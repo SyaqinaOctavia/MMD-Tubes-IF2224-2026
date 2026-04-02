@@ -137,10 +137,3 @@ bool Lexer::generateToken(string srcFile, string destFile){
     output.close();
     return true;
 }
-
-int main(){
-    string n;
-    cin>>n;
-    Lexer lex;
-    lex.generateToken(n,"output.txt");
-}
