@@ -73,6 +73,7 @@ void DFA::loadRules(const string& filepath) {
 
     while (getline(file, line)) {
         if (line.empty()) continue;
+        if (line.find("#") == 0) continue;
 
         if (line.find("startstate") == 0) {
             auto parts = split(line, "|");
