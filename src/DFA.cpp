@@ -75,6 +75,13 @@ string DFA::toLower(const string& str) {
 
 void DFA::loadRules(const string& filepath) {
     ifstream file(filepath);
+
+    if (!file.is_open()) {
+        std::cerr << "Eror : Gagal membuka file aturan DFA: " << filepath << std::endl;
+        std::cerr << "Pastikan file tersebut ada dan path-nya benar relatif terhadap lokasi eksekusi (root direktori)." << std::endl;
+        exit(EXIT_FAILURE); // Hentikan program secara paksa
+    }
+
     string line;
 
     while (getline(file, line)) {
