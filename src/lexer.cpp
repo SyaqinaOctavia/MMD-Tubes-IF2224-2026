@@ -46,7 +46,7 @@ bool Lexer::generateToken(string srcFile, string destFile){
     }
     
     // Load DFA rules
-    DFA dfa("dfa_rules.txt");
+    DFA dfa("src/dfa_rules.txt");
     transition trans = dfa.getTransition();
     
     // Load source file
