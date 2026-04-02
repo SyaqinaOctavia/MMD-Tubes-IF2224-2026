@@ -1,0 +1,33 @@
+programsy
+ident (tesDownTo)
+semicolon
+varsy
+ident (i)
+colon
+ident (integer)
+semicolon
+beginsy
+forsy
+ident (i)
+unknown (=)
+intcon (10)
+downtosy
+intcon (1)
+dosy
+beginsy
+casesy
+ident (i)
+ofsy
+intcon (1)
+colon
+ident (writeln)
+lparent
+string ('Satu')
+rparent
+semicolon
+endsy
+semicolon
+endsy
+semicolon
+endsy
+period

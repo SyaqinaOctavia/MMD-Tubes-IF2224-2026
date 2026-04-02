@@ -1,0 +1,32 @@
+programsy
+ident (LuasLingkaran)
+semicolon
+constsy
+ident (PI)
+unknown (=)
+realcon (3.14)
+semicolon
+proceduresy
+ident (PrintLuas)
+lparent
+ident (r)
+colon
+ident (integer)
+rparent
+semicolon
+varsy
+ident (luas)
+colon
+ident (real)
+semicolon
+beginsy
+ident (luas)
+unknown (=)
+ident (PI)
+times
+ident (r)
+times
+ident (r)
+semicolon
+endsy
+semicolon

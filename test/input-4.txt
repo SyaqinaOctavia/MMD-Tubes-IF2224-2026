@@ -1,0 +1,9 @@
+program skibidi;
+var x, y: integer;
+begin
+  x = 15;
+  repeat
+    y = x mod 2;
+    x = x div 2;
+  until x <= 0;
+end.

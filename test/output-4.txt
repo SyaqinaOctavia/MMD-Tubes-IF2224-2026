@@ -1,0 +1,35 @@
+programsy
+ident (skibidi)
+semicolon
+varsy
+ident (x)
+comma
+ident (y)
+colon
+ident (integer)
+semicolon
+beginsy
+ident (x)
+unknown (=)
+intcon (15)
+semicolon
+repeatsy
+ident (y)
+unknown (=)
+ident (x)
+imod
+intcon (2)
+semicolon
+ident (x)
+unknown (=)
+ident (x)
+idiv
+intcon (2)
+semicolon
+untilsy
+ident (x)
+leq
+intcon (0)
+semicolon
+endsy
+period

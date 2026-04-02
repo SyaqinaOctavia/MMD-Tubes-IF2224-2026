@@ -1,0 +1,22 @@
+comment ({ Ini Komen })
+programsy
+ident (TesKomentar)
+semicolon
+varsy
+comment ((* Ini komen juga
+     Ini komen baris dua *))
+ident (angka)
+colon
+ident (integer)
+semicolon
+beginsy
+ident (angka)
+unknown (=)
+intcon (100)
+semicolon
+comment ({ Ini komen lagi })
+comment ((* lorem ipsum
+     writeln('Ini diabaikan karena dalam komentar');
+  *))
+endsy
+period

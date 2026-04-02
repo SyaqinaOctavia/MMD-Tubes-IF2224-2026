@@ -1,0 +1,15 @@
+{ Ini Komen }
+program TesKomentar;
+
+var
+  (* Ini komen juga
+     Ini komen baris dua *)
+  angka: integer;
+
+begin
+  angka = 100; { Ini komen lagi }
+
+  (* lorem ipsum
+     writeln('Ini diabaikan karena dalam komentar');
+  *)
+end.

@@ -1,0 +1,10 @@
+program tesDownTo;
+var i: integer;
+begin
+  for i = 10 downto 1 do
+  begin
+    case i of
+      1: writeln('Satu');
+    end;
+  end;
+end.
