@@ -6,13 +6,13 @@
 #include "token.hpp"
 using namespace std;
 
-class lexer {
+class Lexer {
     private:
         char currentChar;
         bool EOP;
         ifstream scanner;
     public:
-        lexer(string filepath);
+        Lexer();
         char getCurrent(){ return currentChar; };
         bool isEndFile(){ return EOP; };
         void advance();

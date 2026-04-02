@@ -1,6 +1,6 @@
 #include "lexer.hpp"
 
-void lexer::advance(){
+void Lexer::advance(){
     char c = scanner.get();
     EOP = (currentChar == EOF);
     if(c == EOF){
@@ -14,7 +14,7 @@ void lexer::advance(){
     currentChar = c;
 }
 
-void lexer::readFile(string filepath){
+void Lexer::readFile(string filepath){
     scanner.open(filepath);
     if(!scanner){
         cout << "Gagal membuka file pada path " << filepath << endl;
@@ -26,18 +26,21 @@ void lexer::readFile(string filepath){
     advance();
 }
 
-void lexer::skipWhitespace(){
+void Lexer::skipWhitespace(){
     while(isspace(currentChar)){
         advance();
     }
 }
 
+Lexer::Lexer() : EOP(false) {}
+
 // int main(){
 //     string n;
-//     cin >> n;
-//     readFile(n);
-//     while(!EOP){
-//         cout << currentChar;
-//         advance();
+//     cin>>n;
+//     Lexer lex;
+//     lex.readFile(n);
+//     while(!lex.isEndFile()){
+//         cout << lex.getCurrent();
+//         lex.advance();
 //     }
 // }
