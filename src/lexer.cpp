@@ -38,22 +38,39 @@ void Lexer::skipWhitespace(){
     }
 }
 
-Token Lexer::getNextToken(DFA DFA){
+vector<Token> Lexer::tokenize(DFA& DFA){
+    vector<Token> tokens;
     skipWhitespace();
-    if(EOP) return Token("EOF", false, line);
 
     string lexeme = "";
     string currentState = DFA.getStartState();
     transition machine = DFA.getTransition();
-    while(!isspace(currentChar) && !EOP){
-        currentState = machine.getNextState(currentState, DFA.getDeadState(), currentChar);
-        if(DFA.isDeadState(currentState)) break;
-        lexeme += currentState;
+    while(!EOP){
+        string nextState = machine.getNextState(currentState, DFA.getDeadState(), currentChar);
+        if(DFA.isDeadState(nextState)){
+            if(DFA.isFinalState(currentState)){
+                tokens.push_back(Token(currentState, lexeme, line));
+                lexeme = "";
+                if(isspace(currentChar)) skipWhitespace();
+                currentState = DFA.getStartState();
+                continue;
+            } else {
+                break;
+            }
+        } else if(DFA.isFinalState(nextState) && isspace(currentChar)){
+            tokens.push_back(Token(nextState, lexeme, line));
+            lexeme = "";
+            skipWhitespace();
+            currentState = DFA.getStartState();
+            continue;
+        } else {
+            lexeme += currentChar;
+            currentState = nextState;
+        }
         advance();
     }
-
-    bool isValid = DFA.isFinalState(currentState);
-    return Token(currentState, isValid, line);
+    if(!lexeme.empty() && DFA.isFinalState(currentState)) tokens.push_back(Token(currentState, lexeme, line));
+    return tokens;
 }
 
 // int main(){

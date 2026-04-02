@@ -5,14 +5,13 @@ using namespace std;
 
 class Token {
     private:
-        string value;
+        string state;
         string lexeme;
-        bool valid;
         int line;
     public:
-        Token(string value, bool valid, int line);
+        Token(string state, string lexeme, int line);
 };
 
-Token::Token(string value, bool valid, int line) : value(value), valid(valid), line(line) {}
+Token::Token(string state, string lexeme, int line) : state(state), lexeme(lexeme), line(line) {}
 
 #endif

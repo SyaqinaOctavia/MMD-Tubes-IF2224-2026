@@ -21,7 +21,7 @@ class Lexer {
         void readFile(string filepath);
         void skipWhitespace();
 
-        Token getNextToken(DFA DFA);
+        vector<Token> tokenize(DFA& DFA);
 };
 
 #endif
