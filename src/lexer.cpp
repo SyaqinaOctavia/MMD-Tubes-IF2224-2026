@@ -85,7 +85,15 @@ bool Lexer::generateToken(string srcFile, string destFile){
         // Check if we found a valid token
         if(last_final_state == ""){
             // No valid token found
-            output << "ident (" << lexeme << ")" << endl;
+            bool allAlnum = true;
+            for(char c : lexeme){
+                if(!isalnum(c)){
+                    output << "unknown (" << lexeme << ")" << endl;
+                    allAlnum = false;
+                    break;
+                }
+            }
+            if(allAlnum) output << "ident (" << lexeme << ")" << endl;
             continue;
         }
         
@@ -112,14 +120,14 @@ bool Lexer::generateToken(string srcFile, string destFile){
         }
         
         // Skip comments
-        if(token_name == "comment"){
-            continue;
-        }
+        // if(token_name == "comment"){
+        //     continue;
+        // }
         
         // Emit token with or without value
         if(token_name == "ident" || token_name == "intcon" || 
            token_name == "realcon" || token_name == "string" || 
-           token_name == "charcon"){
+           token_name == "charcon" || token_name == "comment"){
             output << token_name << " (" << last_final_lexeme << ")" << endl;
         } else {
             output << token_name << endl;

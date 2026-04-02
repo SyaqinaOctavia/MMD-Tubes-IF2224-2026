@@ -82,7 +82,8 @@ q0 [ q_lbrack
 q0 ] q_rbrack
 q0 , q_comma
 q0 ; q_semicolon
-q0 = q_eql
+q0 = q_eql1
+q_eql1 = q_eql
 q0 > q_gtr
 q0 < q_lss
 q0 : q_colon
