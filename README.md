@@ -1,4 +1,6 @@
 # MMD-Tubes-IF2224-2026
+![source: emesan desu](mascot.jpg)
+
 # Arion Compiler
 Codebase ini merupakan implementasi Lexical Analyzer untuk bahasa pemrograman Arion sebagai bagian dari Tugas Besar mata kuliah IF2224 Teori Bahasa Formal dan Automata.
 
@@ -140,3 +142,11 @@ Program menggunakan DFA yang didefinisikan dalam file `src/dfa_rules.txt` dengan
 * `Dead_state = <state>`: Mendefinisikan dead/trap state
 * `Final_state = <state1>, <state2>, ...`: Mendefinisikan final states
 * `<state> <input> <next_state>`: Mendefinisikan transisi
+
+## Pembagian Tugas
+| NIM | Kontribusi Tugas | Persentase |
+|:---:|:---:|:---:|
+| 13524040 | Tokenizer, Testing program, Testcase input-output, diagram DFA | 25% |
+| 13524042 | Penulisan laporan, DFA rules, diagram DFA | 25% |
+| 13524048 | Class lexer, class DFA, diagram DFA | 25% |
+| 13524088 | Penulisan laporan, DFA rules, Diagram DFA | 25% |
