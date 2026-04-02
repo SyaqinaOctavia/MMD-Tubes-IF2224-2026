@@ -33,7 +33,7 @@ void transition::addTransition(string qprev, string input_symbol, string qnext){
     }
 }
 
-DFA::DFA(const string& rules_file) : dead_state("State_TRAP") {
+DFA::DFA(const string& rules_file) : dead_state("q_trap") {
     loadRules(rules_file);
 }
 
@@ -72,49 +72,25 @@ void DFA::loadRules(const string& filepath) {
     string line;
 
     while (getline(file, line)) {
-        if (line.empty() || line.find('//') == 0) continue;
+        if (line.empty()) continue;
 
         if (line.find("startstate") == 0) {
-            auto parts = split(line, "=");
+            auto parts = split(line, "|");
             start_state = parts[1];
         } else if (line.find("deadstate") == 0) {
-            auto parts = split(line, "=");
+            auto parts = split(line, "|");
             dead_state = parts[1];
         } else if (line.find("finalstate") == 0) {
-            auto parts = split(line, "=");
+            auto parts = split(line, "|");
             string states_str = parts[1];
             auto states = split(states_str, ",");
             final_states.insert(states.begin(), states.end());
-        } else if (line.find("type_") == 0) {
-            auto parts = split(line, "=");
-            string state_name = "";
-            auto state_name_split = split(parts[0], "_");
-            for (size_t i = 1; i < state_name_split.size(); i++) {
-                state_name += state_name_split[i];
-                if (i < parts.size() - 1) state_name += "_";
-            }
-            string token_type = parts[1];
-            token_types[state_name] = token_type;
-        } else if (line.find("keyword_") == 0) {
-            auto parts = split(line, "=");
-            auto keyword_split = split(parts[0], "_");
-            string keyword = "";
-            for (size_t i = 1; i < keyword_split.size(); i++) {
-                keyword += keyword_split[i];
-                if (i < keyword_split.size() - 1) keyword += "_";
-            }
-            string token_type = parts[1];
-            keywords.insert(keyword);
-            token_types["keyword_" + keyword] = token_type;
         } else {
-            stringstream ss(line);
-            string cur, sym, nxt;
-            ss >> cur >> sym >> nxt;
-            transitions.addTransition(cur, sym, nxt);
+            auto parts = split(line, " ");
+            transitions.addTransition(parts[0], parts[1], parts[2]);
         }
     }
 }
-
 
 bool DFA::isFinalState(const string& state) const {
     return final_states.find(state) != final_states.end();
@@ -122,18 +98,4 @@ bool DFA::isFinalState(const string& state) const {
 
 bool DFA::isDeadState(const string& state) const {
     return state == dead_state;
-}
-
-string DFA::getTokenType(const string& state, const string& lexeme) {
-    string lowerLexeme = toLower(lexeme);
-    if (keywords.find(lowerLexeme) != keywords.end()) {
-        auto it = token_types.find("keyword_" + lowerLexeme);
-        if (it != token_types.end()) return it->second;
-        return "KEYWORD";
-    }
-
-    auto it = token_types.find(state);
-    if (it != token_types.end()) return it->second;
-    
-    return "UNKNOWN";
 }

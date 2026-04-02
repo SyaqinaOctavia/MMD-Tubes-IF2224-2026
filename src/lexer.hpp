@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "token.hpp"
 using namespace std;
 
 class lexer {
@@ -11,6 +12,7 @@ class lexer {
         bool EOP;
         ifstream scanner;
     public:
+        lexer(string filepath);
         char getCurrent(){ return currentChar; };
         bool isEndFile(){ return EOP; };
         void advance();
