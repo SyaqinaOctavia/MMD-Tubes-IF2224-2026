@@ -3,7 +3,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "token.hpp"
 #include "DFA.hpp"
 using namespace std;
 
@@ -14,7 +13,7 @@ class Lexer {
         bool EOP;
         ifstream scanner;
     public:
-        Lexer(string filepath);
+        Lexer();
         char getCurrent(){ return currentChar; };
         bool isEndFile(){ return EOP; };
         void advance();

@@ -1,10 +1,6 @@
 #include "lexer.hpp"
 #include "DFA.hpp"
 
-Lexer::Lexer(string filepath){
-    readFile(filepath);
-}
-
 void Lexer::advance(){
     char c = scanner.get();
     EOP = (currentChar == EOF);
@@ -42,6 +38,7 @@ void Lexer::skipWhitespace(){
 Lexer::Lexer() : EOP(false), currentChar('\0') {}
  
 bool Lexer::generateToken(string srcFile, string destFile){
+    cout << "CONSOLE LOG" << endl;
     ofstream output(destFile);
     if(!output){
         cerr << "Failed to open output file: " << destFile << endl;
@@ -79,7 +76,8 @@ bool Lexer::generateToken(string srcFile, string destFile){
             // Add character to lexeme and transition
             lexeme += ch;
             state = next_state;
-            cout<<lexeme<<" "<<state<<"\n";
+            string space(20-lexeme.length(), ' ');
+            cout << lexeme << space << "| " << state << "\n";
             advance();
             
             if(dfa.isFinalState(state)){
