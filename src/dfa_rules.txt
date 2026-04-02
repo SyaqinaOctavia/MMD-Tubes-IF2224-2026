@@ -61,7 +61,7 @@ q_realcon 9 q_realcon
 # ============================================================
 
 q0 ' q_quote1
-q_quote1 ' q_charcon
+q_quote1 ' q_string
 q_quote1 ANY q_quote2
 q_quote2 ' q_charcon
 q_quote2 ANY q_stringbody
