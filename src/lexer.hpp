@@ -18,6 +18,7 @@ class Lexer {
         void advance();
         void readFile(string filepath);
         void skipWhitespace();
+        bool generateToken(string srcFile, string destFile);
 };
 
 #endif
