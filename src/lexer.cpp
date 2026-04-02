@@ -73,6 +73,7 @@ bool Lexer::generateToken(string srcFile, string destFile){
             // Add character to lexeme and transition
             lexeme += ch;
             state = next_state;
+            cout<<lexeme<<" "<<state<<"\n";
             advance();
             
             if(dfa.isFinalState(state)){
@@ -84,7 +85,7 @@ bool Lexer::generateToken(string srcFile, string destFile){
         // Check if we found a valid token
         if(last_final_state == ""){
             // No valid token found
-            output << "error : Invalid token starting with '" << lexeme << "'" << endl;
+            output << "ident (" << lexeme << ")" << endl;
             continue;
         }
         
