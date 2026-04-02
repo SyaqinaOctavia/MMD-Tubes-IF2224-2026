@@ -21,9 +21,9 @@ class DFA {
 public:
     DFA(const string& rules_file);
 
+    transition getTransition(){ return transitions; };
     bool isFinalState(const string& state) const;
     bool isDeadState(const string& state) const;
-    string getTokenType(const string& state, const string& lexeme);
 
 private:
     string start_state;
