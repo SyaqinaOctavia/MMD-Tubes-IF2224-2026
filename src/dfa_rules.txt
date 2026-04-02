@@ -66,6 +66,7 @@ q_quote1 ANY q_quote2
 q_quote2 ' q_charcon
 q_quote2 ANY q_stringbody
 q_stringbody ' q_string
+q_string ' q_stringbody
 q_stringbody ANY q_stringbody
 
 # ============================================================
