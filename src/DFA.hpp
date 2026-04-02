@@ -22,6 +22,8 @@ public:
     DFA(const string& rules_file);
 
     transition getTransition(){ return transitions; };
+    string getDeadState(){ return dead_state; };
+    string getStartState(){ return start_state; };
     bool isFinalState(const string& state) const;
     bool isDeadState(const string& state) const;
 

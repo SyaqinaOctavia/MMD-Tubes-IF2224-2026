@@ -27,6 +27,10 @@ string transition::getNextState(const string& currentState, const string& dead_s
 void transition::addTransition(string qprev, string input_symbol, string qnext){
     if (input_symbol.compare("ANY") == 0) {
         wildcard_transitions[qprev] = qnext;
+    } else if (input_symbol.compare("ANY2") == 0){
+        for (unsigned char c = 0; c < 128; c++)
+            if (isalnum(c))
+                transitions[{qprev, (char)c}] = qnext;
     } else {
         char input_char = input_symbol[0];
         transitions[{qprev, input_char}] = qnext;
