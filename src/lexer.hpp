@@ -4,15 +4,17 @@
 #include <fstream>
 #include <string>
 #include "token.hpp"
+#include "DFA.hpp"
 using namespace std;
 
 class Lexer {
     private:
         char currentChar;
+        int line;
         bool EOP;
         ifstream scanner;
     public:
-        Lexer();
+        Lexer(string filepath);
         char getCurrent(){ return currentChar; };
         bool isEndFile(){ return EOP; };
         void advance();

@@ -1,6 +1,10 @@
 #include "lexer.hpp"
 #include "DFA.hpp"
 
+Lexer::Lexer(string filepath){
+    readFile(filepath);
+}
+
 void Lexer::advance(){
     char c = scanner.get();
     EOP = (currentChar == EOF);
@@ -24,11 +28,13 @@ void Lexer::readFile(string filepath){
         scanner.close();
         return;
     }
+    line = 0;
     advance();
 }
 
 void Lexer::skipWhitespace(){
     while(isspace(currentChar)){
+        if(currentChar == '\n') line++;
         advance();
     }
 }
