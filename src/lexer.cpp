@@ -66,7 +66,7 @@ bool Lexer::generateToken(string srcFile, string destFile){
             char ch = getCurrent();
             string next_state = trans.getNextState(state, "q_trap", ch);
             if(next_state == "q_trap"){
-               if(lexeme.empty()){
+                if(lexeme.empty()){
                     lexeme += ch;
                     advance();
                 }
@@ -74,7 +74,8 @@ bool Lexer::generateToken(string srcFile, string destFile){
             }
             
             // Add character to lexeme and transition
-            lexeme += ch;
+            if(state.compare("q_string") == 0 && ch == '\'') lexeme = lexeme;
+            else lexeme += ch;
             state = next_state;
             int lexlen = lexeme.length();
             string space((20 * (lexlen / 20 + 1))-lexlen, ' ');
