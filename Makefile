@@ -2,7 +2,7 @@ CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic -Isrc
 BUILD_DIR := build
 SRC_DIR := src
-TARGET := compiler
+TARGET := main
 ARGS :=
 
 CPP_SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
