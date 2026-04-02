@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <cctype>
+#include <iostream>
 using namespace std;
 
 string transition::getNextState(const string& currentState, const string& dead_state, char inputSymbol) {
@@ -27,6 +28,11 @@ string transition::getNextState(const string& currentState, const string& dead_s
 void transition::addTransition(string qprev, string input_symbol, string qnext){
     if (input_symbol.compare("ANY") == 0) {
         wildcard_transitions[qprev] = qnext;
+    } else if (input_symbol.compare("ANY2") == 0){
+        for (unsigned char c = 0; c < 128; c++)
+            if ( (isalnum(c) || c == ' ') && transitions[{qprev,(char)c}] == ""){
+                transitions[{qprev, (char)c}] = qnext;
+            }
     } else {
         char input_char = input_symbol[0];
         transitions[{qprev, input_char}] = qnext;
@@ -72,9 +78,8 @@ void DFA::loadRules(const string& filepath) {
     string line;
 
     while (getline(file, line)) {
-        if (line.empty()) continue;
+        if (line.size() <= 1) continue;
         if (line.find("#") == 0) continue;
-
         if (line.find("startstate") == 0) {
             auto parts = split(line, "|");
             start_state = parts[1];
@@ -88,6 +93,9 @@ void DFA::loadRules(const string& filepath) {
             final_states.insert(states.begin(), states.end());
         } else {
             auto parts = split(line, " ");
+            if(parts.size() == 2) {
+                parts.push_back(" ");
+            }
             transitions.addTransition(parts[0], parts[1], parts[2]);
         }
     }

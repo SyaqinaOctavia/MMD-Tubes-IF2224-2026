@@ -10,9 +10,9 @@ using namespace std;
 
 class transition {
     private:
-        map<pair<string, char>, string> transitions;
-        map<string, string> wildcard_transitions;
+    map<string, string> wildcard_transitions;
     public:
+    map<pair<string, char>, string> transitions;
         void addTransition(string qprev, string input_symbol, string qnext);
         string getNextState(const string& current, const string& dead_state, char inputSymbol);
 };
@@ -22,6 +22,8 @@ public:
     DFA(const string& rules_file);
 
     transition getTransition(){ return transitions; };
+    string getDeadState(){ return dead_state; };
+    string getStartState(){ return start_state; };
     bool isFinalState(const string& state) const;
     bool isDeadState(const string& state) const;
 
