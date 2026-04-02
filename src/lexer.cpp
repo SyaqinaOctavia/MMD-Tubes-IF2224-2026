@@ -76,10 +76,15 @@ bool Lexer::generateToken(string srcFile, string destFile){
             // Add character to lexeme and transition
             lexeme += ch;
             state = next_state;
+<<<<<<< HEAD
             // string space(20-lexeme.length(), ' ');
             // cout << lexeme << space << "| " << state << "\n";
+=======
+            int lexlen = lexeme.length();
+            string space((20 * (lexlen / 20 + 1))-lexlen, ' ');
+            cout << lexeme << space << "| " << state << "\n";
+>>>>>>> f515a89826f1bbfd858362cf4255bbd63ed89546
             advance();
-            
             if(dfa.isFinalState(state)){
                 last_final_state = state;
                 last_final_lexeme = lexeme;
