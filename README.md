@@ -77,7 +77,7 @@ make run ARGS="<intput-file> <output-file>"
 ### Contoh Penggunaan
 
 ```bash
-make run ARGS= "test/milestone-1/input-1.txt test/milestone-1/output-1.txt"
+make run ARGS="test/input-1.txt test/output-1.txt"
 ```
 
 ### Format Input
