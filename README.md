@@ -56,6 +56,7 @@ cd MMD-Tubes-IF2224-2026
 
 ```bash
 make build
+make
 ```
 
 Program akan dikompilasi dan menghasilkan *executable* bernama `main`.
@@ -71,13 +72,15 @@ make clean
 ### Format Perintah
 
 ```bash
-make run ARGS="<intput-file> <output-file>"
+make run ARGS="<option> <intput-file> <output-file>"
 ```
+
+`option` digunakan untuk memilih antara *lexer* (`option == 1`) dan *parser* (`option == 2`).
 
 ### Contoh Penggunaan
 
 ```bash
-make run ARGS="test/input-1.txt test/output-1.txt"
+make run ARGS="1 test/input-1.txt test/output-1.txt"
 ```
 
 ### Format Input
