@@ -9,7 +9,7 @@ int main(int argc, char* argv[]){
         cout << "[USAGE] : ./main <option> <input file> <output file>" << endl;
         cout << "option :" << endl;
         cout << "         1. Lexer (input with code, output as tokens)" << endl;
-        cout << "         2. Parser (input with tokens, output as parse tree)" << endl;
+        cout << "         2. Lexer and Parser (input with code, output as parse tree)" << endl;
         return 0;
     }
     if(std::strcmp(argv[1], "1") == 0){
