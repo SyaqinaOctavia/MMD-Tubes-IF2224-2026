@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include "DFA.hpp"
+#include "../Token.hpp"
 using namespace std;
 
 class Lexer {
@@ -19,7 +20,8 @@ class Lexer {
         void advance();
         void readFile(string filepath);
         void skipWhitespace();
-        bool generateToken(string srcFile, string destFile);
+        std::vector<Token> generateToken(string srcFile);
+        bool generateTokenToFile(string srcFile, string destFile);
 };
 
 #endif

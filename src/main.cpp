@@ -1,4 +1,5 @@
-#include "lexer.hpp"
+#include "Lexer/lexer.hpp"
+#include "Parser.hpp"
 #include <cstring>
 #include <iostream>
 
@@ -14,9 +15,12 @@ int main(int argc, char* argv[]){
     }
     if(std::strcmp(argv[1], "1") == 0){
         Lexer lex;
-        lex.generateToken(argv[2],argv[3]);
+        lex.generateTokenToFile(argv[2],argv[3]);
     }
     else if(std::strcmp(argv[1], "2") == 0){
+        Lexer lex;
+        std::vector<Token> tokens = lex.generateToken(argv[2]);
+        Parser parser(tokens);
         // not implemented yet
     }
     else {

@@ -5,7 +5,10 @@ SRC_DIR := src
 TARGET := main
 ARGS :=
 
-CPP_SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
+# Recursively find all .cpp files
+CPP_SOURCES := $(shell find $(SRC_DIR) -name '*.cpp')
+
+# Map src/.../file.cpp → build/.../file.o
 CPP_OBJECTS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(CPP_SOURCES))
 DEPFILES := $(CPP_OBJECTS:.o=.d)
 
@@ -25,10 +28,9 @@ objects: $(CPP_OBJECTS)
 $(TARGET): $(CPP_OBJECTS)
 	$(CXX) $(CPP_OBJECTS) -o $@
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
+# Create directories as needed
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 run: $(TARGET)
