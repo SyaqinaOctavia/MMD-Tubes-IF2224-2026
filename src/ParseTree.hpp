@@ -2,104 +2,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-
-enum class Symbol {
-    // Terminal
-    intcon,
-    realcon,
-    charcon,
-    string,
-    notsy,
-    plus,
-    minus,
-    times,
-    idiv,
-    rdiv,
-    imod,
-    andsy,
-    orsy,
-    eql,
-    neq,
-    gtr,
-    geq,
-    lss,
-    leq,
-    lparent,
-    rparent,
-    lbrack,
-    rbrack,
-    comma,
-    semicolon,
-    period,
-    colon,
-    becomes,
-    constsy,
-    typesy,
-    varsy,
-    functionsy,
-    proceduresy,
-    arraysy,
-    recordsy,
-    programsy,
-    ident,
-    beginsy,
-    ifsy,
-    casesy,
-    repeatsy,
-    whilesy,
-    forsy,
-    endsy,
-    elsesy,
-    untilsy,
-    ofsy,
-    dosy,
-    tosy,
-    downtosy,
-    thensy,
-    comment,
-
-    // Variabel
-    PROGRAM,
-    PROGRAM_HEADER,
-    DECLARATION_PART,
-    CONST_DECLARATION,
-    CONSTANT,
-    TYPE_DECLARATION,
-    VAR_DECLARATION,
-    IDENTIFIER_LIST,
-    TYPE,
-    ARRAY_TYPE,
-    RANGE,
-    ENUMERATED,
-    RECORD_TYPE,
-    FIELD_LIST,
-    FIELD_PART,
-    SUBPROGRAM_DECLARATION,
-    PROCEDURE_DECLARATION,
-    FUNCTION_DECLARATION,
-    BLOCK,
-    FORMAL_PARAMETER_LIST,
-    PARAMETER_GROUP,
-    COMPOUND_STATEMENT,
-    STATEMENT_LIST,
-    STATEMENT,
-    ASSIGNMENT_STATEMENT,
-    IF_STATEMENT,
-    CASE_STATEMENT,
-    CASE_BLOCK,
-    WHILE_STATEMENT,
-    REPEAT_STATEMENT,
-    FOR_STATEMENT,
-    PROCEDURE_FUNCTION_CALL,
-    PARAMETER_LIST,
-    EXPRESSION,
-    SIMPLE_EXPRESSION,
-    TERM,
-    FACTOR,
-    RELATIONAL_OPERATOR,
-    ADDITIVE_OPERATOR,
-    MULTIPLICATIVE_OPERATOR
-};
+#include "Symbol.hpp"
 
 class TreeNode {
     private:
@@ -107,7 +10,10 @@ class TreeNode {
         std::string value;
         std::vector<std::shared_ptr<TreeNode>> children;
     public:
+        TreeNode(Symbol node) : nodeType(node){}
+        TreeNode(Symbol node, std::string value) : nodeType(node), value(value){}
         Symbol getNodeType() const { return nodeType; }
         std::vector<std::shared_ptr<TreeNode>> getChildren() const { return children; }
         void addChild(std::shared_ptr<TreeNode> newNode);
+        void outputTree(std::string destFile) const;
 };
