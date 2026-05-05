@@ -81,12 +81,57 @@ std::shared_ptr<TreeNode> Parser::arrayType(){
 }
 
 std::shared_ptr<TreeNode> Parser::rangeNode(){
-
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::RANGE);
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::CONSTANT);
+    if(!childA){ currentToken = start; return nullptr;}
+    std::shared_ptr<TreeNode> childB = terminal(Symbol::period);
+    if(!childB){ currentToken = start; return nullptr;}
+    std::shared_ptr<TreeNode> childC = terminal(Symbol::period);
+    if(!childC){ currentToken = start; return nullptr;}
+    std::shared_ptr<TreeNode> childD = terminal(Symbol::CONSTANT);
+    if(!childD){ currentToken = start; return nullptr;}
+    
+    ptr->addChild(childA);
+    ptr->addChild(childB);
+    ptr->addChild(childC);
+    ptr->addChild(childD);
+    
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::enumerated(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::ENUMERATED);
+
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::lparent);
+    if(!childA){ currentToken = start; return nullptr;}
+    std::shared_ptr<TreeNode> childB = terminal(Symbol::ident);
+    if(!childB){ currentToken = start; return nullptr;}
+    
+
+    // Parse remaining comma and identifier
+    std::vector<std::shared_ptr<TreeNode>> parseContainer;
+    while( currentToken+1 < tokens.size() && tokens[currentToken].getTokenType() == Symbol::comma ){
+        std::shared_ptr<TreeNode> parseComma = terminal(Symbol::comma);
+        if( !parseComma ) { currentToken = start; return nullptr; }
+        std::shared_ptr<TreeNode> parseIdent = terminal(Symbol::ident);
+        if( !parseIdent ) { currentToken = start; return nullptr; }
+
+        // Add to container
+        parseContainer.push_back(parseComma);
+        parseContainer.push_back(parseIdent);
+    }
+    
+    std::shared_ptr<TreeNode> childC = terminal(Symbol::rparent);
+    if(!childC){ currentToken = start; return nullptr;}
+    
+    ptr->addChild(childA);
+    for(auto parsed : parseContainer) ptr->addChild(parsed);
+    ptr->addChild(childB);
+    ptr->addChild(childC);
+    
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::recordType(){
