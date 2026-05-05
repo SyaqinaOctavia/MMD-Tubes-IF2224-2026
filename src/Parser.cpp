@@ -46,3 +46,155 @@ std::shared_ptr<TreeNode> Parser::programHeader(){
     
     return ptr;
 }
+
+std::shared_ptr<TreeNode> Parser::declarationPart(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::constDeclaration(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::constantNode(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::typeDeclaration(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::varDeclaration(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::identifierList(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::typeNode(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::arrayType(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::rangeNode(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::enumerated(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::recordType(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::fieldList(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::fieldPart(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::subprogramDeclaration(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::procedureDeclaration(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::functionDeclaration(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::blockNode(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::formalParameterList(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::parameterGroup(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::compoundStatement(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::statementList(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::statementNode(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::assignmentStatement(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::ifStatement(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::caseStatement(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::caseBlock(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::whileStatement(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::repeatStatement(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::forStatement(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::procedureFunctionCall(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::parameterList(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::expressionNode(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::simpleExpression(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::termNode(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::factorNode(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::relationalOperator(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::additiveOperator(){
+    return nullptr;
+}
+
+std::shared_ptr<TreeNode> Parser::multiplicativeOperator(){
+    return nullptr;
+}

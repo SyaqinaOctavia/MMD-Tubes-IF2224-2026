@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <map>
 #include "Symbol.hpp"
 
 class Token {
@@ -12,9 +13,10 @@ class Token {
         Token(Symbol symbol, std::string value) : tokenType(symbol), value(value){}
         Symbol getTokenType() const { return tokenType; }
         std::string getValue() const { return value; }
+        std::string toString() const;
 };
 
-static inline const std::map<std::string, Symbol> keywordMap = {
+inline const std::map<std::string, Symbol> Token::keywordMap = {
     {"intcon", Symbol::intcon},
     {"realcon", Symbol::realcon},
     {"charcon", Symbol::charcon},

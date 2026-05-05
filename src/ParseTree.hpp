@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <fstream>
 #include "Symbol.hpp"
 
 class TreeNode {
@@ -15,5 +16,6 @@ class TreeNode {
         Symbol getNodeType() const { return nodeType; }
         std::vector<std::shared_ptr<TreeNode>> getChildren() const { return children; }
         void addChild(std::shared_ptr<TreeNode> newNode);
-        void outputTree(std::string destFile) const;
+        bool outputTree(std::string destFile) const;
+        bool printNode(std::ofstream& file, int depth) const;
 };

@@ -1,4 +1,6 @@
 #pragma once 
+#include <string>
+
 enum class Symbol {
     // Terminal
     intcon,
@@ -97,3 +99,5 @@ enum class Symbol {
     ADDITIVE_OPERATOR,
     MULTIPLICATIVE_OPERATOR
 };
+
+std::string toString(Symbol s);
