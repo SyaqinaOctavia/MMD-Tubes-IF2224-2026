@@ -38,6 +38,9 @@ class Parser {
         std::shared_ptr<TreeNode> compoundStatement();
         std::shared_ptr<TreeNode> statementList();
         std::shared_ptr<TreeNode> statementNode();
+        std::shared_ptr<TreeNode> variableNode();
+        std::shared_ptr<TreeNode> componentVariable();
+        std::shared_ptr<TreeNode> indexList();
         std::shared_ptr<TreeNode> assignmentStatement();
         std::shared_ptr<TreeNode> ifStatement();
         std::shared_ptr<TreeNode> caseStatement();
