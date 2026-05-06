@@ -80,6 +80,7 @@ std::shared_ptr<TreeNode> Parser::arrayType(){
     return nullptr;
 }
 
+// <range> -> constant + period + period + constant
 std::shared_ptr<TreeNode> Parser::rangeNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::RANGE);
@@ -100,6 +101,7 @@ std::shared_ptr<TreeNode> Parser::rangeNode(){
     return ptr;
 }
 
+// <enumerated> ->  lparent + ident + (comma + ident)* + rparent
 std::shared_ptr<TreeNode> Parser::enumerated(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::ENUMERATED);
