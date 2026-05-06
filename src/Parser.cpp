@@ -349,6 +349,7 @@ std::shared_ptr<TreeNode> Parser::formalParameterList(){
     return ptr;
 }
 
+// <parameter-group> -> identifier-list + colon + (ident | array-type)
 std::shared_ptr<TreeNode> Parser::parameterGroup(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::PARAMETER_GROUP);
@@ -377,6 +378,7 @@ std::shared_ptr<TreeNode> Parser::parameterGroup(){
     return ptr;
 }
 
+//<compound-statement> -> beginsy + statement-list + endsy
 std::shared_ptr<TreeNode> Parser::compoundStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::COMPOUND_STATEMENT);
@@ -399,6 +401,7 @@ std::shared_ptr<TreeNode> Parser::compoundStatement(){
     return ptr;
 }
 
+// <statement-list> -> statement (semicolon + statement)*
 std::shared_ptr<TreeNode> Parser::statementList(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::STATEMENT_LIST);
@@ -422,6 +425,7 @@ std::shared_ptr<TreeNode> Parser::statementList(){
     return ptr;
 }
 
+// <statement> -> (assignment-statement | if-statement | case-statement | while-statement | repeat-statement | for-statement | procedure/function-call )?
 std::shared_ptr<TreeNode> Parser::statementNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::STATEMENT);
@@ -453,6 +457,7 @@ std::shared_ptr<TreeNode> Parser::statementNode(){
     return ptr;
 }
 
+// <variable> -> ident + (component-variable)*
 std::shared_ptr<TreeNode> Parser::variableNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::VARIABLE);
@@ -472,6 +477,7 @@ std::shared_ptr<TreeNode> Parser::variableNode(){
     return ptr;
 }
 
+// <component-variable> -> (lbrack + index-list + rbrack) | (period + ident)
 std::shared_ptr<TreeNode> Parser::componentVariable(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::COMPONENT_VARIABLE);
@@ -504,6 +510,7 @@ std::shared_ptr<TreeNode> Parser::componentVariable(){
     return ptr;
 }
 
+// <index-list> -> ( intcon | charcon | ident ) + ( comma + index-list )*
 std::shared_ptr<TreeNode> Parser::indexList(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::INDEX_LIST);
@@ -529,6 +536,7 @@ std::shared_ptr<TreeNode> Parser::indexList(){
     return ptr;
 }
 
+// <assignment-statement> -> variable + becomes + expression
 std::shared_ptr<TreeNode> Parser::assignmentStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::ASSIGNMENT_STATEMENT);
@@ -551,6 +559,7 @@ std::shared_ptr<TreeNode> Parser::assignmentStatement(){
     return ptr;
 }
 
+// <if-statement> -> ifsy + expression + thensy + statement + (elsy + statement)?
 std::shared_ptr<TreeNode> Parser::ifStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::IF_STATEMENT);
@@ -590,6 +599,7 @@ std::shared_ptr<TreeNode> Parser::ifStatement(){
     return ptr;
 }
 
+// <case-statement> -> casesy + expression + ofsy + case-block + endsy
 std::shared_ptr<TreeNode> Parser::caseStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::CASE_STATEMENT);
@@ -622,6 +632,7 @@ std::shared_ptr<TreeNode> Parser::caseStatement(){
     return ptr;
 }
 
+// <case-block> -> constant + (comma + constant)* + colon + statement + (semicolon + case-block?)*
 std::shared_ptr<TreeNode> Parser::caseBlock(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::CASE_BLOCK);
@@ -683,6 +694,7 @@ std::shared_ptr<TreeNode> Parser::caseBlock(){
     return ptr;
 }
 
+// <while-statement> -> whilesy + expression + dosy + statement
 std::shared_ptr<TreeNode> Parser::whileStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::WHILE_STATEMENT);
@@ -707,6 +719,7 @@ std::shared_ptr<TreeNode> Parser::whileStatement(){
     return ptr;
 }
 
+// <repeat-statement> -> repeatsy + statement-list + untilsy + expression
 std::shared_ptr<TreeNode> Parser::repeatStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::REPEAT_STATEMENT);
@@ -731,6 +744,7 @@ std::shared_ptr<TreeNode> Parser::repeatStatement(){
     return ptr;
 }
 
+// <for-statement> -> forsy + ident + becomes + expression + ( tosy | downtosy) + expression + dosy + statement
 std::shared_ptr<TreeNode> Parser::forStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::FOR_STATEMENT);
@@ -776,6 +790,7 @@ std::shared_ptr<TreeNode> Parser::forStatement(){
     return ptr;
 }
 
+// <procedure/function-call> -> ident + (lparent + parameter-list? + rparent)
 std::shared_ptr<TreeNode> Parser::procedureFunctionCall(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::PROCEDURE_FUNCTION_CALL);
@@ -799,6 +814,7 @@ std::shared_ptr<TreeNode> Parser::procedureFunctionCall(){
     return ptr;
 }
 
+// <parameter-list> -> expression (comma + expression)*
 std::shared_ptr<TreeNode> Parser::parameterList(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::PARAMETER_LIST);
@@ -820,6 +836,7 @@ std::shared_ptr<TreeNode> Parser::parameterList(){
     return ptr;
 }
 
+// <expression> -> simple-expression (relational-operator + simple-expression)?
 std::shared_ptr<TreeNode> Parser::expressionNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::EXPRESSION);
@@ -839,6 +856,7 @@ std::shared_ptr<TreeNode> Parser::expressionNode(){
     return ptr;
 }
 
+// <simple-expression> -> (plus | minus)? term (additive-operator + term)*
 std::shared_ptr<TreeNode> Parser::simpleExpression(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::SIMPLE_EXPRESSION);
@@ -870,6 +888,7 @@ std::shared_ptr<TreeNode> Parser::simpleExpression(){
     return ptr;
 }
 
+// <term> -> factor (multiplicative-operator + factor)*
 std::shared_ptr<TreeNode> Parser::termNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::TERM);
@@ -891,6 +910,7 @@ std::shared_ptr<TreeNode> Parser::termNode(){
     return ptr;
 }
 
+// <factor> -> ident | intcon | realcon | charcon | string | (lparent + expression + rparent) | (notsy + factor) | procedure/function-call | variable
 std::shared_ptr<TreeNode> Parser::factorNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::FACTOR);
@@ -938,6 +958,7 @@ std::shared_ptr<TreeNode> Parser::factorNode(){
     return nullptr;
 }
 
+// <relational-operator> -> eql | neq | gtr | geq | lss | leq
 std::shared_ptr<TreeNode> Parser::relationalOperator(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::RELATIONAL_OPERATOR);
@@ -964,6 +985,7 @@ std::shared_ptr<TreeNode> Parser::relationalOperator(){
     return ptr;
 }
 
+// <additive-operator> -> plus | minus | orsy
 std::shared_ptr<TreeNode> Parser::additiveOperator(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::ADDITIVE_OPERATOR);
@@ -984,6 +1006,7 @@ std::shared_ptr<TreeNode> Parser::additiveOperator(){
     return ptr;
 }
 
+// <multiplicative-operator> -> times | rdiv | idiv | imod | andsy
 std::shared_ptr<TreeNode> Parser::multiplicativeOperator(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::MULTIPLICATIVE_OPERATOR);
