@@ -302,19 +302,49 @@ std::shared_ptr<TreeNode> Parser::blockNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::BLOCK);
 
-    std::shared_ptr<TreeNode> childA = declarationPart(); // Asumsi method ini ada
+    std::shared_ptr<TreeNode> childA = declarationPart();
     if(!childA){ currentToken = start; return nullptr;}
     
-    std::shared_ptr<TreeNode> childB = compoundStatement(); // Asumsi method ini ada
-    if(!childB){ currentToken = start; return nullptr;}
-
+    std::shared_ptr<TreeNode> childB = compoundStatement(); 
     ptr->addChild(childA);
     ptr->addChild(childB);
 
     return ptr;
 }
+
+// <formal-parameter-list> -> lparent + parameter-group + (semicolon + parameter-group)* + rparent
 std::shared_ptr<TreeNode> Parser::formalParameterList(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::FORMAL_PARAMETER_LIST);
+
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::lparent);
+    if(!childA){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childB = parameterGroup(); 
+    if(!childB){ currentToken = start; return nullptr;}
+    
+    // Parse remaining semicolon and parameter-group
+    std::vector<std::shared_ptr<TreeNode>> parseContainer;
+    while( currentToken+1 < tokens.size() && tokens[currentToken].getTokenType() == Symbol::semicolon ){
+        std::shared_ptr<TreeNode> parseSemicolon = terminal(Symbol::semicolon);
+        if( !parseSemicolon ) { currentToken = start; return nullptr; }
+        std::shared_ptr<TreeNode> parseGroup = parameterGroup();
+        if( !parseGroup ) { currentToken = start; return nullptr; }
+
+        // Add to container
+        parseContainer.push_back(parseSemicolon);
+        parseContainer.push_back(parseGroup);
+    }
+    
+    std::shared_ptr<TreeNode> childC = terminal(Symbol::rparent);
+    if(!childC){ currentToken = start; return nullptr;}
+    
+    ptr->addChild(childA);
+    ptr->addChild(childB);
+    for(auto parsed : parseContainer) ptr->addChild(parsed);
+    ptr->addChild(childC);
+    
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::parameterGroup(){
