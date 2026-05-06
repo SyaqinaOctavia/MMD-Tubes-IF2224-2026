@@ -181,8 +181,25 @@ std::shared_ptr<TreeNode> Parser::fieldList(){
     return ptr;
 }
 
+// <field-part> -> identifier-list + colon + type
 std::shared_ptr<TreeNode> Parser::fieldPart(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::FIELD_PART);
+
+    std::shared_ptr<TreeNode> childA = identifierList();
+    if(!childA){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childB = terminal(Symbol::colon);
+    if(!childB){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childC = typeNode();
+    if(!childC){ currentToken = start; return nullptr;}
+
+    ptr->addChild(childA);
+    ptr->addChild(childB);
+    ptr->addChild(childC);
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::subprogramDeclaration(){
