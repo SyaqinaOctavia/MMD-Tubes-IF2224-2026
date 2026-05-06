@@ -255,8 +255,46 @@ std::shared_ptr<TreeNode> Parser::procedureDeclaration(){
     
     return ptr;
 }
+
+// <function-declaration> -> functionsy + ident + (formal-parameter-list)? + colon + ident + semicolon + block + semicolon
 std::shared_ptr<TreeNode> Parser::functionDeclaration(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::FUNCTION_DECLARATION);
+
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::functionsy);
+    if(!childA){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childB = terminal(Symbol::ident);
+    if(!childB){ currentToken = start; return nullptr;}
+    
+    // Optional parameter list
+    std::shared_ptr<TreeNode> parseParams = formalParameterList();
+    
+    std::shared_ptr<TreeNode> childC = terminal(Symbol::colon);
+    if(!childC){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childD = terminal(Symbol::ident);
+    if(!childD){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childE = terminal(Symbol::semicolon);
+    if(!childE){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childF = blockNode();
+    if(!childF){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childG = terminal(Symbol::semicolon);
+    if(!childG){ currentToken = start; return nullptr;}
+    
+    ptr->addChild(childA);
+    ptr->addChild(childB);
+    if(parseParams) ptr->addChild(parseParams);
+    ptr->addChild(childC);
+    ptr->addChild(childD);
+    ptr->addChild(childE);
+    ptr->addChild(childF);
+    ptr->addChild(childG);
+    
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::blockNode(){
