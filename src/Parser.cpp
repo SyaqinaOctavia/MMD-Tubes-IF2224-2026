@@ -154,8 +154,31 @@ std::shared_ptr<TreeNode> Parser::recordType(){
     return ptr;
 }
 
+// <field-list> -> field-part + (semicolon + field-part)*
 std::shared_ptr<TreeNode> Parser::fieldList(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::FIELD_LIST);
+
+    std::shared_ptr<TreeNode> childA = fieldPart();
+    if(!childA){ currentToken = start; return nullptr;}
+    
+    // Parse remaining semicolon and field-part
+    std::vector<std::shared_ptr<TreeNode>> parseContainer;
+    while( currentToken+1 < tokens.size() && tokens[currentToken].getTokenType() == Symbol::semicolon ){
+        std::shared_ptr<TreeNode> parseSemicolon = terminal(Symbol::semicolon);
+        if( !parseSemicolon ) { currentToken = start; return nullptr; }
+        std::shared_ptr<TreeNode> parseField = fieldPart();
+        if( !parseField ) { currentToken = start; return nullptr; }
+
+        // Add to container
+        parseContainer.push_back(parseSemicolon);
+        parseContainer.push_back(parseField);
+    }
+    
+    ptr->addChild(childA);
+    for(auto parsed : parseContainer) ptr->addChild(parsed);
+    
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::fieldPart(){
