@@ -109,7 +109,6 @@ std::shared_ptr<TreeNode> Parser::enumerated(){
     std::shared_ptr<TreeNode> childB = terminal(Symbol::ident);
     if(!childB){ currentToken = start; return nullptr;}
     
-
     // Parse remaining comma and identifier
     std::vector<std::shared_ptr<TreeNode>> parseContainer;
     while( currentToken+1 < tokens.size() && tokens[currentToken].getTokenType() == Symbol::comma ){
@@ -134,8 +133,25 @@ std::shared_ptr<TreeNode> Parser::enumerated(){
     return ptr;
 }
 
+// <record-type> -> recordsy + field-list + endsy
 std::shared_ptr<TreeNode> Parser::recordType(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::RECORD_TYPE);
+
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::recordsy);
+    if(!childA){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childB = fieldList();
+    if(!childB){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childC = terminal(Symbol::endsy);
+    if(!childC){ currentToken = start; return nullptr;}
+
+    ptr->addChild(childA);
+    ptr->addChild(childB);
+    ptr->addChild(childC);
+    
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::fieldList(){
