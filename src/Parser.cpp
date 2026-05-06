@@ -120,43 +120,276 @@ std::shared_ptr<TreeNode> Parser::formalParameterList(){
 }
 
 std::shared_ptr<TreeNode> Parser::parameterGroup(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::PARAMETER_GROUP);
+
+    //identifier-list
+    std::shared_ptr<TreeNode> childA = identifierList();
+    if(!childA){ currentToken = start; return nullptr;}
+    ptr->addChild(childA);
+
+    //colon
+    std::shared_ptr<TreeNode> childB = terminal(Symbol::colon);
+    if(!childB){ currentToken = start; return nullptr;}
+    ptr->addChild(childB);
+
+    // (ident | array-type)
+    if(tokens[currentToken].getTokenType() == Symbol::ident){
+        std::shared_ptr<TreeNode> childC = terminal(Symbol::ident);
+        if(!childC){ currentToken = start; return nullptr;}
+        ptr->addChild(childC);    
+    }else{
+        std::shared_ptr<TreeNode> childC = arrayType();
+        if(!childC){ currentToken = start; return nullptr;}
+        ptr->addChild(childC);
+    }
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::compoundStatement(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::COMPOUND_STATEMENT);
+
+    //beginsy
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::beginsy);
+    if(!childA){ currentToken = start; return nullptr;}
+    ptr->addChild(childA);
+
+    //statement-list
+    std::shared_ptr<TreeNode> childB = statementList();
+    if(!childB){ currentToken = start; return nullptr;}
+    ptr->addChild(childB);
+
+    //endsy
+    std::shared_ptr<TreeNode> childC = terminal(Symbol::endsy);
+    if(!childC){ currentToken = start; return nullptr;}
+    ptr->addChild(childC);
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::statementList(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::STATEMENT_LIST);
+
+    //statement
+    std::shared_ptr<TreeNode> childA = statementNode();
+    if(!childA){ currentToken = start; return nullptr;}
+    ptr->addChild(childA);
+    
+    //(semicolon + statement)*
+    while (true){
+        std::shared_ptr<TreeNode> childB = terminal(Symbol::semicolon);
+        if(childB){ 
+            ptr->addChild(childB);
+            std::shared_ptr<TreeNode> childC = statementNode();
+            if(!childC){ currentToken = start; return nullptr;}
+            ptr->addChild(childC);
+        } else break;  
+    }
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::statementNode(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::STATEMENT);
+
+    // (assignment-statement | if-statement | case-statement | while-statement | 
+    // repeat-statement | for-statement | procedure/function-call )?
+
+    std::shared_ptr<TreeNode> child = assignmentStatement();
+    if(child){ ptr->addChild(child); return ptr; }
+
+    child = ifStatement();
+    if(child){ ptr->addChild(child); return ptr; }
+
+    child = caseStatement();
+    if(child){ ptr->addChild(child); return ptr; }
+
+    child = whileStatement();
+    if(child){ ptr->addChild(child); return ptr; }
+
+    child = repeatStatement();
+    if(child){ ptr->addChild(child); return ptr; }
+
+    child = forStatement();
+    if(child){ ptr->addChild(child); return ptr; }
+
+    child = procedureFunctionCall();
+    if(child){ ptr->addChild(child); return ptr; }
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::variableNode(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::VARIABLE);
+
+    //ident
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::ident);
+    if(!childA){currentToken = start; return nullptr;}
+    ptr->addChild(childA);
+
+    //(component-variable)*
+    while (true){
+        std::shared_ptr<TreeNode> childB = componentVariable();
+        if(childB) ptr->addChild(childB);
+        else break;
+    }
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::componentVariable(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::COMPONENT_VARIABLE);
+
+    //lbrack + index-list + rbrack
+    if(tokens[currentToken].getTokenType() == Symbol::lbrack){
+        std::shared_ptr<TreeNode> childA = terminal(Symbol::lbrack);
+        if(!childA){ currentToken = start; return nullptr; }
+        ptr->addChild(childA);
+        
+        std::shared_ptr<TreeNode> childB = indexList();
+        if(!childB){ currentToken = start; return nullptr; }
+        ptr->addChild(childB);
+        
+        std::shared_ptr<TreeNode> childC = terminal(Symbol::rbrack);
+        if(!childC){ currentToken = start; return nullptr; }
+        ptr->addChild(childC);
+    }
+    //period + ident
+    else{ 
+        std::shared_ptr<TreeNode> childA = terminal(Symbol::period);
+        if(!childA){ currentToken = start; return nullptr; }
+        ptr->addChild(childA);
+
+        std::shared_ptr<TreeNode> childB = terminal(Symbol::ident);
+        if(!childB){ currentToken = start; return nullptr; }
+        ptr->addChild(childB);
+    }
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::indexList(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::INDEX_LIST);
+
+    //(intcon | charcon | ident)
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::intcon);
+    if(!childA) childA = terminal(Symbol::charcon);
+    if(!childA) childA = terminal(Symbol::ident);
+    if(!childA){ currentToken = start; return nullptr; }
+    ptr->addChild(childA);
+
+    //(comma + index-list)*
+    while (true){
+        std::shared_ptr<TreeNode> childB = terminal(Symbol::comma);
+        if(childB){
+            ptr->addChild(childB);
+            std::shared_ptr<TreeNode> childC = indexList();
+            if(!childC){ currentToken = start; return nullptr; }
+            ptr->addChild(childC);
+        } else break;
+    }
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::assignmentStatement(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::ASSIGNMENT_STATEMENT);
+
+    //variable
+    std::shared_ptr<TreeNode> childA = variableNode();
+    if(!childA){ currentToken = start; return nullptr;}
+    ptr->addChild(childA);
+
+    //becomes
+    std::shared_ptr<TreeNode> childB = terminal(Symbol::becomes);
+    if(!childB){ currentToken = start; return nullptr;}
+    ptr->addChild(childB);
+
+    //expression
+    std::shared_ptr<TreeNode> childC = expressionNode();
+    if(!childC){ currentToken = start; return nullptr;}
+    ptr->addChild(childC);
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::ifStatement(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::IF_STATEMENT);
+
+    //ifsy
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::ifsy);
+    if(!childA){ currentToken = start; return nullptr;}
+    ptr->addChild(childA);
+
+    //expression
+    std::shared_ptr<TreeNode> childB = expressionNode();
+    if(!childB){ currentToken = start; return nullptr;}
+    ptr->addChild(childB);
+    
+    //thensy
+    std::shared_ptr<TreeNode> childC = terminal(Symbol::thensy);
+    if(!childC){ currentToken = start; return nullptr;}
+    ptr->addChild(childC);
+
+    //statement
+    std::shared_ptr<TreeNode> childD = statementNode();
+    if(!childD){ currentToken = start; return nullptr;}
+    ptr->addChild(childD);
+    
+    //  (elsesy + statement)?
+    if(tokens[currentToken].getTokenType() == Symbol::elsesy){
+        std::shared_ptr<TreeNode> childF = terminal(Symbol::elsesy);
+        if(!childF){ currentToken = start; return nullptr;}
+        ptr->addChild(childF);
+
+        //statement
+        std::shared_ptr<TreeNode> childG = statementNode();
+        if(!childG){ currentToken = start; return nullptr;}
+        ptr->addChild(childG);
+    }
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::caseStatement(){
-    return nullptr;
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::CASE_STATEMENT);
+
+    //casesy
+    std::shared_ptr<TreeNode> childA = terminal(Symbol::casesy);
+    if(!childA){ currentToken = start; return nullptr;}
+    ptr->addChild(childA);
+
+    //expression
+    std::shared_ptr<TreeNode> childB = expressionNode();
+    if(!childB){ currentToken = start; return nullptr;}
+    ptr->addChild(childB);
+    
+    //ofsy
+    std::shared_ptr<TreeNode> childC = terminal(Symbol::ofsy);
+    if(!childC){ currentToken = start; return nullptr;}
+    ptr->addChild(childC);
+
+    //case-block
+    std::shared_ptr<TreeNode> childD = caseBlock();
+    if(!childD){ currentToken = start; return nullptr;}
+    ptr->addChild(childD);
+
+    //endsy
+    std::shared_ptr<TreeNode> childE = terminal(Symbol::endsy);
+    if(!childE){ currentToken = start; return nullptr;}
+    ptr->addChild(childE);
+
+    return ptr;
 }
 
 std::shared_ptr<TreeNode> Parser::caseBlock(){
