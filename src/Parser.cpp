@@ -202,7 +202,24 @@ std::shared_ptr<TreeNode> Parser::fieldPart(){
     return ptr;
 }
 
+// <subprogram-declaration> -> procedure-declaration | function-declaration
 std::shared_ptr<TreeNode> Parser::subprogramDeclaration(){
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::SUBPROGRAM_DECLARATION);
+
+    std::shared_ptr<TreeNode> childA = procedureDeclaration();
+    if(childA){
+        ptr->addChild(childA);
+        return ptr;
+    }
+    
+    std::shared_ptr<TreeNode> childB = functionDeclaration();
+    if(childB){
+        ptr->addChild(childB);
+        return ptr;
+    }
+
+    currentToken = start;
     return nullptr;
 }
 
