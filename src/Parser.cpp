@@ -297,10 +297,22 @@ std::shared_ptr<TreeNode> Parser::functionDeclaration(){
     return ptr;
 }
 
+// block -> declaration-part + compound-statement
 std::shared_ptr<TreeNode> Parser::blockNode(){
-    return nullptr;
-}
+    int start = currentToken;
+    std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::BLOCK);
 
+    std::shared_ptr<TreeNode> childA = declarationPart(); // Asumsi method ini ada
+    if(!childA){ currentToken = start; return nullptr;}
+    
+    std::shared_ptr<TreeNode> childB = compoundStatement(); // Asumsi method ini ada
+    if(!childB){ currentToken = start; return nullptr;}
+
+    ptr->addChild(childA);
+    ptr->addChild(childB);
+
+    return ptr;
+}
 std::shared_ptr<TreeNode> Parser::formalParameterList(){
     return nullptr;
 }
