@@ -1,4 +1,4 @@
-program TestWhile;
+program TestIntegerOps;
 var
   counter: integer;
 begin
