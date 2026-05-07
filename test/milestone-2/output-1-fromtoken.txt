@@ -46,7 +46,7 @@
 │  │  │  │  │  │  │  │  ├─ intcon(10)
 │  │  ├─ semicolon
 │  │  ├─ <statement>
-│  │  │  ├─ <procedure-function-call>
+│  │  │  ├─ <procedure/function-call>
 │  │  │  │  ├─ ident(writeln)
 │  │  │  │  ├─ lparent
 │  │  │  │  ├─ <parameter-list>

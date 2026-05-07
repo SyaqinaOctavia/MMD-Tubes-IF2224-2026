@@ -33,7 +33,7 @@
 │  │  │  │  │  │  │  │  ├─ intcon(1)
 │  │  │  │  ├─ dosy
 │  │  │  │  ├─ <statement>
-│  │  │  │  │  ├─ <procedure-function-call>
+│  │  │  │  │  ├─ <procedure/function-call>
 │  │  │  │  │  │  ├─ ident(writeln)
 │  │  │  │  │  │  ├─ lparent
 │  │  │  │  │  │  ├─ <parameter-list>
