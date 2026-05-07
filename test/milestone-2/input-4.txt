@@ -1,0 +1,12 @@
+program Test4;
+type
+  Season == (Spring, Summer, Autumn, Winter);
+var
+  s: integer;
+begin
+  s := 1;
+  case s of
+    1: writeln(s);
+    2: writeln(s)
+  end
+end.
