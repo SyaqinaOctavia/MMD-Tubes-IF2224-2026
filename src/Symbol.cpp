@@ -90,7 +90,7 @@ std::string toString(Symbol s) {
         case Symbol::WHILE_STATEMENT: return "<while-statement>";
         case Symbol::REPEAT_STATEMENT: return "<repeat-statement>";
         case Symbol::FOR_STATEMENT: return "<for-statement>";
-        case Symbol::PROCEDURE_FUNCTION_CALL: return "<procedure-function-call>";
+        case Symbol::PROCEDURE_FUNCTION_CALL: return "<procedure/function-call>";
         case Symbol::PARAMETER_LIST: return "<parameter-list>";
         case Symbol::EXPRESSION: return "<expression>";
         case Symbol::SIMPLE_EXPRESSION: return "<simple-expression>";
