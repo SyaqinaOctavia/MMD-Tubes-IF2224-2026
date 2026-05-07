@@ -1,0 +1,22 @@
+programsy
+ident (TestDownTo)
+semicolon
+varsy
+ident (i)
+colon
+ident (integer)
+semicolon
+beginsy
+forsy
+ident (i)
+becomes
+intcon (5)
+downtosy
+intcon (1)
+dosy
+ident (writeln)
+lparent
+ident (i)
+rparent
+endsy
+period
