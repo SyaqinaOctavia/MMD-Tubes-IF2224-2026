@@ -1,0 +1,11 @@
+program TestWhile;
+var
+  counter: integer;
+begin
+  counter := 0;
+  while counter < 10 do
+  begin
+    counter := counter + 1;
+    writeln(counter)
+  end;
+end.

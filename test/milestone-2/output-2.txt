@@ -88,7 +88,7 @@
 │  │  │  │  │  │  ├─ intcon(1)
 │  │  │  │  │  ├─ colon
 │  │  │  │  │  ├─ <statement>
-│  │  │  │  │  │  ├─ <procedure-function-call>
+│  │  │  │  │  │  ├─ <procedure/function-call>
 │  │  │  │  │  │  │  ├─ ident(writeln)
 │  │  │  │  │  │  │  ├─ lparent
 │  │  │  │  │  │  │  ├─ <parameter-list>
@@ -104,7 +104,7 @@
 │  │  │  │  │  │  │  ├─ intcon(2)
 │  │  │  │  │  │  ├─ colon
 │  │  │  │  │  │  ├─ <statement>
-│  │  │  │  │  │  │  ├─ <procedure-function-call>
+│  │  │  │  │  │  │  ├─ <procedure/function-call>
 │  │  │  │  │  │  │  │  ├─ ident(writeln)
 │  │  │  │  │  │  │  │  ├─ lparent
 │  │  │  │  │  │  │  │  ├─ <parameter-list>
@@ -123,7 +123,7 @@
 │  │  │  │  │  │  │  │  ├─ intcon(4)
 │  │  │  │  │  │  │  ├─ colon
 │  │  │  │  │  │  │  ├─ <statement>
-│  │  │  │  │  │  │  │  ├─ <procedure-function-call>
+│  │  │  │  │  │  │  │  ├─ <procedure/function-call>
 │  │  │  │  │  │  │  │  │  ├─ ident(writeln)
 │  │  │  │  │  │  │  │  │  ├─ lparent
 │  │  │  │  │  │  │  │  │  ├─ <parameter-list>
