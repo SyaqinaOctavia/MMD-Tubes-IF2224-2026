@@ -28,6 +28,7 @@ std::shared_ptr<TreeNode> Parser::terminal(Symbol symbol){
     return ptr;
 }
 
+// <program> -> program-header + declaration-part + compound-statement + period
 std::shared_ptr<TreeNode> Parser::programNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::PROGRAM);
@@ -47,6 +48,8 @@ std::shared_ptr<TreeNode> Parser::programNode(){
     return ptr;
 }
 
+// <declaration-part> -> (const-declaration)* + (type-declaration)* + 
+//                       (var-declaration)* + (subprogram-declaration)*
 std::shared_ptr<TreeNode> Parser::programHeader(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::PROGRAM_HEADER);
@@ -64,6 +67,7 @@ std::shared_ptr<TreeNode> Parser::programHeader(){
     return ptr;
 }
 
+// <const-declaration> -> constsy + (ident + eql + constant + semicolon)+
 std::shared_ptr<TreeNode> Parser::declarationPart(){
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::DECLARATION_PART);
     // (const-declaration)*
@@ -94,6 +98,7 @@ std::shared_ptr<TreeNode> Parser::declarationPart(){
     return ptr;
 }
 
+// <const-declaration> -> typesy + (ident + eql + type + semicolon)+
 std::shared_ptr<TreeNode> Parser::constDeclaration(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::CONST_DECLARATION);
@@ -135,6 +140,7 @@ std::shared_ptr<TreeNode> Parser::constDeclaration(){
     return ptr;
 }
 
+// <constant> -> charcon | string | [(plus | minus)? + (ident | intcon | realcon)]
 std::shared_ptr<TreeNode> Parser::constantNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::CONSTANT);
@@ -178,6 +184,7 @@ std::shared_ptr<TreeNode> Parser::constantNode(){
     return nullptr;
 }
 
+// <type-declaration> -> typesy + (ident + eql + type + semicolon)+
 std::shared_ptr<TreeNode> Parser::typeDeclaration(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::TYPE_DECLARATION);
@@ -219,6 +226,7 @@ std::shared_ptr<TreeNode> Parser::typeDeclaration(){
     return ptr;
 }
 
+// <var-declaration> ->  varsy + (identifier-list + colon + type + semicolon)+
 std::shared_ptr<TreeNode> Parser::varDeclaration(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::VAR_DECLARATION);
@@ -260,6 +268,7 @@ std::shared_ptr<TreeNode> Parser::varDeclaration(){
     return ptr;
 }
 
+// <identifier-list> -> ident (comma + ident)*
 std::shared_ptr<TreeNode> Parser::identifierList(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::IDENTIFIER_LIST);
@@ -280,6 +289,7 @@ std::shared_ptr<TreeNode> Parser::identifierList(){
     return ptr;
 }
 
+// <type> -> ident | array-type | range | enumerated | record-type
 std::shared_ptr<TreeNode> Parser::typeNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::TYPE);
@@ -318,6 +328,7 @@ std::shared_ptr<TreeNode> Parser::typeNode(){
     return nullptr;
 }
 
+// <<array-type> -> arraysy + lbrack + (range | ident) + rbrack + ofsy + type
 std::shared_ptr<TreeNode> Parser::arrayType(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::ARRAY_TYPE);
