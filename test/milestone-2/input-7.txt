@@ -1,0 +1,13 @@
+program TestIntegerOps;
+var
+  counter: integer;
+begin
+  counter := 0;
+  blabla := 2;
+  while counter < 10 do
+  begin
+    counter := (counter + 1) * (blabla - 3);
+    blabla := blabla * 2;
+    writeln(counter)
+  end;
+end.
