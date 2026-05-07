@@ -23,19 +23,33 @@ Anggota:
 ```text
 .
 ├── src/
+│   ├── Lexer/
+│   │   ├── dfa_rules.txt
+│   │   ├── DFA.cpp
+│   │   ├── DFA.hpp
+│   │   ├── lexer.cpp
+│   │   └── lexer.hpp
 │   ├── main.cpp
-│   ├── lexer.cpp
-│   ├── lexer.hpp
-│   ├── DFA.cpp
-│   ├── DFA.hpp
-│   └── dfa_rules.txt
+│   ├── Parser.cpp
+│   ├── Parser.hpp
+│   ├── ParseTree.cpp
+│   ├── ParseTree.hpp
+│   ├── Symbol.cpp
+│   ├── Symbol.hpp
+│   ├── Token.cpp
+│   └── Token.hpp
 ├── build/
-│   └── milestone-1/
+│   ├── milestone-1/
+│   │   ├── input-1.txt
+│   │   ├── output-1.txt
+│   │   └── ...
+│   └── milestone-2/
 │       ├── input-1.txt
 │       ├── output-1.txt
 │       └── ...
 ├── doc/
-│   └── Laporan-1-MMD.pdf
+│   ├── Laporan-1-MMD.pdf
+│   └── Laporan-2-MMD.pdf
 ├── Makefile
 └── README.md
 ```
@@ -55,7 +69,6 @@ cd MMD-Tubes-IF2224-2026
 ### Kompilasi Program
 
 ```bash
-make build
 make
 ```
 
