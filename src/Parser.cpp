@@ -1067,9 +1067,6 @@ std::shared_ptr<TreeNode> Parser::forStatement(){
     //compound-statement
     std::shared_ptr<TreeNode> childH = compoundStatement();
     if(!childH){ currentToken = start; return nullptr;}
-    //semicolon
-    std::shared_ptr<TreeNode> childI = terminal(Symbol::semicolon);
-    if(!childH){ currentToken = start; return nullptr;}
 
     ptr->addChild(childA);
     ptr->addChild(childB);
@@ -1079,7 +1076,6 @@ std::shared_ptr<TreeNode> Parser::forStatement(){
     ptr->addChild(childF);
     ptr->addChild(childG);
     ptr->addChild(childH);
-    ptr->addChild(childI);
 
     return ptr;
 }
