@@ -1034,7 +1034,7 @@ std::shared_ptr<TreeNode> Parser::repeatStatement(){
     return ptr;
 }
 
-// <for-statement> -> forsy + ident + becomes + expression + ( tosy | downtosy) + expression + dosy + compound-statement + semicolon
+// <for-statement> -> forsy + ident + becomes + expression + ( tosy | downtosy) + expression + dosy + compound-statement
 std::shared_ptr<TreeNode> Parser::forStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::FOR_STATEMENT);
@@ -1067,6 +1067,7 @@ std::shared_ptr<TreeNode> Parser::forStatement(){
     //compound-statement
     std::shared_ptr<TreeNode> childH = compoundStatement();
     if(!childH){ currentToken = start; return nullptr;}
+
 
     ptr->addChild(childA);
     ptr->addChild(childB);
