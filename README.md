@@ -6,7 +6,7 @@ Codebase ini merupakan implementasi Lexical Analyzer untuk bahasa pemrograman Ar
 
 ## Deskripsi Program
 
-Program ini menggunakan Deterministic Finite Automata (DFA) untuk mengenali pola karakter dan menghasilkan token sesuai dengan spesifikasi bahasa pemrograman Arion. Program ini menggunakan Lexical Analyzer (Lexer) sebagai tahap pertama dalam kompilasi source code dari rangkaian karakter menjadi program yang dapat dijalankan. 
+Program ini menggabungkan proses *Lexical Analyzer* (Lexer) dengan *Syntax Analysis* (Parser) dari sebuah *source code*. Proses pembentukan token dalam lexer menggunakan Deterministic Finite Automata (DFA) untuk mengenali pola karakter dan menghasilkan token sesuai dengan spesifikasi bahasa pemrograman Arion. Sementara proses analisa syntax dari token yang dihasilkan menggunakan algoritma Recursive Descent yang didasarkan pada Context Free Grammar (CFG)
 
 ## Identitas Kelompok
 
@@ -74,8 +74,12 @@ make clean
 ```bash
 make run ARGS="<option> <intput-file> <output-file>"
 ```
+atau
+```bash
+./main <option> <intput-file> <output-file>
+```
 
-`option` digunakan untuk memilih antara *lexer* (`option == 1`) dan *parser* (`option == 2`).
+`option` digunakan untuk memilih antara *lexer* (`option == 1`) dan *parser* (`option == 2` untuk input file berisi token dan `option == 3` untuk input *source code*).
 
 ### Contoh Penggunaan
 
@@ -103,7 +107,7 @@ end.
 
 Output berupa daftar token yang dihasilkan, satu token per baris.
 
-Contoh output:
+Contoh output hasil *lexer*:
 
 ```text
 programsy
@@ -121,6 +125,30 @@ ident (a)
 becomes
 intcon (5)
 semicolon
+```
+
+Contoh output hasil *parser*:
+
+```text
+<program>
+├─ <program-header>
+│  ├─ programsy
+│  ├─ ident(Hello)
+│  ├─ semicolon
+├─ <declaration-part>
+│  ├─ <var-declaration>
+│  │  ├─ varsy
+│  │  ├─ <identifier-list>
+│  │  │  ├─ ident(a)
+│  │  │  ├─ comma
+│  │  │  ├─ ident(b)
+│  │  ├─ colon
+│  │  ├─ <type>
+│  │  │  ├─ ident(integer)
+│  │  ├─ semicolon
+.
+.
+.
 ```
 
 ### Token yang Dapat Dikenali
@@ -146,10 +174,30 @@ Program menggunakan DFA yang didefinisikan dalam file `src/dfa_rules.txt` dengan
 * `Final_state = <state1>, <state2>, ...`: Mendefinisikan final states
 * `<state> <input> <next_state>`: Mendefinisikan transisi
 
+### Grammar yang Dapat dikenali
+- **Program Structure:**
+  `<program>`, `<program-header>`, `<declaration-part>`, `<block>`, `<compound-statement>`
+
+- **Declarations:**
+  `<const-declaration>`, `<type-declaration>`, `<var-declaration>`, `<subprogram-declaration>`, `<procedure-declaration>`, `<function-declaration>`
+
+- **Type System:**
+  `<type>`, `<array-type>`, `<range>`, `<enumerated>`, `<record-type>`, `<field-list>`, `<field-part>`
+
+- **Variables & Parameters:**
+  `<identifier-list>`, `<variable>`, `<component-variable>`, `<index-list>`, `<formal-parameter-list>`, `<parameter-group>`, `<parameter-list>`
+
+- **Statements:**
+  `<statement-list>`, `<statement>`, `<assignment-statement>`, `<if-statement>`, `<case-statement>`, `<case-block>`, `<while-statement>`, `<repeat-statement>`, `<for-statement>`, `<procedure/function-call>`
+
+- **Expressions & Operators:**
+  `<expression>`, `<simple-expression>`, `<term>`, `<factor>`, `<relational-operator>`, `<additive-operator>`, `<multiplicative-operator>`, `<constant>`
+
+
 ## Pembagian Tugas
 | NIM | Kontribusi Tugas | Persentase |
 |:---:|:---:|:---:|
-| 13524040 | Tokenizer, Testing program, Testcase input-output, diagram DFA | 25% |
-| 13524042 | Penulisan laporan, DFA rules, diagram DFA | 25% |
-| 13524048 | Class lexer, class DFA, diagram DFA | 25% |
-| 13524088 | Penulisan laporan, DFA rules, Diagram DFA | 25% |
+| 13524040 | Tokenizer, diagram DFA, production functions, debugging and testing, testcase input-output, | 25% |
+| 13524042 | Penulisan laporan, DFA rules, diagram DFA, production functions | 25% |
+| 13524048 | Class lexer, DFA, Parser, dan ParseTree, diagram DFA, production functions | 25% |
+| 13524088 | Penulisan laporan, DFA rules, diagram DFA, production functions | 25% |
