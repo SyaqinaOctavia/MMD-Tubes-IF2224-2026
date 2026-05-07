@@ -981,7 +981,7 @@ std::shared_ptr<TreeNode> Parser::caseBlock(){
     return ptr;
 }
 
-// <while-statement> -> whilesy + expression + dosy + statement
+// <while-statement> -> whilesy + expression + dosy + compound-statement + semicolon
 std::shared_ptr<TreeNode> Parser::whileStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::WHILE_STATEMENT);
@@ -995,8 +995,11 @@ std::shared_ptr<TreeNode> Parser::whileStatement(){
     std::shared_ptr<TreeNode> childC = terminal(Symbol::dosy);
     if(!childC){ currentToken = start; return nullptr;}
     //statement
-    std::shared_ptr<TreeNode> childD = statementNode();
+    std::shared_ptr<TreeNode> childD = compoundStatement();
     if(!childD){ currentToken = start; return nullptr;}
+    //semicolon
+    std::shared_ptr<TreeNode> childE = terminal(Symbol::semicolon);
+    if(!childE){ currentToken = start; return nullptr;}
 
     ptr->addChild(childA);
     ptr->addChild(childB);
@@ -1031,7 +1034,7 @@ std::shared_ptr<TreeNode> Parser::repeatStatement(){
     return ptr;
 }
 
-// <for-statement> -> forsy + ident + becomes + expression + ( tosy | downtosy) + expression + dosy + statement
+// <for-statement> -> forsy + ident + becomes + expression + ( tosy | downtosy) + expression + dosy + compound-statement + semicolon
 std::shared_ptr<TreeNode> Parser::forStatement(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::FOR_STATEMENT);
@@ -1061,8 +1064,11 @@ std::shared_ptr<TreeNode> Parser::forStatement(){
     //dosy
     std::shared_ptr<TreeNode> childG = terminal(Symbol::dosy);
     if(!childG){ currentToken = start; return nullptr;}
-    //statement
-    std::shared_ptr<TreeNode> childH = statementNode();
+    //compound-statement
+    std::shared_ptr<TreeNode> childH = compoundStatement();
+    if(!childH){ currentToken = start; return nullptr;}
+    //semicolon
+    std::shared_ptr<TreeNode> childI = terminal(Symbol::semicolon);
     if(!childH){ currentToken = start; return nullptr;}
 
     ptr->addChild(childA);
@@ -1073,7 +1079,8 @@ std::shared_ptr<TreeNode> Parser::forStatement(){
     ptr->addChild(childF);
     ptr->addChild(childG);
     ptr->addChild(childH);
-    
+    ptr->addChild(childI);
+
     return ptr;
 }
 
