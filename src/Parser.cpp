@@ -404,8 +404,8 @@ std::shared_ptr<TreeNode> Parser::enumerated(){
     if(!childC){ currentToken = start; return nullptr;}
     
     ptr->addChild(childA);
-    for(auto parsed : parseContainer) ptr->addChild(parsed);
     ptr->addChild(childB);
+    for(auto parsed : parseContainer) ptr->addChild(parsed);
     ptr->addChild(childC);
     
     return ptr;
