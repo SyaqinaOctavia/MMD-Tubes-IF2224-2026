@@ -11,6 +11,7 @@ class Parser {
         int currentToken;
         Token *received;
         Symbol expected;
+        Symbol currentProd;
     public:
         Parser(std::vector<Token> tokens) : tokens(tokens), currentToken(0) {}
         std::shared_ptr<TreeNode> buildTree();
