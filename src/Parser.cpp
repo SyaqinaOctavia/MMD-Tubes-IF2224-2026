@@ -359,13 +359,14 @@ std::shared_ptr<TreeNode> Parser::arrayType(){
 std::shared_ptr<TreeNode> Parser::rangeNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::RANGE);
-    std::shared_ptr<TreeNode> childA = terminal(Symbol::CONSTANT);
+    
+    std::shared_ptr<TreeNode> childA = constantNode();
     if(!childA){ currentToken = start; return nullptr;}
     std::shared_ptr<TreeNode> childB = terminal(Symbol::period);
     if(!childB){ currentToken = start; return nullptr;}
     std::shared_ptr<TreeNode> childC = terminal(Symbol::period);
     if(!childC){ currentToken = start; return nullptr;}
-    std::shared_ptr<TreeNode> childD = terminal(Symbol::CONSTANT);
+    std::shared_ptr<TreeNode> childD = constantNode();
     if(!childD){ currentToken = start; return nullptr;}
     
     ptr->addChild(childA);
