@@ -1,13 +1,29 @@
 #include "Parser.hpp"
 #include <map>
 #include <fstream>
+#include <iostream>
 #include <exception>
+
+std::shared_ptr<TreeNode> Parser::buildTree(){
+    std::shared_ptr<TreeNode> tree = programNode();
+    if(tree == nullptr){
+        std::cout << "Parsing failed," << std::endl;
+        std::cout << "          expected: " << toString(expected) << std::endl;
+        std::cout << "          received: " << toString(received->getTokenType()) << std::endl;
+        std::cout << "          at line " << received->getLine() << std::endl;
+    }
+    return tree;
+}
 
 std::shared_ptr<TreeNode> Parser::terminal(Symbol symbol){
     std::shared_ptr<TreeNode> ptr = nullptr;
     if(tokens[currentToken].getTokenType() == symbol){
         ptr = std::make_shared<TreeNode>(symbol);
+        ptr->setValue(tokens[currentToken].getValue());
         currentToken++;
+    } else {
+        received = &tokens[currentToken];
+        expected = symbol;
     }
     return ptr;
 }
@@ -274,25 +290,25 @@ std::shared_ptr<TreeNode> Parser::typeNode(){
         return ptr;
     }
 
-    std::shared_ptr<TreeNode> child = arrayType();
+    child = arrayType();
     if(child != nullptr){
         ptr->addChild(child);
         return ptr;
     }
 
-    std::shared_ptr<TreeNode> child = rangeNode();
+    child = rangeNode();
     if(child != nullptr){
         ptr->addChild(child);
         return ptr;
     }
 
-    std::shared_ptr<TreeNode> child = enumerated();
+    child = enumerated();
     if(child != nullptr){
         ptr->addChild(child);
         return ptr;
     }
 
-    std::shared_ptr<TreeNode> child = recordType();
+    child = recordType();
     if(child != nullptr){
         ptr->addChild(child);
         return ptr;

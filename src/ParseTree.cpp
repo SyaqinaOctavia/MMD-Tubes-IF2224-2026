@@ -25,6 +25,10 @@ bool TreeNode::printNode(std::ofstream& output, int depth) const {
         }
     }
     output << toString(this->nodeType);
+    if(isToken(this->nodeType) && value != ""){
+        output << "(" << value << ")";
+    } 
+    output << std::endl;
     for(const auto& node : children){
         node->printNode(output, depth+1);
     }

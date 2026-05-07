@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <map>
 #include "Symbol.hpp"
 
@@ -7,13 +8,15 @@ class Token {
     private:
         Symbol tokenType;
         std::string value;
+        int line;
     public:
         static const std::map<std::string, Symbol> keywordMap;
-        Token(Symbol symbol) : tokenType(symbol){}
-        Token(Symbol symbol, std::string value) : tokenType(symbol), value(value){}
+        static std::vector<Token> readTokens(std::string filepath);
+        Token(Symbol symbol, int line) : tokenType(symbol), line(line){}
+        Token(Symbol symbol, std::string value, int line) : tokenType(symbol), value(value), line(line){}
+        int getLine() const { return line; }
         Symbol getTokenType() const { return tokenType; }
         std::string getValue() const { return value; }
-        std::string toString() const;
 };
 
 inline const std::map<std::string, Symbol> Token::keywordMap = {

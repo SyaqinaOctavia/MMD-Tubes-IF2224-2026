@@ -15,6 +15,8 @@ class TreeNode {
         TreeNode(Symbol node, std::string value) : nodeType(node), value(value){}
         Symbol getNodeType() const { return nodeType; }
         std::vector<std::shared_ptr<TreeNode>> getChildren() const { return children; }
+        std::string getValue(){ return value; }
+        void setValue(std::string value){ this->value = value; }
         void addChild(std::shared_ptr<TreeNode> newNode);
         bool outputTree(std::string destFile) const;
         bool printNode(std::ofstream& file, int depth) const;

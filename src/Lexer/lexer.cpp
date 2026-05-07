@@ -24,7 +24,7 @@ void Lexer::readFile(string filepath){
         scanner.close();
         return;
     }
-    line = 0;
+    line = 1;
     advance();
 }
 
@@ -195,12 +195,12 @@ std::vector<Token> Lexer::generateToken(string srcFile){
             bool allAlnum = true;
             for(char c : lexeme){
                 if(!isalnum(c)){
-                    tokens.push_back(Token(Symbol::unknown, lexeme));
+                    tokens.push_back(Token(Symbol::unknown, lexeme, line));
                     allAlnum = false;
                     break;
                 }
             }
-            if(allAlnum) tokens.push_back(Token(Symbol::ident, lexeme));
+            if(allAlnum) tokens.push_back(Token(Symbol::ident, lexeme, line));
             continue;
         }
         
@@ -236,9 +236,9 @@ std::vector<Token> Lexer::generateToken(string srcFile){
         if(token_name == "ident" || token_name == "intcon" || 
            token_name == "realcon" || token_name == "string" || 
            token_name == "charcon" || token_name == "comment"){
-            tokens.push_back(Token(it->second, last_final_lexeme));
+            tokens.push_back(Token(it->second, last_final_lexeme, line));
         } else {
-            tokens.push_back(Token(it->second));
+            tokens.push_back(Token(it->second, line));
         }
     }
     

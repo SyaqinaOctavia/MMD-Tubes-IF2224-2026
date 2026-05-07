@@ -9,9 +9,11 @@ class Parser {
     private:
         std::vector<Token> tokens;
         int currentToken;
+        Token *received;
+        Symbol expected;
     public:
-        Parser(std::vector<Token> tokens) : tokens(tokens){}
-        void buildTree(std::shared_ptr<TreeNode> node);
+        Parser(std::vector<Token> tokens) : tokens(tokens), currentToken(0) {}
+        std::shared_ptr<TreeNode> buildTree();
         std::shared_ptr<TreeNode> terminal(Symbol symbol);
 
         std::shared_ptr<TreeNode> programNode();
