@@ -1016,21 +1016,20 @@ std::shared_ptr<TreeNode> Parser::caseBlock(){
         if(childF){ 
             ptr->addChild(childF);
 
-            auto isFirstCaseBlock = [&](int pos) {
-                if (pos >= (int)tokens.size()) currentProd = prevProd; return false;
+            auto isFirstCaseBlock = [&](int pos) -> bool {
+                if (pos >= (int)tokens.size()) { return false; }
                 Symbol s = tokens[pos].getTokenType();
                 if (s == Symbol::charcon || s == Symbol::string ||
-                    s == Symbol::ident || s == Symbol::intcon ||
-                    s == Symbol::realcon)
-                    currentProd = prevProd; return true;
+                    s == Symbol::ident   || s == Symbol::intcon ||
+                    s == Symbol::realcon) { return true; }
                 if ((s == Symbol::plus || s == Symbol::minus) &&
                     pos + 1 < (int)tokens.size()) {
                     Symbol next_s = tokens[pos + 1].getTokenType();
-                    currentProd = prevProd; return next_s == Symbol::ident ||
+                    return next_s == Symbol::ident  ||
                         next_s == Symbol::intcon ||
                         next_s == Symbol::realcon;
                 }
-                currentProd = prevProd; return false;
+                return false;
             };
 
             if(isFirstCaseBlock(currentToken)){
