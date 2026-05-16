@@ -1,5 +1,5 @@
 #include "Lexer/lexer.hpp"
-#include "Parser.hpp"
+#include "Parser/Parser.hpp"
 #include <cstring>
 #include <iostream>
 

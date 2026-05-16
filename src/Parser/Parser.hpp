@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "Token.hpp"
+#include "../Token.hpp"
 #include "ParseTree.hpp"
 
 class Parser {

@@ -18,6 +18,9 @@ std::shared_ptr<TreeNode> Parser::buildTree(){
 
 std::shared_ptr<TreeNode> Parser::terminal(Symbol symbol){
     std::shared_ptr<TreeNode> ptr = nullptr;
+    while(tokens[currentToken].getTokenType() == Symbol::comment){
+        currentToken++;
+    }
     if(tokens[currentToken].getTokenType() == symbol){
         ptr = std::make_shared<TreeNode>(symbol);
         ptr->setValue(tokens[currentToken].getValue());
@@ -1137,6 +1140,9 @@ std::shared_ptr<TreeNode> Parser::forStatement(){
     //compound-statement
     std::shared_ptr<TreeNode> childH = compoundStatement();
     if(!childH){ currentToken = start; currentProd = prevProd; return nullptr;}
+    //semicolon
+    std::shared_ptr<TreeNode> childI = terminal(Symbol::semicolon);
+    if(!childI){ currentToken = start; currentProd = prevProd; return nullptr;}
 
 
     ptr->addChild(childA);
@@ -1147,6 +1153,7 @@ std::shared_ptr<TreeNode> Parser::forStatement(){
     ptr->addChild(childF);
     ptr->addChild(childG);
     ptr->addChild(childH);
+    ptr->addChild(childI);
     
     currentProd = prevProd; return ptr;
 }

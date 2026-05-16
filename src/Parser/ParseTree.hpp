@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 #include <fstream>
-#include "Symbol.hpp"
+#include "../Symbol.hpp"
 
 class TreeNode {
     private:
