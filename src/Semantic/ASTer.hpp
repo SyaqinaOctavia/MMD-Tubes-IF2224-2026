@@ -10,7 +10,6 @@ public:
     std::shared_ptr<ArrayTypeNode> buildArrayTypeNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<EnumTypeNode> buildEnumTypeNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<FieldTypeNode> buildFieldTypeNode(std::shared_ptr<TreeNode> root) const;
-    std::shared_ptr<ConstDeclNode> buildConstDeclNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<DeclNode> buildDeclNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<LiteralNode> buildLiteralNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<CallNode> buildCallNode(std::shared_ptr<TreeNode> root) const;

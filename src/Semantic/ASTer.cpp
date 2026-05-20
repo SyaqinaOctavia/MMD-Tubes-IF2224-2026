@@ -17,9 +17,6 @@ std::shared_ptr<EnumTypeNode> ASTer::buildEnumTypeNode(std::shared_ptr<TreeNode>
 std::shared_ptr<FieldTypeNode> ASTer::buildFieldTypeNode(std::shared_ptr<TreeNode> root) const {
     return nullptr;
 }
-std::shared_ptr<ConstDeclNode> ASTer::buildConstDeclNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
-}
 std::shared_ptr<DeclNode> ASTer::buildDeclNode(std::shared_ptr<TreeNode> root) const {
     return nullptr;
 }
