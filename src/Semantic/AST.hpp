@@ -41,7 +41,7 @@ enum class LiteralKind { Int, Real, Bool, Char, String };
 
 class ASTNode {
 protected:
-    ASTType NodeType;
+    ASTType nodeType;
 };
 
 class ExprNode : public ASTNode {};
@@ -51,7 +51,7 @@ private:
     LiteralKind kind;
     std::string value;
 public:
-    LiteralNode(LiteralKind kind, std::string value) : kind(kind), value(value) { NodeType = ASTType::LiteralNode; }
+    LiteralNode(LiteralKind kind, std::string value) : kind(kind), value(value) { nodeType = ASTType::LiteralNode; }
     LiteralKind getKind(){ return kind; }
     std::string getValue(){ return value; }
 };
@@ -67,7 +67,7 @@ private:
 
 class SimpleTypeNode : public TypeNode {
 public:
-    SimpleTypeNode(std::string name) : TypeNode(Kind::Simple), name(name) { NodeType = ASTType::SimpleTypeNode; }
+    SimpleTypeNode(std::string name) : TypeNode(Kind::Simple), name(name) { nodeType = ASTType::SimpleTypeNode; }
     std::string getName() const { return name; }
 private:
     std::string name;
@@ -76,7 +76,7 @@ private:
 class ArrayTypeNode : public TypeNode {
 public:
     ArrayTypeNode(std::shared_ptr<TypeNode> type, std::shared_ptr<ExprNode> low, std::shared_ptr<ExprNode> high)
-        : TypeNode(Kind::Array), type(type), low(low), high(high) { NodeType = ASTType::ArrayTypeNode; }
+        : TypeNode(Kind::Array), type(type), low(low), high(high) { nodeType = ASTType::ArrayTypeNode; }
     std::shared_ptr<TypeNode> getType() const { return type; }
     std::shared_ptr<ExprNode> getLow() const { return low; }
     std::shared_ptr<ExprNode> getHigh() const { return high; }
@@ -87,7 +87,7 @@ private:
 
 class EnumTypeNode : public TypeNode {
 public:
-    EnumTypeNode(std::vector<std::string> enum_values) : TypeNode(Kind::Enumerated), enum_values(enum_values) { NodeType = ASTType::EnumTypeNode; }
+    EnumTypeNode(std::vector<std::string> enum_values) : TypeNode(Kind::Enumerated), enum_values(enum_values) { nodeType = ASTType::EnumTypeNode; }
     std::vector<std::string> getEnumValues() const { return enum_values; }
     void pushEnumValue(std::string value) { enum_values.push_back(value); }
 private:
@@ -97,7 +97,7 @@ private:
 class FieldTypeNode : public TypeNode {
 public:
     FieldTypeNode(std::vector<std::pair<std::vector<std::string>, std::shared_ptr<TypeNode>>> fields)
-        : TypeNode(Kind::Record), fields(fields) { NodeType = ASTType::FieldTypeNode; }
+        : TypeNode(Kind::Record), fields(fields) { nodeType = ASTType::FieldTypeNode; }
     std::vector<std::pair<std::vector<std::string>, std::shared_ptr<TypeNode>>> getFields() const { return fields; }
     void pushField(std::pair<std::vector<std::string>, std::shared_ptr<TypeNode>> field) { fields.push_back(field); }
 private:
@@ -118,7 +118,7 @@ private:
 class TypeDeclNode : public DeclNode {
 public:
     TypeDeclNode(std::string name, std::shared_ptr<TypeNode> type_spec)
-        : DeclNode(Kind::Type), name(name), type_spec(type_spec) { NodeType = ASTType::TypeDeclNode; }
+        : DeclNode(Kind::Type), name(name), type_spec(type_spec) { nodeType = ASTType::TypeDeclNode; }
     std::string getName() const { return name; }
     std::shared_ptr<TypeNode> getTypeSpec() const { return type_spec; }
 private:
@@ -129,7 +129,7 @@ private:
 class ConstDeclNode : public DeclNode {
 public:
     ConstDeclNode(std::string name, std::shared_ptr<ExprNode> value)
-        : DeclNode(Kind::Const), name(name), value(value) { NodeType = ASTType::ConstDeclNode; }
+        : DeclNode(Kind::Const), name(name), value(value) { nodeType = ASTType::ConstDeclNode; }
     std::string getName() const { return name; }
     std::shared_ptr<ExprNode> getValue() const { return value; }
 private:
@@ -140,7 +140,7 @@ private:
 class VarDeclNode : public DeclNode {
 public:
     VarDeclNode(std::vector<std::string> names, std::shared_ptr<TypeNode> type)
-        : DeclNode(Kind::Var), names(names), type(type) { NodeType = ASTType::VarDeclNode; }
+        : DeclNode(Kind::Var), names(names), type(type) { nodeType = ASTType::VarDeclNode; }
     std::vector<std::string> getNames() const { return names; }
     std::shared_ptr<TypeNode> getType() const { return type; }
     void pushName(std::string name) { names.push_back(name); }
@@ -152,7 +152,7 @@ private:
 class ParamDeclNode : public DeclNode {
 public:
     ParamDeclNode(std::vector<std::string> names, std::shared_ptr<TypeNode> type, bool is_var_param = false)
-        : DeclNode(Kind::Param), names(names), type(type), is_var_param(is_var_param) { NodeType = ASTType::ParamDeclNode; }
+        : DeclNode(Kind::Param), names(names), type(type), is_var_param(is_var_param) { nodeType = ASTType::ParamDeclNode; }
     std::vector<std::string> getNames() const { return names; }
     std::shared_ptr<TypeNode> getType() const { return type; }
     bool isVarParam() const { return is_var_param; }
@@ -167,7 +167,7 @@ class ProcDeclNode : public DeclNode {
 public:
     ProcDeclNode(std::string name, std::vector<std::shared_ptr<ParamDeclNode>> params,
                  std::vector<std::shared_ptr<DeclNode>> local_var, std::shared_ptr<StmtNode> body)
-        : DeclNode(Kind::Proc), name(name), params(params), local_var(local_var), body(body) { NodeType = ASTType::ProcDeclNode; }
+        : DeclNode(Kind::Proc), name(name), params(params), local_var(local_var), body(body) { nodeType = ASTType::ProcDeclNode; }
     std::string getName() const { return name; }
     std::vector<std::shared_ptr<ParamDeclNode>> getParams() const { return params; }
     std::vector<std::shared_ptr<DeclNode>> getLocalVar() const { return local_var; }
@@ -186,7 +186,7 @@ public:
     FuncDeclNode(std::string name, std::shared_ptr<TypeNode> return_type,
                  std::vector<std::shared_ptr<ParamDeclNode>> params,
                  std::vector<std::shared_ptr<DeclNode>> local_var, std::shared_ptr<StmtNode> body)
-        : DeclNode(Kind::Func), name(name), return_type(return_type), params(params), local_var(local_var), body(body) { NodeType = ASTType::FuncDeclNode; }
+        : DeclNode(Kind::Func), name(name), return_type(return_type), params(params), local_var(local_var), body(body) { nodeType = ASTType::FuncDeclNode; }
     std::string getName() const { return name; }
     std::shared_ptr<TypeNode> getReturnType() const { return return_type; }
     std::vector<std::shared_ptr<ParamDeclNode>> getParams() const { return params; }
@@ -205,7 +205,7 @@ private:
 class CallNode : public ExprNode {
 public:
     CallNode(std::string name, std::vector<std::shared_ptr<ExprNode>> args)
-        : name(name), args(args) { NodeType = ASTType::CallNode; }
+        : name(name), args(args) { nodeType = ASTType::CallNode; }
     std::string getName() const { return name; }
     std::vector<std::shared_ptr<ExprNode>> getArgs() const { return args; }
     void pushArg(std::shared_ptr<ExprNode> arg) { args.push_back(arg); }
@@ -217,7 +217,7 @@ private:
 class BinaryOpNode : public ExprNode {
 public:
     BinaryOpNode(std::string op, std::shared_ptr<ExprNode> left, std::shared_ptr<ExprNode> right)
-        : op(op), left(left), right(right) { NodeType = ASTType::BinaryOpNode; }
+        : op(op), left(left), right(right) { nodeType = ASTType::BinaryOpNode; }
     std::string getOp() const { return op; }
     std::shared_ptr<ExprNode> getLeft() const { return left; }
     std::shared_ptr<ExprNode> getRight() const { return right; }
@@ -230,7 +230,7 @@ private:
 class UnaryOpNode : public ExprNode {
 public:
     UnaryOpNode(std::string op, std::shared_ptr<ExprNode> operand)
-        : op(op), operand(operand) { NodeType = ASTType::UnaryOpNode; }
+        : op(op), operand(operand) { nodeType = ASTType::UnaryOpNode; }
     std::string getOp() const { return op; }
     std::shared_ptr<ExprNode> getOperand() const { return operand; }
 private:
@@ -240,7 +240,7 @@ private:
 
 class VarRefNode : public ExprNode {
 public:
-    VarRefNode(std::string name) : name(name) { NodeType = ASTType::VarRefNode; }
+    VarRefNode(std::string name) : name(name) { nodeType = ASTType::VarRefNode; }
     std::string getName() const { return name; }
 private:
     std::string name;
@@ -249,7 +249,7 @@ private:
 class ArrayAccessNode : public ExprNode {
 public:
     ArrayAccessNode(std::shared_ptr<ExprNode> array, std::shared_ptr<ExprNode> index)
-        : array(array), index(index) { NodeType = ASTType::ArrayAccessNode; }
+        : array(array), index(index) { nodeType = ASTType::ArrayAccessNode; }
     std::shared_ptr<ExprNode> getArray() const { return array; }
     std::shared_ptr<ExprNode> getIndex() const { return index; }
 private:
@@ -260,7 +260,7 @@ private:
 class FieldAccessNode : public ExprNode {
 public:
     FieldAccessNode(std::shared_ptr<ExprNode> record, std::string field_name)
-        : record(record), field_name(field_name) { NodeType = ASTType::FieldAccessNode; }
+        : record(record), field_name(field_name) { nodeType = ASTType::FieldAccessNode; }
     std::shared_ptr<ExprNode> getRecord() const { return record; }
     std::string getFieldName() const { return field_name; }
 private:
@@ -272,7 +272,7 @@ class IfNode : public StmtNode {
 public:
     IfNode(std::shared_ptr<ExprNode> condition, std::shared_ptr<StmtNode> thenblock,
            std::shared_ptr<StmtNode> elseblock = nullptr)
-        : condition(condition), thenblock(thenblock), elseblock(elseblock) { NodeType = ASTType::IfNode; }
+        : condition(condition), thenblock(thenblock), elseblock(elseblock) { nodeType = ASTType::IfNode; }
     std::shared_ptr<ExprNode> getCondition() const { return condition; }
     std::shared_ptr<StmtNode> getThenBlock() const { return thenblock; }
     std::shared_ptr<StmtNode> getElseBlock() const { return elseblock; }
@@ -285,7 +285,7 @@ private:
 class WhileNode : public StmtNode {
 public:
     WhileNode(std::shared_ptr<ExprNode> condition, std::shared_ptr<StmtNode> body)
-        : condition(condition), body(body) { NodeType = ASTType::WhileNode; }
+        : condition(condition), body(body) { nodeType = ASTType::WhileNode; }
     std::shared_ptr<ExprNode> getCondition() const { return condition; }
     std::shared_ptr<StmtNode> getBody() const { return body; }
 private:
@@ -297,7 +297,7 @@ class ForNode : public StmtNode {
 public:
     ForNode(bool goes_up, std::string movingvar, std::shared_ptr<ExprNode> startpoint,
             std::shared_ptr<ExprNode> endpoint, std::shared_ptr<StmtNode> body)
-        : goes_up(goes_up), movingvar(movingvar), startpoint(startpoint), endpoint(endpoint), body(body) { NodeType = ASTType::ForNode; }
+        : goes_up(goes_up), movingvar(movingvar), startpoint(startpoint), endpoint(endpoint), body(body) { nodeType = ASTType::ForNode; }
     bool goesUp() const { return goes_up; }
     std::string getMovingVar() const { return movingvar; }
     std::shared_ptr<ExprNode> getStartPoint() const { return startpoint; }
@@ -314,7 +314,7 @@ private:
 class RepeatNode : public StmtNode {
 public:
     RepeatNode(std::shared_ptr<StmtNode> body, std::shared_ptr<ExprNode> untilcondition)
-        : body(body), untilcondition(untilcondition) { NodeType = ASTType::RepeatNode; }
+        : body(body), untilcondition(untilcondition) { nodeType = ASTType::RepeatNode; }
     std::shared_ptr<StmtNode> getBody() const { return body; }
     std::shared_ptr<ExprNode> getUntilCondition() const { return untilcondition; }
 private:
@@ -326,7 +326,7 @@ class CaseNode : public StmtNode {
 public:
     CaseNode(std::shared_ptr<ExprNode> key,
              std::vector<std::pair<std::vector<std::shared_ptr<ExprNode>>, std::shared_ptr<StmtNode>>> cases)
-        : key(key), cases(cases) { NodeType = ASTType::CaseNode; }
+        : key(key), cases(cases) { nodeType = ASTType::CaseNode; }
     std::shared_ptr<ExprNode> getKey() const { return key; }
     std::vector<std::pair<std::vector<std::shared_ptr<ExprNode>>, std::shared_ptr<StmtNode>>> getCases() const { return cases; }
     void pushCase(std::pair<std::vector<std::shared_ptr<ExprNode>>, std::shared_ptr<StmtNode>> case_pair) { cases.push_back(case_pair); }
@@ -338,7 +338,7 @@ private:
 class AssignNode : public StmtNode {
 public:
     AssignNode(std::shared_ptr<ExprNode> target, std::shared_ptr<ExprNode> value)
-        : target(target), value(value) { NodeType = ASTType::AssignNode; }
+        : target(target), value(value) { nodeType = ASTType::AssignNode; }
     std::shared_ptr<ExprNode> getTarget() const { return target; }
     std::shared_ptr<ExprNode> getValue() const { return value; }
 private:
@@ -349,7 +349,7 @@ private:
 class CompoundNode : public StmtNode {
 public:
     CompoundNode(std::vector<std::shared_ptr<StmtNode>> statements)
-        : statements(statements) { NodeType = ASTType::CompoundNode; }
+        : statements(statements) { nodeType = ASTType::CompoundNode; }
     std::vector<std::shared_ptr<StmtNode>> getStatements() const { return statements; }
     void pushStatement(std::shared_ptr<StmtNode> stmt) { statements.push_back(stmt); }
 private:
@@ -360,7 +360,7 @@ class ProgramNode : public ASTNode {
 public:
     ProgramNode(std::string name, std::vector<std::shared_ptr<DeclNode>> declarations,
                 std::shared_ptr<CompoundNode> main)
-        : name(name), declarations(declarations), main(main) { NodeType = ASTType::ProgramNode; }
+        : name(name), declarations(declarations), main(main) { nodeType = ASTType::ProgramNode; }
     std::string getName() const { return name; }
     std::vector<std::shared_ptr<DeclNode>> getDeclarations() const { return declarations; }
     std::shared_ptr<CompoundNode> getMain() const { return main; }
