@@ -20,6 +20,8 @@ public:
     std::shared_ptr<FieldAccessNode> buildFieldAccessNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<AssignNode> buildAssignNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<IfNode> buildIfNode(std::shared_ptr<TreeNode> root) const;
+    std::shared_ptr<ExprNode> buildExprNode(std::shared_ptr<TreeNode> root) const;
+    std::shared_ptr<StmtNode> buildStmtNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<WhileNode> buildWhileNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<ForNode> buildForNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<RepeatNode> buildRepeatNode(std::shared_ptr<TreeNode> root) const;
