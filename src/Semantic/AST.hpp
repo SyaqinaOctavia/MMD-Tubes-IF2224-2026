@@ -5,8 +5,6 @@
 #include "../Symbol.hpp"
 
 enum class ASTType {
-    // Literals
-    LiteralNode,
     // Types
     SimpleTypeNode,
     ArrayTypeNode,
