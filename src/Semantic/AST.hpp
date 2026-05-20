@@ -5,24 +5,41 @@
 #include "../Symbol.hpp"
 
 enum class ASTType {
-    LiteralNode, 
-    TypeNode, 
-    DeclNode, 
-    CallNode, 
-    BinaryOpNode, 
-    UnaryOpNode, 
-    VarRefNode, 
-    ArrayAccessNode, 
+    // Literals
+    LiteralNode,
+    // Types
+    SimpleTypeNode,
+    ArrayTypeNode,
+    EnumTypeNode,
+    FieldTypeNode,
+    // Declarations
+    ConstDeclNode,
+    TypeDeclNode,
+    VarDeclNode,
+    ParamDeclNode,
+    ProcDeclNode,
+    FuncDeclNode,
+    // Expressions
+    LiteralNode,
+    CallNode,
+    BinaryOpNode,
+    UnaryOpNode,
+    VarRefNode,
+    ArrayAccessNode,
     FieldAccessNode,
-    IfNode, 
-    WhileNode, 
-    ForNode, 
-    RepeatNode, 
-    CaseNode, 
-    AssignNode, 
-    CompoundNode, 
-    ProgramNode 
+    // Statements
+    AssignNode,
+    IfNode,
+    WhileNode,
+    ForNode,
+    RepeatNode,
+    CaseNode,
+    CompoundNode,
+    // Root
+    ProgramNode
 };
+
+enum class LiteralKind { Int, Real, Bool, Char, String };
 
 class ASTNode {
 protected:
@@ -32,21 +49,40 @@ protected:
 class ExprNode : public ASTNode {};
 
 class LiteralNode : public ExprNode {
-public:
-    enum class Kind { Int, Real, Bool, Char, String };
-    Kind kind;
+private:
+    LiteralKind kind;
     std::string value;
+public:
+    LiteralNode(LiteralKind kind, std::string value) : kind(kind), value(value) {}
+    LiteralKind getKind(){ return kind; }
+    std::string getValue(){ return value; }
 };
 
 class TypeNode : public ASTNode {
 public:
     enum class Kind { Simple, Array, Record, Range, Enumerated };
     Kind kind;
-    std::string name;                          // Simple
-    std::shared_ptr<TypeNode> element_type;    // Array
-    std::shared_ptr<ExprNode> low, high;       // Array bounds / Range
-    std::vector<std::string> enum_values;      // Enumerated
-    std::vector<std::pair<std::vector<std::string>, std::shared_ptr<TypeNode>>> fields;    // Record
+};
+
+class SimpleTypeNode : public TypeNode {
+public:
+    std::string name;
+};
+
+class ArrayTypeNode : public TypeNode {
+public:
+    std::shared_ptr<TypeNode> type;
+    std::shared_ptr<ExprNode> low, high;
+};
+
+class EnumTypeNode : public TypeNode {
+public:
+    std::vector<std::string> enum_values;
+};
+
+class FieldTypeNode : public TypeNode {
+public:
+    std::vector<std::pair<std::vector<std::string>, std::shared_ptr<TypeNode>>> fields;
 };
 
 class StmtNode : public ASTNode {};
@@ -55,13 +91,48 @@ class DeclNode : public ASTNode {
 public:
     enum class Kind { Const, Type, Var, Proc, Func, Param };
     Kind kind;
-    std::vector<std::string> names;
+};
+
+class TypeDeclNode : public DeclNode {
+public:
+    std::string name;
     std::shared_ptr<TypeNode> type_spec;       // Var, Param, Func return
+};
+
+class ConstDeclNode : public DeclNode {
+public:
+    std::string name;
     std::shared_ptr<ExprNode> value;           // Const
-    std::vector<std::shared_ptr<DeclNode>> params;      // Proc/Func
-    std::vector<std::shared_ptr<DeclNode>> local_decls; // Proc/Func
+};
+
+class VarDeclNode : public DeclNode {
+public:
+    std::vector<std::string> names;
+    std::shared_ptr<TypeNode> type;
+};
+
+class ParamDeclNode : public DeclNode {
+public:
+    std::vector<std::string> names;
+    std::shared_ptr<TypeNode> type;
+    bool is_var_param = false;
+};
+
+class ProcDeclNode : public DeclNode {
+public:
+    std::string name;
+    std::vector<std::shared_ptr<ParamDeclNode>> params;      // Proc/Func
+    std::vector<std::shared_ptr<DeclNode>> local_var; // Proc/Func
     std::shared_ptr<StmtNode> body;            // Proc/Func
-    bool is_var_param = false;                 // Param
+};
+
+class FuncDeclNode : public DeclNode {
+public:
+    std::string name;
+    std::shared_ptr<TypeNode> return_type;
+    std::vector<std::shared_ptr<ParamDeclNode>> params;      // Proc/Func
+    std::vector<std::shared_ptr<DeclNode>> local_var; // Proc/Func
+    std::shared_ptr<StmtNode> body;            // Proc/Func
 };
 
 class CallNode : public ExprNode {
@@ -88,7 +159,6 @@ public:
     std::string name;
 };
 
-
 class ArrayAccessNode : public ExprNode {
 public:
     std::shared_ptr<ExprNode> array;
@@ -103,7 +173,7 @@ public:
 
 class IfNode : public StmtNode {
 public:
-    std::shared_ptr<ExprNode> target;
+    std::shared_ptr<ExprNode> condition;
     std::shared_ptr<StmtNode> thenblock;
     std::shared_ptr<StmtNode> elseblock;
 };
@@ -124,6 +194,7 @@ public:
 };
 
 class RepeatNode : public StmtNode {
+public:
     std::shared_ptr<StmtNode> body;
     std::shared_ptr<ExprNode> untilcondition;
 };
@@ -132,7 +203,7 @@ class CaseNode : public StmtNode {
 public:
     std::shared_ptr<ExprNode> key;
     std::vector<std::pair<
-        std::shared_ptr<ExprNode>,  
+        std::vector<std::shared_ptr<ExprNode>>,
         std::shared_ptr<StmtNode>
     >> cases;
 };
@@ -144,6 +215,7 @@ public:
 };
 
 class CompoundNode : public StmtNode {
+public:
     std::vector<std::shared_ptr<StmtNode>> statements;
 };
 
