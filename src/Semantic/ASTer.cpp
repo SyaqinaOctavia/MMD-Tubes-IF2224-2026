@@ -2,6 +2,7 @@
 #include "AST.hpp"
 #include "../Symbol.hpp"
 #include <string>
+#include <functional>
 
 std::shared_ptr<ASTNode> ASTer::buildAST(std::shared_ptr<TreeNode> root) const {
     return buildProgramNode(root);
@@ -114,9 +115,14 @@ std::shared_ptr<ArrayAccessNode> ASTer::buildArrayAccessNode(std::shared_ptr<Tre
     std::vector<std::shared_ptr<TreeNode>> children = root->getChildren();
 
     if (children.empty() || children[0]->getNodeType() != Symbol::ident) return nullptr;
-    if (children.size() < 2 || children[1]->getNodeType() != Symbol::COMPONENT_VARIABLE ||
-        children[1]->getChildren().empty() ||
-        children[1]->getChildren()[0]->getNodeType() != Symbol::lbrack) return nullptr;
+    if (children.size() < 2) return nullptr;
+    std::shared_ptr<TreeNode> lastComp = children.back();
+    if (!lastComp || lastComp->getNodeType() != Symbol::COMPONENT_VARIABLE)
+        return nullptr;
+    std::vector<std::shared_ptr<TreeNode>> lastChildren = lastComp->getChildren();
+    if (lastChildren.empty() || lastChildren[0]->getNodeType() != Symbol::lbrack)
+        return nullptr;
+
     // save ident
     std::shared_ptr<ExprNode> current = std::make_shared<VarRefNode>(children[0]->getValue());
     for (std::size_t i = 1; i < children.size(); ++i) {
@@ -127,6 +133,7 @@ std::shared_ptr<ArrayAccessNode> ASTer::buildArrayAccessNode(std::shared_ptr<Tre
 
         // the grammar: <component-variable> -> (lbrack + index-list + rbrack) | (period + ident)
         if (cvChildren[0]->getNodeType() == Symbol::lbrack) {
+            if (cvChildren.size() < 2) return nullptr;
             std::shared_ptr<TreeNode> indexList = cvChildren[1];
             if (!indexList || indexList->getNodeType() != Symbol::INDEX_LIST) return nullptr;
 
@@ -148,6 +155,10 @@ std::shared_ptr<ArrayAccessNode> ASTer::buildArrayAccessNode(std::shared_ptr<Tre
                             std::make_shared<VarRefNode>(ch->getValue()));
                     else if (t == Symbol::INDEX_LIST)
                         collectIndices(ch, out);
+                    else if (t == Symbol::EXPRESSION) {
+                        std::shared_ptr<ExprNode> expr = buildExprNode(ch);
+                        if (expr) out.push_back(expr);
+                    }
                 }
             };
 
@@ -193,10 +204,11 @@ std::shared_ptr<FieldAccessNode> ASTer::buildFieldAccessNode(std::shared_ptr<Tre
         std::shared_ptr<TreeNode> compVar = children[i];
         if (compVar->getNodeType() != Symbol::COMPONENT_VARIABLE) return nullptr;
 
-         std::vector<std::shared_ptr<TreeNode>> cvChildren = compVar->getChildren();
+        std::vector<std::shared_ptr<TreeNode>> cvChildren = compVar->getChildren();
         if (cvChildren.empty()) return nullptr;
 
         if (cvChildren[0]->getNodeType() == Symbol::lbrack) {
+            if (cvChildren.size() < 2) return nullptr;
             std::shared_ptr<TreeNode> indexList = cvChildren[1];
             if (!indexList ||
                 indexList->getNodeType() != Symbol::INDEX_LIST)
@@ -219,6 +231,10 @@ std::shared_ptr<FieldAccessNode> ASTer::buildFieldAccessNode(std::shared_ptr<Tre
                             std::make_shared<VarRefNode>(ch->getValue()));
                     else if (t == Symbol::INDEX_LIST)
                         collectIndices(ch, out);
+                    else if (t == Symbol::EXPRESSION) {
+                        std::shared_ptr<ExprNode> expr = buildExprNode(ch);
+                        if (expr) out.push_back(expr);
+                    }
                 }
             };
 
