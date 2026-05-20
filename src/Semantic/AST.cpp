@@ -15,6 +15,7 @@ std::string toString(ASTType s) {
         case ASTType::ProcDeclNode: return "ProcDecl";
         case ASTType::FuncDeclNode: return "FuncDecl";
         case ASTType::CallNode: return "Call";
+        case ASTType::CallStmtNode: return "CallStmt";
         case ASTType::BinaryOpNode: return "BinaryOp";
         case ASTType::UnaryOpNode: return "UnaryOp";
         case ASTType::VarRefNode: return "VarRef";

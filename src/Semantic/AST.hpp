@@ -34,6 +34,7 @@ enum class ASTType {
     RepeatNode,
     CaseNode,
     CompoundNode,
+    CallStmtNode, //wrapper CallNode for stmtNode
     // Root
     ProgramNode
 };
@@ -221,6 +222,16 @@ public:
 private:
     std::string name;
     std::vector<std::shared_ptr<ExprNode>> args;
+};
+
+class CallStmtNode : public StmtNode {
+public:
+    CallStmtNode(std::shared_ptr<CallNode> call)
+        : call(call) { nodeType = ASTType::CallStmtNode; }
+
+    std::shared_ptr<CallNode> getCall() const { return call; }
+private:
+    std::shared_ptr<CallNode> call;
 };
 
 class BinaryOpNode : public ExprNode {
