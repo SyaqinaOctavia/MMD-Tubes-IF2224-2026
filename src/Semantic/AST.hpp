@@ -9,6 +9,7 @@ enum class ASTType {
     SimpleTypeNode,
     ArrayTypeNode,
     EnumTypeNode,
+    RangeTypeNode,
     FieldTypeNode,
     // Declarations
     ConstDeclNode,
@@ -75,14 +76,12 @@ private:
 
 class ArrayTypeNode : public TypeNode {
 public:
-    ArrayTypeNode(std::shared_ptr<TypeNode> type, std::shared_ptr<ExprNode> low, std::shared_ptr<ExprNode> high)
-        : TypeNode(Kind::Array), type(type), low(low), high(high) { nodeType = ASTType::ArrayTypeNode; }
+    ArrayTypeNode(std::shared_ptr<TypeNode> type, std::shared_ptr<TypeNode> index)
+        : TypeNode(Kind::Array), type(type), index(index) { nodeType = ASTType::ArrayTypeNode; }
     std::shared_ptr<TypeNode> getType() const { return type; }
-    std::shared_ptr<ExprNode> getLow() const { return low; }
-    std::shared_ptr<ExprNode> getHigh() const { return high; }
 private:
     std::shared_ptr<TypeNode> type;
-    std::shared_ptr<ExprNode> low, high;
+    std::shared_ptr<TypeNode> index; // harus simpletype atau rangetype
 };
 
 class EnumTypeNode : public TypeNode {
@@ -92,6 +91,16 @@ public:
     void pushEnumValue(std::string value) { enum_values.push_back(value); }
 private:
     std::vector<std::string> enum_values;
+};
+
+class RangeTypeNode : public TypeNode {
+public:
+    RangeTypeNode(std::shared_ptr<ExprNode> low, std::shared_ptr<ExprNode> high) : TypeNode(Kind::Range), low(low), high(high) { nodeType = ASTType::RangeTypeNode; }
+    std::shared_ptr<ExprNode> getLow() const { return low; }
+    std::shared_ptr<ExprNode> getHigh() const { return high; }
+private:
+    std::shared_ptr<ExprNode> low;
+    std::shared_ptr<ExprNode> high;
 };
 
 class FieldTypeNode : public TypeNode {
@@ -370,3 +379,7 @@ private:
     std::vector<std::shared_ptr<DeclNode>> declarations;
     std::shared_ptr<CompoundNode> main;
 };
+
+std::shared_ptr<LiteralNode> constantToLiteral(std::shared_ptr<TreeNode> node);
+std::vector<std::string> enumToStrings(std::shared_ptr<TreeNode> node);
+std::vector<std::string> identifierListToStrings(std::shared_ptr<TreeNode> node);
