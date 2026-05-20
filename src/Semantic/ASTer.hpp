@@ -5,11 +5,15 @@
 
 class ASTer {
 public:
+    std::pair<std::vector<std::string>, std::shared_ptr<TypeNode>> fieldPartToField(std::shared_ptr<TreeNode> node) const;
+    std::shared_ptr<TypeNode> buildSimpleType(std::shared_ptr<TreeNode> node) const;
+    std::shared_ptr<TypeNode> buildArrayType(std::shared_ptr<TreeNode> node) const;
+    std::shared_ptr<TypeNode> buildRangeType(std::shared_ptr<TreeNode> node) const;
+    std::shared_ptr<TypeNode> buildEnumType(std::shared_ptr<TreeNode> node) const;
+    std::shared_ptr<TypeNode> buildRecordType(std::shared_ptr<TreeNode> node) const;
+    std::shared_ptr<TypeNode> buildArrayIndex(std::shared_ptr<TreeNode> node) const;
     std::shared_ptr<ASTNode> buildAST(std::shared_ptr<TreeNode> root) const;
-    std::shared_ptr<SimpleTypeNode> buildSimpleTypeNode(std::shared_ptr<TreeNode> root) const;
-    std::shared_ptr<ArrayTypeNode> buildArrayTypeNode(std::shared_ptr<TreeNode> root) const;
-    std::shared_ptr<EnumTypeNode> buildEnumTypeNode(std::shared_ptr<TreeNode> root) const;
-    std::shared_ptr<FieldTypeNode> buildFieldTypeNode(std::shared_ptr<TreeNode> root) const;
+    std::shared_ptr<TypeNode> buildTypeNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<DeclNode> buildDeclNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<LiteralNode> buildLiteralNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<CallNode> buildCallNode(std::shared_ptr<TreeNode> root) const;
