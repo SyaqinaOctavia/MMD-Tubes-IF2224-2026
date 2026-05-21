@@ -660,8 +660,19 @@ std::shared_ptr<WhileNode>ASTer::buildWhileNode(std::shared_ptr<TreeNode> root) 
 }
 
 std::shared_ptr<ForNode> ASTer::buildForNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+    if (!root || root->getNodeType() != Symbol::FOR_STATEMENT) return nullptr;
+    auto children = root->getChildren();
+    if (children.size() < 8) return nullptr;
+    // forsy + ident + becomes + EXPRESSION + (tosy|downtosy) + EXPRESSION + dosy + COMPOUND + semicolon
+    std::string var = children[1]->getValue();
+    bool goesUp = (children[4]->getNodeType() == Symbol::tosy);
+    auto start = buildExprNode(children[3]);
+    auto end = buildExprNode(children[5]);
+    auto body = buildCompoundNode(children[7]);
+    if (!start || !end || !body) return nullptr;
+    return std::make_shared<ForNode>(goesUp, var, start, end, body);
 }
+
 std::shared_ptr<RepeatNode> ASTer::buildRepeatNode(std::shared_ptr<TreeNode> root) const {
     return nullptr;
 }
