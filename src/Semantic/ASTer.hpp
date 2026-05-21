@@ -39,4 +39,5 @@ public:
     std::shared_ptr<CaseNode> buildCaseNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<CompoundNode> buildCompoundNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<ProgramNode> buildProgramNode(std::shared_ptr<TreeNode> root) const;
+    std::shared_ptr<CompoundNode> buildStatementList(std::shared_ptr<TreeNode> root) const;
 };

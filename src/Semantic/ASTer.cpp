@@ -792,8 +792,7 @@ std::shared_ptr<ProgramNode> ASTer::buildProgramNode(std::shared_ptr<TreeNode> r
 }
 
 // Statement builders helper
-std::shared_ptr<CompoundNode>
-ASTer::buildStatementList(std::shared_ptr<TreeNode> root) const {
+std::shared_ptr<CompoundNode>ASTer::buildStatementList(std::shared_ptr<TreeNode> root) const {
     // STATEMENT_LIST: STATEMENT (semicolon + STATEMENT)*
     std::vector<std::shared_ptr<StmtNode>> stmts;
     for (auto& child : root->getChildren()) {
