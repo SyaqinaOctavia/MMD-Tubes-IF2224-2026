@@ -749,13 +749,22 @@ ASTer::buildCompoundNode(std::shared_ptr<TreeNode> root) const {
     for (auto& child : children) {
         if (child->getNodeType() == Symbol::STATEMENT_LIST)
             return buildStatementList(child);
-    })
+    }
     return std::make_shared<CompoundNode>(std::vector<std::shared_ptr<StmtNode>>{});
 }
 
 std::shared_ptr<CompoundNode> ASTer::buildCompoundNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+    if (!root || root->getNodeType() != Symbol::COMPOUND_STATEMENT) return nullptr;
+    auto children = root->getChildren();
+    // beginsy + STATEMENT_LIST + endsy
+    if (children.size() < 2) return nullptr;
+    for (auto& child : children) {
+        if (child->getNodeType() == Symbol::STATEMENT_LIST)
+            return buildStatementList(child);
+    }
+    return std::make_shared<CompoundNode>(std::vector<std::shared_ptr<StmtNode>>{});
 }
+
 std::shared_ptr<ProgramNode> ASTer::buildProgramNode(std::shared_ptr<TreeNode> root) const {
     std::vector<std::shared_ptr<TreeNode>> children = root->getChildren();
     std::string name;
