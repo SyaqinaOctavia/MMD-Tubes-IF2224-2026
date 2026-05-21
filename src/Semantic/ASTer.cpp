@@ -488,6 +488,8 @@ std::shared_ptr<StmtNode> ASTer::buildStmtNode(std::shared_ptr<TreeNode> root) c
             return buildForNode(inner);
         case Symbol::CASE_STATEMENT:
             return buildCaseNode(inner);
+        case Symbol::COMPOUND_STATEMENT:
+            return buildCompoundNode(inner);
         case Symbol::PROCEDURE_FUNCTION_CALL: {
             std::shared_ptr<CallNode> callNode = buildCallNode(inner);
             if (!callNode) return nullptr;
