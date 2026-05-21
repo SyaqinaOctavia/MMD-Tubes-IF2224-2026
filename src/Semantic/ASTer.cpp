@@ -673,9 +673,34 @@ std::shared_ptr<ForNode> ASTer::buildForNode(std::shared_ptr<TreeNode> root) con
     return std::make_shared<ForNode>(goesUp, var, start, end, body);
 }
 
-std::shared_ptr<RepeatNode> ASTer::buildRepeatNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+std::shared_ptr<RepeatNode>
+ASTer::buildRepeatNode(std::shared_ptr<TreeNode> root) const {
+    if (!root || root->getNodeType() != Symbol::REPEAT_STATEMENT) return nullptr;
+    auto children = root->getChildren();
+    if (children.size() < 4) return nullptr;
+    
+    // repeatsy + STATEMENT_LIST + untilsy + EXPRESSION 
+    auto stmtListNode = children[1];
+    std::vector<std::shared_ptr<StmtNode>> stmts;
+    
+    // Statement list
+    if (stmtListNode && stmtListNode->getNodeType() == Symbol::STATEMENT_LIST) {
+        for (auto& child : stmtListNode->getChildren()) {
+            if (child->getNodeType() == Symbol::STATEMENT) {
+                auto stmt = buildStmtNode(child);
+                if (stmt) stmts.push_back(stmt);
+            }
+        }
+    }
+    
+    auto body = std::make_shared<CompoundNode>(stmts);
+    auto cond = buildExprNode(children[3]);
+    
+    if (!body || !cond) return nullptr;
+    
+    return std::make_shared<RepeatNode>(body, cond);
 }
+
 std::shared_ptr<CaseNode> ASTer::buildCaseNode(std::shared_ptr<TreeNode> root) const {
     return nullptr;
 }
