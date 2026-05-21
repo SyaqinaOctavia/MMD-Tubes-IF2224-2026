@@ -757,6 +757,19 @@ std::shared_ptr<CaseNode>ASTer::buildCaseNode(std::shared_ptr<TreeNode> root) co
     return std::make_shared<CaseNode>(key, cases);
 }
 
+std::shared_ptr<CompoundNode>
+ASTer::buildCompoundNode(std::shared_ptr<TreeNode> root) const {
+    if (!root || root->getNodeType() != Symbol::COMPOUND_STATEMENT) return nullptr;
+    auto children = root->getChildren();
+    // beginsy + STATEMENT_LIST + endsy
+    if (children.size() < 2) return nullptr;
+    for (auto& child : children) {
+        if (child->getNodeType() == Symbol::STATEMENT_LIST)
+            return buildStatementList(child);
+    })
+    return std::make_shared<CompoundNode>(std::vector<std::shared_ptr<StmtNode>>{});
+}
+
 std::shared_ptr<CompoundNode> ASTer::buildCompoundNode(std::shared_ptr<TreeNode> root) const {
     return nullptr;
 }
@@ -776,4 +789,18 @@ std::shared_ptr<ProgramNode> ASTer::buildProgramNode(std::shared_ptr<TreeNode> r
         comp_node = buildCompoundNode(children[2]);
     } else return nullptr;
     return std::make_shared<ProgramNode>(name, decl_nodes, comp_node);
+}
+
+// Statement builders helper
+std::shared_ptr<CompoundNode>
+ASTer::buildStatementList(std::shared_ptr<TreeNode> root) const {
+    // STATEMENT_LIST: STATEMENT (semicolon + STATEMENT)*
+    std::vector<std::shared_ptr<StmtNode>> stmts;
+    for (auto& child : root->getChildren()) {
+        if (child->getNodeType() == Symbol::STATEMENT) {
+            auto stmt = buildStmtNode(child);
+            if (stmt) stmts.push_back(stmt);
+        }
+    }
+    return std::make_shared<CompoundNode>(stmts);
 }
