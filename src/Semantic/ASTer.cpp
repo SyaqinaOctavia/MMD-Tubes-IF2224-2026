@@ -240,14 +240,18 @@ std::shared_ptr<CallNode> ASTer::buildCallNode(std::shared_ptr<TreeNode> root) c
     if (!root) return nullptr;
     auto children = root->getChildren();
 
+    if (children.empty()) return nullptr;
     std::string name = children[0]->getValue();
     std::vector<std::shared_ptr<ExprNode>> args;
 
     // has argument list: ident + lparent + (expression + (comma + expression)*)? + rparent
-    if (children.size() > 1) {
-        for (auto& child : children) {
-            if (child->getNodeType() == Symbol::EXPRESSION) {
-                args.push_back(buildExprNode(child));
+    for (auto& child : children) {
+        if (child->getNodeType() == Symbol::EXPRESSION) {
+            args.push_back(buildExprNode(child));
+        } else if (child->getNodeType() == Symbol::PARAMETER_LIST) {
+            for (auto& grandchild : child->getChildren()) {
+                if (grandchild->getNodeType() == Symbol::EXPRESSION)
+                    args.push_back(buildExprNode(grandchild));
             }
         }
     }
