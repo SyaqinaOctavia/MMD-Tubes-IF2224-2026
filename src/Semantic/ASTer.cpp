@@ -77,8 +77,142 @@ std::shared_ptr<TypeNode> ASTer::buildRecordType(std::shared_ptr<TreeNode> node)
     }
     return std::make_shared<FieldTypeNode>(fields);
 }
-std::shared_ptr<DeclNode> ASTer::buildDeclNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+std::vector<std::shared_ptr<DeclNode>> ASTer::buildDeclNodes(std::shared_ptr<TreeNode> root) const {
+    std::vector<std::shared_ptr<DeclNode>> declList;
+    if (root->getNodeType() != Symbol::DECLARATION_PART || root->getChildren().empty())
+        return declList;
+
+    for (auto child : root->getChildren()){
+        switch (child->getNodeType()) {
+            case Symbol::CONST_DECLARATION:         {
+                auto constDecls = buildConstDeclNode(child);
+                declList.insert(declList.end(), constDecls.begin(), constDecls.end());
+            }
+            case Symbol::TYPE_DECLARATION:          {
+                auto typeDecls = buildTypeDeclNode(child);
+                declList.insert(declList.end(), typeDecls.begin(), typeDecls.end());
+            }
+            case Symbol::VAR_DECLARATION:           {
+                auto varDecls = buildVarDeclNode(child);
+                declList.insert(declList.end(), varDecls.begin(), varDecls.end());
+            }
+            // case Symbol::PARAMETER_GROUP:           declList.push_back(buildParamDeclNode(child, false));
+            case Symbol::PROCEDURE_DECLARATION:     declList.push_back(buildProcDeclNode(child));
+            case Symbol::FUNCTION_DECLARATION:      declList.push_back(buildFuncDeclNode(child));
+        }
+    }
+}
+std::vector<std::shared_ptr<ConstDeclNode>> ASTer::buildConstDeclNode(std::shared_ptr<TreeNode> root) const {
+    // root = const-declaration: constsy + (ident + eql + constant + semicolon)+
+    std::vector<std::shared_ptr<ConstDeclNode>> decls;
+    auto children = root->getChildren();
+
+    // skip children[0] = constsy, then stride 4: ident + eql + constant + semicolon
+    for (size_t i = 1; i + 2 < children.size(); i += 4) {
+        std::string name = children[i]->getValue();
+        auto value = constantToLiteral(children[i + 2]);
+        decls.push_back(std::make_shared<ConstDeclNode>(name, value));
+    }
+
+    return decls;
+}
+std::vector<std::shared_ptr<TypeDeclNode>> ASTer::buildTypeDeclNode(std::shared_ptr<TreeNode> root) const {
+    // root = type-declaration: typesy + (ident + eql + type + semicolon)+
+    std::vector<std::shared_ptr<TypeDeclNode>> decls;
+    auto children = root->getChildren();
+
+    // skip children[0] = typesy, then stride 4: ident + eql + type + semicolon
+    for (size_t i = 1; i + 2 < children.size(); i += 4) {
+        std::string name               = children[i]->getValue();
+        std::shared_ptr<TypeNode> type = buildTypeNode(children[i + 2]);
+        decls.push_back(std::make_shared<TypeDeclNode>(name, type));
+    }
+
+    return decls;
+}
+std::vector<std::shared_ptr<VarDeclNode>> ASTer::buildVarDeclNode(std::shared_ptr<TreeNode> root) const {
+    // root = var-declaration: varsy + (identifier-list + colon + type + semicolon)+
+    std::vector<std::shared_ptr<VarDeclNode>> decls;
+    auto children = root->getChildren();
+
+    // skip children[0] = varsy, then stride 4: identifier-list + colon + type + semicolon
+    for (size_t i = 1; i + 2 < children.size(); i += 4) {
+        std::vector<std::string> names   = identifierListToStrings(children[i]);
+        std::shared_ptr<TypeNode> type   = buildTypeNode(children[i + 2]);
+        decls.push_back(std::make_shared<VarDeclNode>(names, type));
+    }
+
+    return decls;
+}
+std::shared_ptr<ParamDeclNode> ASTer::buildParamDeclNode(std::shared_ptr<TreeNode> root) const {
+    // parameter-group: identifier-list + colon + (ident | array-type)
+    auto children = root->getChildren();
+    std::vector<std::string> names = identifierListToStrings(children[0]);
+    std::shared_ptr<TreeNode> typeChild = children[2];
+    std::shared_ptr<TypeNode> type;
+    if (typeChild->getNodeType() == Symbol::ident) {
+        type = buildSimpleType(typeChild);
+    } else if (typeChild->getNodeType() == Symbol::ARRAY_TYPE) {
+        type = buildArrayType(typeChild);
+    }
+    return std::make_shared<ParamDeclNode>(names, type, false); // is_var always false
+}
+std::vector<std::shared_ptr<ParamDeclNode>> ASTer::buildFormalParams(std::shared_ptr<TreeNode> root) const {
+    // lparent + parameter-group + (semicolon + parameter-group)* + rparent
+    std::vector<std::shared_ptr<ParamDeclNode>> params;
+    for (auto& child : root->getChildren()) {
+        if (child->getNodeType() == Symbol::PARAMETER_GROUP) {
+            params.push_back(buildParamDeclNode(child));
+        }
+    }
+    return params;
+}
+std::shared_ptr<ProcDeclNode> ASTer::buildProcDeclNode(std::shared_ptr<TreeNode> root) const {
+    // proceduresy + ident + (formal-parameter-list)? + semicolon + block + semicolon
+    auto children = root->getChildren();
+    std::string name = children[1]->getValue();                         // ident
+    int offset = 2;
+    std::vector<std::shared_ptr<ParamDeclNode>> params;
+    if (children[offset]->getNodeType() == Symbol::FORMAL_PARAMETER_LIST) {
+        params = buildFormalParams(children[offset]);
+        offset++;
+    }
+    // children[offset] = semicolon (skip)
+    offset++;
+    // block = declaration-part + compound-statement
+    std::shared_ptr<TreeNode> block = children[offset];
+    auto blockChildren = block->getChildren();
+
+    std::vector<std::shared_ptr<DeclNode>> local_var = buildDeclNodes(blockChildren[0]);
+    std::shared_ptr<StmtNode> body = buildCompoundNode(blockChildren[1]);
+
+    return std::make_shared<ProcDeclNode>(name, params, local_var, body);
+}
+
+std::shared_ptr<FuncDeclNode> ASTer::buildFuncDeclNode(std::shared_ptr<TreeNode> root) const {
+    // functionsy + ident + (formal-parameter-list)? + colon + ident + semicolon + block + semicolon
+    auto children = root->getChildren();
+    std::string name = children[1]->getValue();                         // ident
+
+    int offset = 2;
+    std::vector<std::shared_ptr<ParamDeclNode>> params;
+    if (children[offset]->getNodeType() == Symbol::FORMAL_PARAMETER_LIST) {
+        params = buildFormalParams(children[offset]);
+        offset++;
+    }
+    // children[offset] = colon (skip)
+    offset++;
+    std::shared_ptr<TypeNode> return_type = buildSimpleType(children[offset]); // ident
+    offset++;
+    // children[offset] = semicolon (skip)
+    offset++;
+    // block = declaration-part + compound-statement
+    std::shared_ptr<TreeNode> block = children[offset];
+    auto blockChildren = block->getChildren();
+
+    std::vector<std::shared_ptr<DeclNode>> local_var = buildDeclNodes(blockChildren[0]);
+    std::shared_ptr<StmtNode> body = buildCompoundNode(blockChildren[1]);
+    return std::make_shared<FuncDeclNode>(name, return_type, params, local_var, body);
 }
 std::shared_ptr<LiteralNode> ASTer::buildLiteralNode(std::shared_ptr<TreeNode> root) const {
     return nullptr;
@@ -526,17 +660,17 @@ std::shared_ptr<CompoundNode> ASTer::buildCompoundNode(std::shared_ptr<TreeNode>
 std::shared_ptr<ProgramNode> ASTer::buildProgramNode(std::shared_ptr<TreeNode> root) const {
     std::vector<std::shared_ptr<TreeNode>> children = root->getChildren();
     std::string name;
-    std::shared_ptr<DeclNode> decl_node;
+    std::vector<std::shared_ptr<DeclNode>> decl_nodes;
     std::shared_ptr<CompoundNode> comp_node;
     if(children[0]->getNodeType() == Symbol::PROGRAM_HEADER){
         std::vector<std::shared_ptr<TreeNode>> grandchildren = children[0]->getChildren();
         name = grandchildren[1]->getValue();
     } else return nullptr;
     if(children[1]->getNodeType() == Symbol::DECLARATION_PART){
-        decl_node = buildDeclNode(children[1]);
+        decl_nodes = buildDeclNodes(children[1]);
     } else return nullptr;
     if(children[2]->getNodeType() == Symbol::COMPOUND_STATEMENT){
         comp_node = buildCompoundNode(children[2]);
     } else return nullptr;
-    return std::make_shared<ProgramNode>(name, decl_node, comp_node);
+    return std::make_shared<ProgramNode>(name, decl_nodes, comp_node);
 }

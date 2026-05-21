@@ -14,7 +14,14 @@ public:
     std::shared_ptr<TypeNode> buildArrayIndex(std::shared_ptr<TreeNode> node) const;
     std::shared_ptr<ASTNode> buildAST(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<TypeNode> buildTypeNode(std::shared_ptr<TreeNode> root) const;
-    std::shared_ptr<DeclNode> buildDeclNode(std::shared_ptr<TreeNode> root) const;
+    std::vector<std::shared_ptr<DeclNode>> buildDeclNodes(std::shared_ptr<TreeNode> root) const;
+    std::vector<std::shared_ptr<ConstDeclNode>> buildConstDeclNode(std::shared_ptr<TreeNode> root) const;
+    std::vector<std::shared_ptr<TypeDeclNode>> buildTypeDeclNode(std::shared_ptr<TreeNode> root) const;
+    std::vector<std::shared_ptr<VarDeclNode>> buildVarDeclNode(std::shared_ptr<TreeNode> root) const;
+    std::shared_ptr<ParamDeclNode> buildParamDeclNode(std::shared_ptr<TreeNode> root) const;
+    std::vector<std::shared_ptr<ParamDeclNode>> ASTer::buildFormalParams(std::shared_ptr<TreeNode> root) const;
+    std::shared_ptr<ProcDeclNode> buildProcDeclNode(std::shared_ptr<TreeNode> root) const;
+    std::shared_ptr<FuncDeclNode> buildFuncDeclNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<LiteralNode> buildLiteralNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<CallNode> buildCallNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<BinaryOpNode> buildBinaryOpNode(std::shared_ptr<TreeNode> root) const;

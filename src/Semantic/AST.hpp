@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include "../Symbol.hpp"
+#include "../Parser/ParseTree.hpp"
 
 enum class ASTType {
     // Types
