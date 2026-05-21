@@ -647,9 +647,18 @@ std::shared_ptr<ExprNode> ASTer::buildExprNode(std::shared_ptr<TreeNode> root) c
 
     return nullptr;
 }
-std::shared_ptr<WhileNode> ASTer::buildWhileNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+
+std::shared_ptr<WhileNode>ASTer::buildWhileNode(std::shared_ptr<TreeNode> root) const {
+    if (!root || root->getNodeType() != Symbol::WHILE_STATEMENT) return nullptr;
+    auto children = root->getChildren();
+    if (children.size() < 4) return nullptr;
+    // whilesy + EXPRESSION + dosy + COMPOUND_STATEMENT
+    auto condition = buildExprNode(children[1]);
+    auto body = buildCompoundNode(children[3]);
+    if (!condition || !body) return nullptr;
+    return std::make_shared<WhileNode>(condition, body);
 }
+
 std::shared_ptr<ForNode> ASTer::buildForNode(std::shared_ptr<TreeNode> root) const {
     return nullptr;
 }
