@@ -215,16 +215,44 @@ std::shared_ptr<FuncDeclNode> ASTer::buildFuncDeclNode(std::shared_ptr<TreeNode>
     return std::make_shared<FuncDeclNode>(name, return_type, params, local_var, body);
 }
 std::shared_ptr<LiteralNode> ASTer::buildLiteralNode(std::shared_ptr<TreeNode> root) const {
+    if (!root) return nullptr;
+    Symbol sym = root->getNodeType();
+    if (sym == Symbol::intcon)  return std::make_shared<LiteralNode>(LiteralKind::Int,    root->getValue());
+    if (sym == Symbol::realcon) return std::make_shared<LiteralNode>(LiteralKind::Real,   root->getValue());
+    if (sym == Symbol::charcon) return std::make_shared<LiteralNode>(LiteralKind::Char,   root->getValue());
+    if (sym == Symbol::string)  return std::make_shared<LiteralNode>(LiteralKind::String, root->getValue());
     return nullptr;
 }
 std::shared_ptr<CallNode> ASTer::buildCallNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+    // PROCEDURE_FUNCTION_CALL: ident + (lparent + parameter-list? + rparent)?
+    if (!root) return nullptr;
+    auto children = root->getChildren();
+
+    std::string name = children[0]->getValue();
+    std::vector<std::shared_ptr<ExprNode>> args;
+
+    // has argument list: ident + lparent + (expression + (comma + expression)*)? + rparent
+    if (children.size() > 1) {
+        for (auto& child : children) {
+            if (child->getNodeType() == Symbol::EXPRESSION) {
+                args.push_back(buildExprNode(child));
+            }
+        }
+    }
+
+    return std::make_shared<CallNode>(name, args);
 }
-std::shared_ptr<BinaryOpNode> ASTer::buildBinaryOpNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+std::shared_ptr<BinaryOpNode> ASTer::buildBinaryOpNode(std::shared_ptr<ExprNode> lhs, std::shared_ptr<TreeNode> opNode, std::shared_ptr<ExprNode> rhs) const {
+    if (!lhs || !opNode || !rhs) return nullptr;
+    auto opChildren = opNode->getChildren();
+    if (opChildren.empty()) return nullptr;
+    std::string op = toString(opChildren[0]->getNodeType());
+    return std::make_shared<BinaryOpNode>(op, lhs, rhs);
 }
-std::shared_ptr<UnaryOpNode> ASTer::buildUnaryOpNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+std::shared_ptr<UnaryOpNode> ASTer::buildUnaryOpNode(std::shared_ptr<TreeNode> opNode, std::shared_ptr<ExprNode> operand) const {
+    if (!opNode || !operand) return nullptr;
+    std::string op = toString(opNode->getNodeType());
+    return std::make_shared<UnaryOpNode>(op, operand);
 }
 std::shared_ptr<VarRefNode> ASTer::buildVarRefNode(std::shared_ptr<TreeNode> root) const {
     if (!root || root->getNodeType() != Symbol::VARIABLE)
@@ -502,85 +530,71 @@ std::shared_ptr<StmtNode> ASTer::buildStmtNode(std::shared_ptr<TreeNode> root) c
 std::shared_ptr<ExprNode> ASTer::buildExprNode(std::shared_ptr<TreeNode> root) const {
     if (!root) return nullptr;
 
-    // expression
+    // expression: simple-expression (relational-operator + simple-expression)?
     if (root->getNodeType() == Symbol::EXPRESSION) {
-        std::vector<std::shared_ptr<TreeNode>> children = root->getChildren();
-
+        auto children = root->getChildren();
         if (children.empty()) return nullptr;
+
         std::shared_ptr<ExprNode> lhs = buildExprNode(children[0]);
         if (!lhs) return nullptr;
+
         if (children.size() == 3) {
-            std::vector<std::shared_ptr<TreeNode>> opChildren = children[1]->getChildren();
-            if (opChildren.empty()) return nullptr;
-            std::string op = toString(opChildren[0]->getNodeType());
             std::shared_ptr<ExprNode> rhs = buildExprNode(children[2]);
             if (!rhs) return nullptr;
-
-            return std::make_shared<BinaryOpNode>(op, lhs, rhs);
+            return buildBinaryOpNode(lhs, children[1], rhs);
         }
 
         return lhs;
     }
 
-    // simple_expression
+    // simple-expression: (plus | minus)? term (additive-operator + term)*
     if (root->getNodeType() == Symbol::SIMPLE_EXPRESSION) {
-        std::vector<std::shared_ptr<TreeNode>> children = root->getChildren();
-
+        auto children = root->getChildren();
         if (children.empty()) return nullptr;
 
         int idx = 0;
-        std::string unaryOp;
+        std::shared_ptr<ExprNode> current;
 
+        // optional unary sign
         if (children[idx]->getNodeType() == Symbol::plus ||
             children[idx]->getNodeType() == Symbol::minus) {
-            unaryOp = toString(children[idx]->getNodeType());
+            std::shared_ptr<ExprNode> operand = buildExprNode(children[idx + 1]);
+            if (!operand) return nullptr;
+            current = buildUnaryOpNode(children[idx], operand);
+            idx += 2;
+        } else {
+            current = buildExprNode(children[idx]);
+            if (!current) return nullptr;
             idx++;
         }
 
-        if (idx >= static_cast<int>(children.size())) return nullptr;
-        std::shared_ptr<ExprNode> current = buildExprNode(children[idx]);
-        idx++;
-        if (!current) return nullptr;
-        if (!unaryOp.empty()) {
-            current = std::make_shared<UnaryOpNode>(unaryOp, current);
-        }
-
+        // additive-operator + term pairs
         while (idx + 1 < static_cast<int>(children.size()) &&
                children[idx]->getNodeType() == Symbol::ADDITIVE_OPERATOR) {
-            std::vector<std::shared_ptr<TreeNode>> opChildren = children[idx]->getChildren();
-            if (opChildren.empty()) return nullptr;
-            std::string op = toString(opChildren[0]->getNodeType());
-            idx++;
-            std::shared_ptr<ExprNode> rhs = buildExprNode(children[idx]);
-            idx++;
+            std::shared_ptr<ExprNode> rhs = buildExprNode(children[idx + 1]);
             if (!rhs) return nullptr;
-            current = std::make_shared<BinaryOpNode>(op, current, rhs);
+            current = buildBinaryOpNode(current, children[idx], rhs);
+            idx += 2;
         }
 
         return current;
     }
 
-    // term
+    // term: factor (multiplicative-operator + factor)*
     if (root->getNodeType() == Symbol::TERM) {
-        std::vector<std::shared_ptr<TreeNode>> children = root->getChildren();
-
+        auto children = root->getChildren();
         if (children.empty()) return nullptr;
 
         std::shared_ptr<ExprNode> current = buildExprNode(children[0]);
         if (!current) return nullptr;
 
         int idx = 1;
-
         while (idx + 1 < static_cast<int>(children.size()) &&
                children[idx]->getNodeType() == Symbol::MULTIPLICATIVE_OPERATOR) {
-            std::vector<std::shared_ptr<TreeNode>> opChildren = children[idx]->getChildren();
-            if (opChildren.empty()) return nullptr;
-            std::string op = toString(opChildren[0]->getNodeType());
-            idx++;
-            std::shared_ptr<ExprNode> rhs = buildExprNode(children[idx]);
-            idx++;
+            std::shared_ptr<ExprNode> rhs = buildExprNode(children[idx + 1]);
             if (!rhs) return nullptr;
-            current = std::make_shared<BinaryOpNode>(op, current, rhs);
+            current = buildBinaryOpNode(current, children[idx], rhs);
+            idx += 2;
         }
 
         return current;
@@ -588,29 +602,21 @@ std::shared_ptr<ExprNode> ASTer::buildExprNode(std::shared_ptr<TreeNode> root) c
 
     // factor
     if (root->getNodeType() == Symbol::FACTOR) {
-        std::vector<std::shared_ptr<TreeNode>> children = root->getChildren();
-
+        auto children = root->getChildren();
         if (children.empty()) return nullptr;
 
         Symbol first = children[0]->getNodeType();
 
-        if (first == Symbol::intcon) {
-            return std::make_shared<LiteralNode>(LiteralKind::Int, children[0]->getValue());
-        }
-        if (first == Symbol::realcon) {
-            return std::make_shared<LiteralNode>(LiteralKind::Real, children[0]->getValue());
-        }
-        if (first == Symbol::charcon) {
-            return std::make_shared<LiteralNode>(LiteralKind::Char, children[0]->getValue());
-        }
-        if (first == Symbol::string) {
-            return std::make_shared<LiteralNode>(LiteralKind::String, children[0]->getValue());
+        if (first == Symbol::intcon  ||
+            first == Symbol::realcon ||
+            first == Symbol::charcon ||
+            first == Symbol::string) {
+            return buildLiteralNode(children[0]);
         }
         if (first == Symbol::notsy) {
             if (children.size() < 2) return nullptr;
             std::shared_ptr<ExprNode> operand = buildExprNode(children[1]);
-            if (!operand) return nullptr;
-            return std::make_shared<UnaryOpNode>("not", operand);
+            return buildUnaryOpNode(children[0], operand);
         }
         if (first == Symbol::lparent) {
             if (children.size() < 3) return nullptr;
@@ -619,15 +625,14 @@ std::shared_ptr<ExprNode> ASTer::buildExprNode(std::shared_ptr<TreeNode> root) c
         if (first == Symbol::PROCEDURE_FUNCTION_CALL) {
             return buildCallNode(children[0]);
         }
-        // VARIABLE -> ident (COMPONENT_VARIABLE)*
         if (first == Symbol::VARIABLE) {
-            std::vector<std::shared_ptr<TreeNode>> varChildren = children[0]->getChildren();
+            auto varChildren = children[0]->getChildren();
             if (varChildren.empty()) return nullptr;
             if (varChildren.size() == 1) {
                 return buildVarRefNode(children[0]);
             }
             std::shared_ptr<TreeNode> lastComp = varChildren.back();
-            std::vector<std::shared_ptr<TreeNode>> lastChildren = lastComp->getChildren();
+            auto lastChildren = lastComp->getChildren();
             if (lastChildren.empty()) return nullptr;
             if (lastChildren[0]->getNodeType() == Symbol::period) {
                 return buildFieldAccessNode(children[0]);
@@ -635,8 +640,6 @@ std::shared_ptr<ExprNode> ASTer::buildExprNode(std::shared_ptr<TreeNode> root) c
             if (lastChildren[0]->getNodeType() == Symbol::lbrack) {
                 return buildArrayAccessNode(children[0]);
             }
-
-            return nullptr;
         }
 
         return nullptr;
