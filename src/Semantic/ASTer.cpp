@@ -701,9 +701,62 @@ ASTer::buildRepeatNode(std::shared_ptr<TreeNode> root) const {
     return std::make_shared<RepeatNode>(body, cond);
 }
 
-std::shared_ptr<CaseNode> ASTer::buildCaseNode(std::shared_ptr<TreeNode> root) const {
-    return nullptr;
+std::shared_ptr<CaseNode>ASTer::buildCaseNode(std::shared_ptr<TreeNode> root) const {
+    if (!root || root->getNodeType() != Symbol::CASE_STATEMENT) return nullptr;
+    auto children = root->getChildren();
+    
+    // casesy + EXPRESSION + ofsy + CASE_BLOCK + endsy
+    if (children.size() < 4) return nullptr;
+    
+    auto key = buildExprNode(children[1]);
+    if (!key) return nullptr;
+    
+    std::vector<std::pair<std::vector<std::shared_ptr<ExprNode>>, std::shared_ptr<StmtNode>>> cases;
+
+    std::shared_ptr<TreeNode> currentBlock = children[3];
+    
+    while (currentBlock && currentBlock->getNodeType() == Symbol::CASE_BLOCK) {
+        auto blockChildren = currentBlock->getChildren();
+        std::vector<std::shared_ptr<ExprNode>> keys;
+        size_t i = 0;
+        
+        while (i < blockChildren.size() && blockChildren[i]->getNodeType() == Symbol::CONSTANT) {
+            keys.push_back(constantToLiteral(blockChildren[i]));
+            i++;
+            if (i < blockChildren.size() && blockChildren[i]->getNodeType() == Symbol::comma) {
+                i++;
+            }
+        }
+        
+        if (i < blockChildren.size() && blockChildren[i]->getNodeType() == Symbol::colon) {
+            i++;
+        }
+        
+        if (i < blockChildren.size() && blockChildren[i]->getNodeType() == Symbol::STATEMENT) {
+            auto stmt = buildStmtNode(blockChildren[i]);
+            cases.push_back({keys, stmt});
+            i++;
+        }
+        
+        std::shared_ptr<TreeNode> nextBlock = nullptr;
+        while (i < blockChildren.size()) {
+            if (blockChildren[i]->getNodeType() == Symbol::semicolon) {
+                i++;
+                if (i < blockChildren.size() && blockChildren[i]->getNodeType() == Symbol::CASE_BLOCK) {
+                    nextBlock = blockChildren[i];
+                    break;
+                }
+            } else {
+                i++;
+            }
+        }
+        
+        currentBlock = nextBlock;
+    }
+    
+    return std::make_shared<CaseNode>(key, cases);
 }
+
 std::shared_ptr<CompoundNode> ASTer::buildCompoundNode(std::shared_ptr<TreeNode> root) const {
     return nullptr;
 }
