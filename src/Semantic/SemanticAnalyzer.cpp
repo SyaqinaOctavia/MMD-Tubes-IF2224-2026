@@ -501,3 +501,61 @@ int SemanticAnalyzer::visitFieldAccess(std::shared_ptr<FieldAccessNode> node) {
     semanticError("Field '" + node->getFieldName() + "' not found in record");
     return T_NONE;
 }
+
+// ========================== Type Spec visitors ============================================
+
+int SemanticAnalyzer::visitSimpleType(std::shared_ptr<SimpleTypeNode> node) {
+    if (!node) return T_NONE;
+    std::string name = node->getName();
+
+    // Built-in types resolved directly (case-insensitive)
+    if (name == "integer") return T_INTEGER;
+    if (name == "real") return T_REAL;
+    if (name == "boolean") return T_BOOLEAN;
+    if (name == "char") return T_CHAR;
+    if (name == "string")  return T_STRING;
+
+    int idx = symTab.searchTab(name);
+    if (idx < 0) {
+        semanticError("Unknown type '" + node->getName() + "'");
+        return T_NONE;
+    }
+    Tab& e = symTab.getTab(idx);
+    if (e.obj != OBJ_TYPE) {
+        semanticError("'" + node->getName() + "' is not a type identifier");
+        return T_NONE;
+    }
+    lastTypeRef = e.ref;
+    return e.type;
+}
+
+int SemanticAnalyzer::visitArrayType(std::shared_ptr<ArrayTypeNode> node) {
+    if (!node) return T_ARRAY;
+
+    // Resolve index type (must not be Real)
+    lastTypeRef = 0;
+    int idxType = visitType(node->getIndex());
+    if (idxType == T_REAL)
+        semanticError("Array index type cannot be Real");
+
+    // Resolve element type
+    lastTypeRef = 0;
+    int elemType = visitType(node->getType());
+    int elemRef  = lastTypeRef;
+
+    // Extract bounds from a RangeTypeNode index
+    int low = 0, high = 0;
+    if (node->getIndex() && node->getIndex()->getKind() == TypeNode::Kind::Range) {
+        auto rn = std::dynamic_pointer_cast<RangeTypeNode>(node->getIndex());
+        if (rn) {
+            if (auto ll = std::dynamic_pointer_cast<LiteralNode>(rn->getLow()))
+                try { low  = std::stoi(ll->getValue()); } catch (...) {}
+            if (auto hl = std::dynamic_pointer_cast<LiteralNode>(rn->getHigh()))
+                try { high = std::stoi(hl->getValue()); } catch (...) {}
+        }
+    }
+
+    int atIdx = symTab.addArray(idxType, elemType, elemRef, low, high);
+    lastTypeRef = atIdx;
+    return T_ARRAY;
+}
