@@ -356,3 +356,62 @@ int SemanticAnalyzer::visitCall(std::shared_ptr<CallNode> node) {
 
     return e.type; 
 }
+
+int SemanticAnalyzer::visitBinaryOp(std::shared_ptr<BinaryOpNode> node) {
+    if (!node) return T_NONE;
+    int lt = visitExpr(node->getLeft());
+    int rt = visitExpr(node->getRight());
+    const std::string& op = node->getOp();
+
+    //relational operators
+    if (op == "eql" || op == "neq" || op == "gtr" || op == "geq"
+     || op == "lss" || op == "leq") {
+        if (!isCompatible(lt, rt) && lt != T_NONE && rt != T_NONE)
+            semanticError("Type mismatch in relational operator '" + op + "': "
+                          + typeToString(lt) + " vs " + typeToString(rt));
+        return T_BOOLEAN;
+    }
+
+    // bool operators
+    if (op == "andsy" || op == "orsy") {
+        if (lt != T_BOOLEAN && lt != T_NONE)
+            semanticError("'" + op + "' requires Boolean left operand, got " + typeToString(lt));
+        if (rt != T_BOOLEAN && rt != T_NONE)
+            semanticError("'" + op + "' requires Boolean right operand, got " + typeToString(rt));
+        return T_BOOLEAN;
+    }
+
+    // addition and multiplication
+    if (op == "plus" || op == "minus" || op == "times") {
+        bool lNum = (lt == T_INTEGER || lt == T_REAL);
+        bool rNum = (rt == T_INTEGER || rt == T_REAL);
+        if (lt != T_NONE && rt != T_NONE && (!lNum || !rNum))
+            semanticError("Arithmetic operator '" + op + "' requires numeric operands, got "
+                          + typeToString(lt) + " and " + typeToString(rt));
+        if (lt == T_REAL || rt == T_REAL) return T_REAL;
+        return T_INTEGER;
+    }
+
+    // real division
+    if (op == "rdiv") {
+        bool lNum = (lt == T_INTEGER || lt == T_REAL);
+        bool rNum = (rt == T_INTEGER || rt == T_REAL);
+        if (lt != T_NONE && !lNum)
+            semanticError("'/' requires numeric left operand, got " + typeToString(lt));
+        if (rt != T_NONE && !rNum)
+            semanticError("'/' requires numeric right operand, got " + typeToString(rt));
+        return T_REAL;
+    }
+
+    // division and modulo
+    if (op == "idiv" || op == "imod") {
+        if (lt != T_INTEGER && lt != T_NONE)
+            semanticError("'" + op + "' requires Integer left operand, got " + typeToString(lt));
+        if (rt != T_INTEGER && rt != T_NONE)
+            semanticError("'" + op + "' requires Integer right operand, got " + typeToString(rt));
+        return T_INTEGER;
+    }
+
+    semanticError("Unknown binary operator '" + op + "'");
+    return T_NONE;
+}
