@@ -337,3 +337,22 @@ int SemanticAnalyzer::visitVarRef(std::shared_ptr<VarRefNode> node) {
     }
     return e.type;
 }
+
+int SemanticAnalyzer::visitCall(std::shared_ptr<CallNode> node) {
+    if (!node) return T_NONE;
+    std::string name = node->getName();
+    int idx = symTab.searchTab(name);
+    if (idx < 0) {
+        semanticError("Undeclared procedure/function '" + node->getName() + "'");
+        for (auto& arg : node->getArgs()) visitExpr(arg);
+        return T_NONE;
+    }
+
+    Tab& e = symTab.getTab(idx);
+    if (e.obj != OBJ_PROC && e.obj != OBJ_FUNC)
+        semanticError("'" + node->getName() + "' is not a procedure or function");
+
+    for (auto& arg : node->getArgs()) visitExpr(arg);
+
+    return e.type; 
+}
