@@ -47,7 +47,22 @@ protected:
     ASTType nodeType;
 };
 
-class ExprNode : public ASTNode {};
+class ExprNode : public ASTNode {
+public:
+    void setEvaluatedType(std::string type) { evaluatedType = type; }
+    std::string getEvaluatedType() const { return evaluatedType; }
+
+    void setTabIndex(int index) { tabIndex = index; }
+    int getTabIndex() const { return tabIndex; }
+
+    void setLexicalLevel(int level) { lexLevel = level; }
+    int getLexicalLevel() const { return lexLevel; }
+
+protected:
+    std::string evaluatedType = "unknown"; 
+    int tabIndex = -1;   
+    int lexLevel = -1;  
+};
 
 class LiteralNode : public ExprNode {
 private:
