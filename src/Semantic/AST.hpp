@@ -98,6 +98,7 @@ public:
     ArrayTypeNode(std::shared_ptr<TypeNode> type, std::shared_ptr<TypeNode> index)
         : TypeNode(Kind::Array), type(type), index(index) { nodeType = ASTType::ArrayTypeNode; }
     std::shared_ptr<TypeNode> getType() const { return type; }
+    std::shared_ptr<TypeNode> getIndex() const { return index; }
 private:
     std::shared_ptr<TypeNode> type;
     std::shared_ptr<TypeNode> index; // harus simpletype atau rangetype
