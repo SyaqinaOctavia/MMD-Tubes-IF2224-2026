@@ -119,6 +119,8 @@ private:
         auto it = nodeType.find(ptr);
         return it != nodeType.end() ? it->second : T_NONE;
     }
-    std::string SemanticAnalyzer::annotateExpr(std::shared_ptr<ExprNode> node) const;
-    void SemanticAnalyzer::printExpr(std::shared_ptr<ExprNode> node, std::ostream& out, const std::string& prefix, bool isLast) const ;
+    std::string annotateExpr(std::shared_ptr<ExprNode> node) const;
+    void printExpr(std::shared_ptr<ExprNode> node, std::ostream& out, const std::string& prefix, bool isLast) const;
+    void printStmt(std::shared_ptr<StmtNode> node, std::ostream& out, const std::string& prefix, bool isLast) const;
+    void printNode(std::shared_ptr<ASTNode> node, std::ostream& out, const std::string& prefix, bool isLast) const;
 };
