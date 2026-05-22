@@ -321,3 +321,19 @@ int SemanticAnalyzer::visitLiteral(std::shared_ptr<LiteralNode> node) {
     }
     return t;
 }
+
+int SemanticAnalyzer::visitVarRef(std::shared_ptr<VarRefNode> node) {
+    if (!node) return T_NONE;
+    std::string name = node->getName();
+    int idx = symTab.searchTab(name);
+    if (idx < 0) {
+        semanticError("Undeclared identifier '" + node->getName() + "'");
+        return T_NONE;
+    }
+    Tab& e = symTab.getTab(idx);
+    if (e.obj == OBJ_TYPE) {
+        semanticError("'" + node->getName() + "' is a type name, not a variable");
+        return T_NONE;
+    }
+    return e.type;
+}
