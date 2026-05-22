@@ -268,3 +268,11 @@ void SemanticAnalyzer::visitFor(std::shared_ptr<ForNode> node) {
     int endType   = visitExpr(node->getEndPoint());
     visit(node->getBody());
 }
+
+void SemanticAnalyzer::visitRepeat(std::shared_ptr<RepeatNode> node) {
+    if (!node) return;
+    visit(node->getBody());
+    int condType = visitExpr(node->getUntilCondition());
+    if (condType != T_BOOLEAN && condType != T_NONE)
+        semanticError("REPEAT-UNTIL condition must be Boolean, got " + typeToString(condType));
+}
