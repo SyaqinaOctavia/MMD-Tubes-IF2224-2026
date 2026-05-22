@@ -247,3 +247,24 @@ void SemanticAnalyzer::visitIf(std::shared_ptr<IfNode> node) {
     visit(node->getThenBlock());
     if (node->getElseBlock()) visit(node->getElseBlock());
 }
+
+void SemanticAnalyzer::visitWhile(std::shared_ptr<WhileNode> node) {
+    if (!node) return;
+    int condType = visitExpr(node->getCondition());
+    if (condType != T_BOOLEAN && condType != T_NONE)
+        semanticError("WHILE condition must be Boolean, got " + typeToString(condType));
+    visit(node->getBody());
+}
+
+void SemanticAnalyzer::visitFor(std::shared_ptr<ForNode> node) {
+    if (!node) return;
+    std::string varName = node->getMovingVar();
+    int idx = symTab.searchTab(varName);
+    if (idx < 0) {
+        semanticError("FOR loop variable '" + node->getMovingVar() + "' is undeclared");
+    } // TODO : check if move variable must be integer
+
+    int startType = visitExpr(node->getStartPoint());
+    int endType   = visitExpr(node->getEndPoint());
+    visit(node->getBody());
+}
