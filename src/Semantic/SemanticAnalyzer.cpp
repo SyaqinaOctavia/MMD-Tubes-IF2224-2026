@@ -433,3 +433,71 @@ int SemanticAnalyzer::visitUnaryOp(std::shared_ptr<UnaryOpNode> node) {
     }
     return t;
 }
+
+int SemanticAnalyzer::visitArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
+    if (!node) return T_NONE;
+    int arrType = visitExpr(node->getArray());
+    int idxType = visitExpr(node->getIndex());
+
+    if (arrType != T_ARRAY && arrType != T_NONE)
+        semanticError("Cannot index into non-array type " + typeToString(arrType));
+    if (idxType != T_INTEGER && idxType != T_CHAR && idxType != T_BOOLEAN && idxType != T_NONE)
+        semanticError("Array index must be ordinal type, got " + typeToString(idxType));
+
+    auto arr = node->getArray();
+    while (arr && arr->getASTType() == ASTType::ArrayAccessNode)
+        arr = std::dynamic_pointer_cast<ArrayAccessNode>(arr)->getArray();
+
+    if (arr && arr->getASTType() == ASTType::VarRefNode) {
+        auto vr = std::dynamic_pointer_cast<VarRefNode>(arr);
+        int idx = symTab.searchTab(vr->getName());
+        if (idx >= 0) {
+            int ref = symTab.getTab(idx).ref;
+            if (ref > 0 && ref < symTab.getArraytabSize())
+                return symTab.getArrayTab(ref).etyp;
+        }
+    }
+    return T_NONE;
+}
+
+int SemanticAnalyzer::visitFieldAccess(std::shared_ptr<FieldAccessNode> node) {
+    if (!node) return T_NONE;
+    int recType = visitExpr(node->getRecord());
+
+    if (recType != T_RECORD && recType != T_NONE)
+        semanticError("Field access on non-record type " + typeToString(recType));
+
+    auto rec = node->getRecord();
+    while (rec && (rec->getASTType() == ASTType::FieldAccessNode
+                || rec->getASTType() == ASTType::ArrayAccessNode)) {
+        if (rec->getASTType() == ASTType::FieldAccessNode)
+            rec = std::dynamic_pointer_cast<FieldAccessNode>(rec)->getRecord();
+        else
+            rec = std::dynamic_pointer_cast<ArrayAccessNode>(rec)->getArray();
+    }
+
+    if (rec && rec->getASTType() == ASTType::VarRefNode) {
+        auto vr = std::dynamic_pointer_cast<VarRefNode>(rec);
+        int idx = symTab.searchTab(vr->getName());
+        if (idx >= 0) {
+            int ref = symTab.getTab(idx).ref;
+            if (ref > 0 && ref < symTab.getBlocktabSize()) {
+                // Search field in the record's block
+                int fldIdx = symTab.getBlockTab(ref).last;
+                std::string fld = node->getFieldName();
+                while (fldIdx > 0) {
+                    if (symTab.getTab(fldIdx).id == fld)
+                        return symTab.getTab(fldIdx).type;
+                    fldIdx = symTab.getTab(fldIdx).link;
+                }
+            }
+        }
+    }
+
+    // Fallback: direct lookup
+    int fldIdx = symTab.searchTab(node->getFieldName());
+    if (fldIdx >= 0) return symTab.getTab(fldIdx).type;
+
+    semanticError("Field '" + node->getFieldName() + "' not found in record");
+    return T_NONE;
+}
