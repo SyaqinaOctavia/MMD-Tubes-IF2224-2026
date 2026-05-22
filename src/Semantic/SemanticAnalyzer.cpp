@@ -601,7 +601,7 @@ int SemanticAnalyzer::visitRangeType(std::shared_ptr<RangeTypeNode> node) {
         } catch (...) {}
     }
 
-    // Record the range in atab so array builders can retrieve bounds
+    // Record the range in atab 
     int lo = 0, hi = 0;
     if (lowLit)  try { lo = std::stoi(lowLit->getValue());  } catch (...) {}
     if (highLit) try { hi = std::stoi(highLit->getValue()); } catch (...) {}
@@ -609,4 +609,31 @@ int SemanticAnalyzer::visitRangeType(std::shared_ptr<RangeTypeNode> node) {
     lastTypeRef = atIdx;
 
     return (lowType != T_NONE) ? lowType : T_INTEGER;
+}
+
+int SemanticAnalyzer::visitFieldType(std::shared_ptr<FieldTypeNode> node) {
+    if (!node) return T_RECORD;
+
+    // Create a new block 
+    symTab.enterScope();
+    int blockIdx = symTab.getCurrentBlock();
+
+    int offset = 0;
+    for (auto& [names, typeSpec] : node->getFields()) {
+        lastTypeRef = 0;
+        int ft  = visitType(typeSpec);
+        int ref = lastTypeRef;
+        for (const auto& rawName : names) {
+            std::string name = rawName;
+            if (symTab.searchCurrentScope(name) >= 0) {
+                semanticError("Duplicate field '" + rawName + "' in record");
+            } else {
+                symTab.addTab(name, OBJ_VAR, ft, ref, 1, offset++);
+            }
+        }
+    }
+
+    symTab.exitScope();
+    lastTypeRef = blockIdx;
+    return T_RECORD;
 }
