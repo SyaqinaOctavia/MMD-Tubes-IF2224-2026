@@ -12,6 +12,7 @@ class SemanticAnalyzer {
 private:
     SymbolTable& symTab;
     int errorCount;
+    int lastTypeRef;
 
     const int T_NONE = 0;
     const int T_INTEGER = 1;
@@ -34,7 +35,7 @@ private:
     }
 
 public:
-    SemanticAnalyzer(SymbolTable& st) : symTab(st), errorCount(0) {}
+    SemanticAnalyzer(SymbolTable& st) : lastTypeRef(0), symTab(st), errorCount(0) {}
     bool analyze(std::shared_ptr<ASTNode> root) {
         errorCount = 0;
         if (!root) return false;

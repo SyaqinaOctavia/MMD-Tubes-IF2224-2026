@@ -92,3 +92,40 @@ void SemanticAnalyzer::visitConstDecl(std::shared_ptr<ConstDeclNode> node) {
         catch (...) {}
     }
 }
+
+void SemanticAnalyzer::visitTypeDecl(std::shared_ptr<TypeDeclNode> node) {
+    if (!node) return;
+    std::string name = node->getName();
+
+    if (symTab.searchCurrentScope(name) >= 0) {
+        semanticError("Redeclaration of type '" + node->getName() + "'");
+        return;
+    }
+
+    lastTypeRef = 0;
+    int t   = visitType(node->getTypeSpec());
+    int ref = lastTypeRef;
+
+    symTab.addTab(name, OBJ_TYPE, t, ref, 1, 0);
+}
+
+void SemanticAnalyzer::visitVarDecl(std::shared_ptr<VarDeclNode> node) {
+    if (!node) return;
+    lastTypeRef = 0;
+    int t   = visitType(node->getType());
+    int ref = lastTypeRef;
+
+    for (const auto& rawName : node->getNames()) {
+        std::string name = rawName;
+
+        if (symTab.searchCurrentScope(name) >= 0) {
+            semanticError("Redeclaration of variable '" + rawName + "' in current scope");
+            continue;
+        }
+
+        int blockIdx = symTab.getCurrentBlock();
+        int vsze = symTab.getBlockTab(blockIdx).vsze;
+        symTab.addTab(name, OBJ_VAR, t, ref, 1, vsze);
+        symTab.getBlockTab(blockIdx).vsze++;
+    }
+}
