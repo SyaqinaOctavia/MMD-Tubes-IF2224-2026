@@ -36,6 +36,18 @@ private:
     }
 
     std::unordered_map<void*, int> nodeType;
+    const std::string BRANCH = "\u251C\u2500 ";   // ├─
+    const std::string CORNER = "\u2514\u2500 ";   // └─
+    const std::string PIPE   = "\u2502  ";        // │
+    const std::string SPACE  = "   ";
+    std::string conn(bool isLast)  const {
+        if(isLast) return CORNER;
+        return BRANCH;
+    }
+    std::string ext (bool isLast)  const {
+        if(isLast) return SPACE;
+        return PIPE;  
+    }
 
 public:
     SemanticAnalyzer(SymbolTable& st) : lastTypeRef(0), symTab(st), errorCount(0) {}
@@ -107,4 +119,6 @@ private:
         auto it = nodeType.find(ptr);
         return it != nodeType.end() ? it->second : T_NONE;
     }
+    std::string SemanticAnalyzer::annotateExpr(std::shared_ptr<ExprNode> node) const;
+    void SemanticAnalyzer::printExpr(std::shared_ptr<ExprNode> node, std::ostream& out, const std::string& prefix, bool isLast) const ;
 };

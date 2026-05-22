@@ -688,3 +688,70 @@ std::string SemanticAnalyzer::annotateExpr(std::shared_ptr<ExprNode> node) const
     }
     return ann;
 }
+
+void SemanticAnalyzer::printExpr(std::shared_ptr<ExprNode> node, std::ostream& out, const std::string& prefix, bool isLast) const {
+    if (!node) return;
+    out << prefix << conn(isLast);
+    std::string next = prefix + ext(isLast);
+
+    switch (node->getASTType()) {
+        case ASTType::LiteralNode: {
+            auto lit = std::dynamic_pointer_cast<LiteralNode>(node);
+            out << "Literal(" << lit->getValue() << ")"
+                << " \u2192 type:" << typeToString(getCachedType(node.get())) << "\n";
+            break;
+        }
+        case ASTType::VarRefNode: {
+            auto vr = std::dynamic_pointer_cast<VarRefNode>(node);
+            int idx = symTab.searchTab(vr->getName());
+            out << "Var('" << vr->getName() << "')";
+            if (idx >= 0)
+                out << " \u2192 tab_idx:" << idx
+                    << ", type:" << typeToString(symTab.getTab(idx).type)
+                    << ", lev:" << symTab.getTab(idx).lev;
+            out << "\n";
+            break;
+        }
+        case ASTType::BinaryOpNode: {
+            auto bin = std::dynamic_pointer_cast<BinaryOpNode>(node);
+            out << "BinaryOp('" << bin->getOp() << "')"
+                << " \u2192 type:" << typeToString(getCachedType(node.get())) << "\n";
+            printExpr(bin->getLeft(),  out, next, false);
+            printExpr(bin->getRight(), out, next, true);
+            break;
+        }
+        case ASTType::UnaryOpNode: {
+            auto un = std::dynamic_pointer_cast<UnaryOpNode>(node);
+            out << "UnaryOp('" << un->getOp() << "')"
+                << " \u2192 type:" << typeToString(getCachedType(node.get())) << "\n";
+            printExpr(un->getOperand(), out, next, true);
+            break;
+        }
+        case ASTType::CallNode: {
+            auto call = std::dynamic_pointer_cast<CallNode>(node);
+            out << "Call('" << call->getName() << "')"
+                << " \u2192 type:" << typeToString(getCachedType(node.get())) << "\n";
+            auto args = call->getArgs();
+            for (size_t i = 0; i < args.size(); ++i)
+                printExpr(args[i], out, next, i + 1 == args.size());
+            break;
+        }
+        case ASTType::ArrayAccessNode: {
+            auto aa = std::dynamic_pointer_cast<ArrayAccessNode>(node);
+            out << "ArrayAccess"
+                << " \u2192 type:" << typeToString(getCachedType(node.get())) << "\n";
+            printExpr(aa->getArray(), out, next, false);
+            printExpr(aa->getIndex(), out, next, true);
+            break;
+        }
+        case ASTType::FieldAccessNode: {
+            auto fa = std::dynamic_pointer_cast<FieldAccessNode>(node);
+            out << "FieldAccess('" << fa->getFieldName() << "')"
+                << " \u2192 type:" << typeToString(getCachedType(node.get())) << "\n";
+            printExpr(fa->getRecord(), out, next, true);
+            break;
+        }
+        default:
+            out << "Expr\n"; break;
+    }
+}
