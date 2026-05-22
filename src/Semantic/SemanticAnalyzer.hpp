@@ -53,6 +53,11 @@ public:
     }
 
     int getErrorCount() const { return errorCount; }
+    int getCachedType(void* ptr) const {
+        auto it = nodeType.find(ptr);
+        return it != nodeType.end() ? it->second : T_NONE;
+    }
+    void cacheType(void* ptr, int t) { nodeType[ptr] = t; }
 
 private:
     // main visitors

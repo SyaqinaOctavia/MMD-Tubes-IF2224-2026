@@ -38,6 +38,7 @@ int SemanticAnalyzer::visitExpr(std::shared_ptr<ExprNode> node) {
         case ASTType::FieldAccessNode: t = visitFieldAccess(std::dynamic_pointer_cast<FieldAccessNode>(node)); break;
         default: break;
     }
+    cacheType(node.get(), t);
     return t;
 }
 
@@ -675,7 +676,7 @@ std::string SemanticAnalyzer::typeToString(int typeCode) const {
 
 std::string SemanticAnalyzer::annotateExpr(std::shared_ptr<ExprNode> node) const {
     if (!node) return "";
-    int t = getCachedType(node.get());
+    int t =   getCachedType(node.get());
     std::string ann = " \u2192 type:" + typeToString(t); // "→ type:…"
 
     if (node->getASTType() == ASTType::VarRefNode) {
