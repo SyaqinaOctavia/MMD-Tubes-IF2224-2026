@@ -306,3 +306,18 @@ void SemanticAnalyzer::visitCallStmt(std::shared_ptr<CallStmtNode> node) {
     if (!node || !node->getCall()) return;
     visitCall(node->getCall());
 }
+
+// ========================== EXPRESSION VISITORS ==================================
+
+int SemanticAnalyzer::visitLiteral(std::shared_ptr<LiteralNode> node) {
+    if (!node) return T_NONE;
+    int t = T_NONE;
+    switch (node->getKind()) {
+        case LiteralKind::Int : t = T_INTEGER; break;
+        case LiteralKind::Real : t = T_REAL; break;
+        case LiteralKind::Char : t = T_CHAR; break;
+        case LiteralKind::String : t = T_STRING; break;
+        case LiteralKind::Bool : t = T_BOOLEAN; break;
+    }
+    return t;
+}
