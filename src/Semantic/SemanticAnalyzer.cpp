@@ -650,11 +650,25 @@ bool SemanticAnalyzer::isCompatible(int type1, int type2) const {
 }
 
 // T2 is assignment-compatible with T1 when:
-//   (a) they are compatible or
+//   (a) they are compatible
 //   (b) T1 is Real and T2 is Integer (widening).
 bool SemanticAnalyzer::isAssignmentCompatible(int t1, int t2) const {
     if (t1 == T_NONE || t2 == T_NONE) return true;
     if (t1 == t2) return true;
     if (t1 == T_REAL && t2 == T_INTEGER) return true;
     return isCompatible(t1, t2);
+}
+
+std::string SemanticAnalyzer::typeToString(int typeCode) const { 
+    switch (typeCode) {
+        case T_NONE:    return "none";
+        case T_INTEGER: return "integer";
+        case T_REAL:    return "real";
+        case T_BOOLEAN: return "boolean";
+        case T_CHAR:    return "char";
+        case T_ARRAY:   return "array";
+        case T_RECORD:  return "record";
+        case T_STRING:  return "string";
+        default:        return "unknown(" + std::to_string(typeCode) + ")";
+    }
 }
