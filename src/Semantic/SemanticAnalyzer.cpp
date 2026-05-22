@@ -225,3 +225,17 @@ void SemanticAnalyzer::visitFuncDecl(std::shared_ptr<FuncDeclNode> node) {
 
     symTab.exitScope();
 }
+
+// ========================== STATEMENT VISITORS ==================================
+
+void SemanticAnalyzer::visitAssign(std::shared_ptr<AssignNode> node) {
+    if (!node) return;
+    int lhsType = visitExpr(node->getTarget());
+    int rhsType = visitExpr(node->getValue());
+
+    if (lhsType == T_NONE || rhsType == T_NONE) return;
+
+    if (!isAssignmentCompatible(lhsType, rhsType))
+        semanticError("Assignment incompatible: cannot assign "
+                      + typeToString(rhsType) + " to " + typeToString(lhsType));
+}
