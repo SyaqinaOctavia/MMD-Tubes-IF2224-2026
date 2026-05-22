@@ -45,6 +45,8 @@ enum class LiteralKind { Int, Real, Bool, Char, String };
 class ASTNode {
 protected:
     ASTType nodeType;
+public:
+    ASTType getASTType() { return nodeType; }
 };
 
 class ExprNode : public ASTNode {
