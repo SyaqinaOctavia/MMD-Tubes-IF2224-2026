@@ -24,3 +24,32 @@ void SemanticAnalyzer::visit(std::shared_ptr<ASTNode> node) {
         default: break;
     }
 }
+
+int SemanticAnalyzer::visitExpr(std::shared_ptr<ExprNode> node) {
+    if (!node) return T_NONE;
+    int t = T_NONE;
+    switch (node->getASTType()) {
+        case ASTType::LiteralNode:     t = visitLiteral    (std::dynamic_pointer_cast<LiteralNode>    (node)); break;
+        case ASTType::VarRefNode:      t = visitVarRef     (std::dynamic_pointer_cast<VarRefNode>     (node)); break;
+        case ASTType::BinaryOpNode:    t = visitBinaryOp   (std::dynamic_pointer_cast<BinaryOpNode>   (node)); break;
+        case ASTType::UnaryOpNode:     t = visitUnaryOp    (std::dynamic_pointer_cast<UnaryOpNode>    (node)); break;
+        case ASTType::CallNode:        t = visitCall       (std::dynamic_pointer_cast<CallNode>       (node)); break;
+        case ASTType::ArrayAccessNode: t = visitArrayAccess(std::dynamic_pointer_cast<ArrayAccessNode>(node)); break;
+        case ASTType::FieldAccessNode: t = visitFieldAccess(std::dynamic_pointer_cast<FieldAccessNode>(node)); break;
+        default: break;
+    }
+    return t;
+}
+
+int SemanticAnalyzer::visitType(std::shared_ptr<TypeNode> node) {
+    if (!node) return T_NONE;
+    switch (node->getKind()) {
+        case TypeNode::Kind::Simple:     return visitSimpleType(std::dynamic_pointer_cast<SimpleTypeNode>(node));
+        case TypeNode::Kind::Array:      return visitArrayType (std::dynamic_pointer_cast<ArrayTypeNode> (node));
+        case TypeNode::Kind::Enumerated: return visitEnumType  (std::dynamic_pointer_cast<EnumTypeNode>  (node));
+        case TypeNode::Kind::Range:      return visitRangeType (std::dynamic_pointer_cast<RangeTypeNode> (node));
+        case TypeNode::Kind::Record:     return visitFieldType (std::dynamic_pointer_cast<FieldTypeNode> (node));
+        default: return T_NONE;
+    }
+}
+
