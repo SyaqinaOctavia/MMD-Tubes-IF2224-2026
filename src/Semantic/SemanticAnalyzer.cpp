@@ -637,3 +637,24 @@ int SemanticAnalyzer::visitFieldType(std::shared_ptr<FieldTypeNode> node) {
     lastTypeRef = blockIdx;
     return T_RECORD;
 }
+
+// ================================= HELPER FUNCTIONS ==================================
+
+// Two types are compatible if they are the same, or one is a numeric widening of the other.
+bool SemanticAnalyzer::isCompatible(int type1, int type2) const {
+    if (type1 == T_NONE || type2 == T_NONE) return true; // already reported, don't cascade
+    if (type1 == type2) return true;
+    if ((type1 == T_INTEGER && type2 == T_REAL) || (type1 == T_REAL && type2 == T_INTEGER))
+        return true;
+    return false;
+}
+
+// T2 is assignment-compatible with T1 when:
+//   (a) they are compatible or
+//   (b) T1 is Real and T2 is Integer (widening).
+bool SemanticAnalyzer::isAssignmentCompatible(int t1, int t2) const {
+    if (t1 == T_NONE || t2 == T_NONE) return true;
+    if (t1 == t2) return true;
+    if (t1 == T_REAL && t2 == T_INTEGER) return true;
+    return isCompatible(t1, t2);
+}

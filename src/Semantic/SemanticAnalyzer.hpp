@@ -92,7 +92,7 @@ private:
     int visitFieldType(std::shared_ptr<FieldTypeNode> node);
 
     // helpers
-    bool isCompatible(int type1, int type2);
-    bool isAssignmentCompatible(int targetType, int valueType);
+    bool isCompatible(int type1, int type2) const ;
+    bool isAssignmentCompatible(int targetType, int valueType) const;
     std::string typeToString(int typeCode);
 };
