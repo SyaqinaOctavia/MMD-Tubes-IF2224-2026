@@ -755,190 +755,220 @@ void SemanticAnalyzer::printExpr(std::shared_ptr<ExprNode> node, std::ostream& o
             out << "Expr\n"; break;
         }
     }
-    void SemanticAnalyzer::printStmt(std::shared_ptr<StmtNode> node, std::ostream& out, const std::string& prefix, bool isLast) const {
-        if (!node) return;
-        out << prefix << conn(isLast);
-        std::string next = prefix + ext(isLast);
 
-        switch (node->getASTType()) {
-            case ASTType::AssignNode: {
-                auto as = std::dynamic_pointer_cast<AssignNode>(node);
-                out << "Assign \u2192 type:void\n";
-                printExpr(as->getTarget(), out, next, false);
-                printExpr(as->getValue(),  out, next, true);
-                break;
-            }
-            case ASTType::IfNode: {
-                auto ifn = std::dynamic_pointer_cast<IfNode>(node);
-                out << "If\n";
-                out << next << BRANCH << "condition\n";
-                printExpr(ifn->getCondition(), out, next + PIPE, true);
-                bool hasElse = (ifn->getElseBlock() != nullptr);
-                out << next << (hasElse ? BRANCH : CORNER) << "then\n";
-                printStmt(ifn->getThenBlock(), out, next + (hasElse ? PIPE : SPACE), true);
-                if (hasElse) {
-                    out << next << CORNER << "else\n";
-                    printStmt(ifn->getElseBlock(), out, next + SPACE, true);
-                }
-                break;
-            }
-            case ASTType::WhileNode: {
-                auto wn = std::dynamic_pointer_cast<WhileNode>(node);
-                out << "While\n";
-                out << next << BRANCH << "condition\n";
-                printExpr(wn->getCondition(), out, next + PIPE, true);
-                out << next << CORNER << "body\n";
-                printStmt(wn->getBody(), out, next + SPACE, true);
-                break;
-            }
-            case ASTType::ForNode: {
-                auto fn = std::dynamic_pointer_cast<ForNode>(node);
-                out << "For('" << fn->getMovingVar() << "' "
-                    << (fn->goesUp() ? "to" : "downto") << ")\n";
-                out << next << BRANCH << "start\n";
-                printExpr(fn->getStartPoint(), out, next + PIPE, true);
-                out << next << BRANCH << "end\n";
-                printExpr(fn->getEndPoint(), out, next + PIPE, true);
-                out << next << CORNER << "body\n";
-                printStmt(fn->getBody(), out, next + SPACE, true);
-                break;
-            }
-            case ASTType::RepeatNode: {
-                auto rn = std::dynamic_pointer_cast<RepeatNode>(node);
-                out << "Repeat\n";
-                out << next << BRANCH << "body\n";
-                printStmt(rn->getBody(), out, next + PIPE, true);
-                out << next << CORNER << "until\n";
-                printExpr(rn->getUntilCondition(), out, next + SPACE, true);
-                break;
-            }
-            case ASTType::CaseNode: {
-                auto cn = std::dynamic_pointer_cast<CaseNode>(node);
-                out << "Case\n";
-                out << next << BRANCH << "key\n";
-                printExpr(cn->getKey(), out, next + PIPE, true);
-                auto cases = cn->getCases();
-                for (size_t i = 0; i < cases.size(); ++i) {
-                    bool last = (i + 1 == cases.size());
-                    out << next << conn(last) << "case " << i << "\n";
-                    auto& [labels, stmt] = cases[i];
-                    std::string cn2 = next + ext(last);
-                    for (size_t j = 0; j < labels.size(); ++j)
-                        printExpr(labels[j], out, cn2, false);
-                    printStmt(stmt, out, cn2, true);
-                }
-                break;
-            }
-            case ASTType::CompoundNode: {
-                auto comp = std::dynamic_pointer_cast<CompoundNode>(node);
-                auto stmts = comp->getStatements();
-                out << "Compound(" << stmts.size() << " stmts)\n";
-                for (size_t i = 0; i < stmts.size(); ++i)
-                    printStmt(stmts[i], out, next, i + 1 == stmts.size());
-                break;
-            }
-            case ASTType::CallStmtNode: {
-                auto cs = std::dynamic_pointer_cast<CallStmtNode>(node);
-                auto call = cs->getCall();
-                out << "CallStmt('" << call->getName() << "')\n";
-                auto args = call->getArgs();
-                for (size_t i = 0; i < args.size(); ++i)
-                    printExpr(args[i], out, next, i + 1 == args.size());
-                break;
-            }
-            default:
-                out << "Stmt\n"; break;
+void SemanticAnalyzer::printStmt(std::shared_ptr<StmtNode> node, std::ostream& out, const std::string& prefix, bool isLast) const {
+    if (!node) return;
+    out << prefix << conn(isLast);
+    std::string next = prefix + ext(isLast);
+
+    switch (node->getASTType()) {
+        case ASTType::AssignNode: {
+            auto as = std::dynamic_pointer_cast<AssignNode>(node);
+            out << "Assign \u2192 type:void\n";
+            printExpr(as->getTarget(), out, next, false);
+            printExpr(as->getValue(),  out, next, true);
+            break;
         }
+        case ASTType::IfNode: {
+            auto ifn = std::dynamic_pointer_cast<IfNode>(node);
+            out << "If\n";
+            out << next << BRANCH << "condition\n";
+            printExpr(ifn->getCondition(), out, next + PIPE, true);
+            bool hasElse = (ifn->getElseBlock() != nullptr);
+            out << next << (hasElse ? BRANCH : CORNER) << "then\n";
+            printStmt(ifn->getThenBlock(), out, next + (hasElse ? PIPE : SPACE), true);
+            if (hasElse) {
+                out << next << CORNER << "else\n";
+                printStmt(ifn->getElseBlock(), out, next + SPACE, true);
+            }
+            break;
+        }
+        case ASTType::WhileNode: {
+            auto wn = std::dynamic_pointer_cast<WhileNode>(node);
+            out << "While\n";
+            out << next << BRANCH << "condition\n";
+            printExpr(wn->getCondition(), out, next + PIPE, true);
+            out << next << CORNER << "body\n";
+            printStmt(wn->getBody(), out, next + SPACE, true);
+            break;
+        }
+        case ASTType::ForNode: {
+            auto fn = std::dynamic_pointer_cast<ForNode>(node);
+            out << "For('" << fn->getMovingVar() << "' "
+                << (fn->goesUp() ? "to" : "downto") << ")\n";
+            out << next << BRANCH << "start\n";
+            printExpr(fn->getStartPoint(), out, next + PIPE, true);
+            out << next << BRANCH << "end\n";
+            printExpr(fn->getEndPoint(), out, next + PIPE, true);
+            out << next << CORNER << "body\n";
+            printStmt(fn->getBody(), out, next + SPACE, true);
+            break;
+        }
+        case ASTType::RepeatNode: {
+            auto rn = std::dynamic_pointer_cast<RepeatNode>(node);
+            out << "Repeat\n";
+            out << next << BRANCH << "body\n";
+            printStmt(rn->getBody(), out, next + PIPE, true);
+            out << next << CORNER << "until\n";
+            printExpr(rn->getUntilCondition(), out, next + SPACE, true);
+            break;
+        }
+        case ASTType::CaseNode: {
+            auto cn = std::dynamic_pointer_cast<CaseNode>(node);
+            out << "Case\n";
+            out << next << BRANCH << "key\n";
+            printExpr(cn->getKey(), out, next + PIPE, true);
+            auto cases = cn->getCases();
+            for (size_t i = 0; i < cases.size(); ++i) {
+                bool last = (i + 1 == cases.size());
+                out << next << conn(last) << "case " << i << "\n";
+                auto& [labels, stmt] = cases[i];
+                std::string cn2 = next + ext(last);
+                for (size_t j = 0; j < labels.size(); ++j)
+                    printExpr(labels[j], out, cn2, false);
+                printStmt(stmt, out, cn2, true);
+            }
+            break;
+        }
+        case ASTType::CompoundNode: {
+            auto comp = std::dynamic_pointer_cast<CompoundNode>(node);
+            auto stmts = comp->getStatements();
+            out << "Compound(" << stmts.size() << " stmts)\n";
+            for (size_t i = 0; i < stmts.size(); ++i)
+                printStmt(stmts[i], out, next, i + 1 == stmts.size());
+            break;
+        }
+        case ASTType::CallStmtNode: {
+            auto cs = std::dynamic_pointer_cast<CallStmtNode>(node);
+            auto call = cs->getCall();
+            out << "CallStmt('" << call->getName() << "')\n";
+            auto args = call->getArgs();
+            for (size_t i = 0; i < args.size(); ++i)
+                printExpr(args[i], out, next, i + 1 == args.size());
+            break;
+        }
+        default:
+            out << "Stmt\n"; break;
     }
+}
 
-    void SemanticAnalyzer::printNode(std::shared_ptr<ASTNode> node, std::ostream& out,
-                                    const std::string& prefix, bool isLast) const {
-        if (!node) return;
-        // Only called for DeclNode subtypes from printDecoratedAST
-        if (auto dn = std::dynamic_pointer_cast<DeclNode>(node)) {
-            switch (dn->getKind()) {
-                case DeclNode::Kind::Var: {
-                    auto vd = std::dynamic_pointer_cast<VarDeclNode>(dn);
-                    for (const auto& n : vd->getNames()) {
-                        int idx = symTab.searchTab(n);
-                        out << prefix << conn(isLast)
-                            << "VarDecl('" << n << "')";
-                        if (idx >= 0)
-                            out << " \u2192 tab_idx:" << idx
-                                << ", type:" << typeToString(symTab.getTab(idx).type)
-                                << ", lev:" << symTab.getTab(idx).lev;
-                        out << "\n";
-                    }
-                    break;
-                }
-                case DeclNode::Kind::Const: {
-                    auto cd = std::dynamic_pointer_cast<ConstDeclNode>(dn);
-                    int idx = symTab.searchTab(cd->getName());
+void SemanticAnalyzer::printNode(std::shared_ptr<ASTNode> node, std::ostream& out, const std::string& prefix, bool isLast) const {
+    if (!node) return;
+    // Only called for DeclNode subtypes from printDecoratedAST
+    if (auto dn = std::dynamic_pointer_cast<DeclNode>(node)) {
+        switch (dn->getKind()) {
+            case DeclNode::Kind::Var: {
+                auto vd = std::dynamic_pointer_cast<VarDeclNode>(dn);
+                for (const auto& n : vd->getNames()) {
+                    int idx = symTab.searchTab(n);
                     out << prefix << conn(isLast)
-                        << "ConstDecl('" << cd->getName() << "')";
+                        << "VarDecl('" << n << "')";
                     if (idx >= 0)
                         out << " \u2192 tab_idx:" << idx
                             << ", type:" << typeToString(symTab.getTab(idx).type)
-                            << ", val:" << symTab.getTab(idx).const_value;
+                            << ", lev:" << symTab.getTab(idx).lev;
                     out << "\n";
-                    break;
                 }
-                case DeclNode::Kind::Type: {
-                    auto td = std::dynamic_pointer_cast<TypeDeclNode>(dn);
-                    int idx = symTab.searchTab(td->getName());
-                    out << prefix << conn(isLast)
-                        << "TypeDecl('" << td->getName() << "')";
-                    if (idx >= 0)
-                        out << " \u2192 tab_idx:" << idx
-                            << ", type:" << typeToString(symTab.getTab(idx).type);
-                    out << "\n";
-                    break;
+                break;
+            }
+            case DeclNode::Kind::Const: {
+                auto cd = std::dynamic_pointer_cast<ConstDeclNode>(dn);
+                int idx = symTab.searchTab(cd->getName());
+                out << prefix << conn(isLast)
+                    << "ConstDecl('" << cd->getName() << "')";
+                if (idx >= 0)
+                    out << " \u2192 tab_idx:" << idx
+                        << ", type:" << typeToString(symTab.getTab(idx).type)
+                        << ", val:" << symTab.getTab(idx).const_value;
+                out << "\n";
+                break;
+            }
+            case DeclNode::Kind::Type: {
+                auto td = std::dynamic_pointer_cast<TypeDeclNode>(dn);
+                int idx = symTab.searchTab(td->getName());
+                out << prefix << conn(isLast)
+                    << "TypeDecl('" << td->getName() << "')";
+                if (idx >= 0)
+                    out << " \u2192 tab_idx:" << idx
+                        << ", type:" << typeToString(symTab.getTab(idx).type);
+                out << "\n";
+                break;
+            }
+            case DeclNode::Kind::Proc: {
+                auto pd = std::dynamic_pointer_cast<ProcDeclNode>(dn);
+                int idx = symTab.searchTab(pd->getName());
+                out << prefix << conn(isLast)
+                    << "ProcDecl('" << pd->getName() << "')";
+                if (idx >= 0)
+                    out << " \u2192 tab_idx:" << idx
+                        << ", ref(btab):" << symTab.getTab(idx).ref;
+                out << "\n";
+                // Print params
+                std::string next = prefix + ext(isLast);
+                for (size_t i = 0; i < pd->getParams().size(); ++i) {
+                    auto& p = pd->getParams()[i];
+                    bool last = (i + 1 == pd->getParams().size()) && pd->getLocalVar().empty() && !pd->getBody();
+                    out << next << conn(last) << "Param(";
+                    for (const auto& n : p->getNames()) out << n << " ";
+                    out << ")\n";
                 }
-                case DeclNode::Kind::Proc: {
-                    auto pd = std::dynamic_pointer_cast<ProcDeclNode>(dn);
-                    int idx = symTab.searchTab(pd->getName());
-                    out << prefix << conn(isLast)
-                        << "ProcDecl('" << pd->getName() << "')";
-                    if (idx >= 0)
-                        out << " \u2192 tab_idx:" << idx
-                            << ", ref(btab):" << symTab.getTab(idx).ref;
-                    out << "\n";
-                    // Print params
-                    std::string next = prefix + ext(isLast);
-                    for (size_t i = 0; i < pd->getParams().size(); ++i) {
-                        auto& p = pd->getParams()[i];
-                        bool last = (i + 1 == pd->getParams().size()) && pd->getLocalVar().empty() && !pd->getBody();
-                        out << next << conn(last) << "Param(";
-                        for (const auto& n : p->getNames()) out << n << " ";
-                        out << ")\n";
-                    }
-                    // Print local decls
-                    for (size_t i = 0; i < pd->getLocalVar().size(); ++i)
-                        printNode(pd->getLocalVar()[i], out, next, i + 1 == pd->getLocalVar().size() && !pd->getBody());
-                    // Print body
-                    if (pd->getBody())
-                        printStmt(pd->getBody(), out, next, true);
-                    break;
-                }
-                case DeclNode::Kind::Func: {
-                    auto fd = std::dynamic_pointer_cast<FuncDeclNode>(dn);
-                    int idx = symTab.searchTab(fd->getName());
-                    out << prefix << conn(isLast)
-                        << "FuncDecl('" << fd->getName() << "')";
-                    if (idx >= 0)
-                        out << " \u2192 tab_idx:" << idx
-                            << ", returnType:" << typeToString(symTab.getTab(idx).type)
-                            << ", ref(btab):" << symTab.getTab(idx).ref;
-                    out << "\n";
-                    std::string next = prefix + ext(isLast);
-                    for (size_t i = 0; i < fd->getLocalVar().size(); ++i)
-                        printNode(fd->getLocalVar()[i], out, next, i + 1 == fd->getLocalVar().size() && !fd->getBody());
-                    if (fd->getBody())
-                        printStmt(fd->getBody(), out, next, true);
-                    break;
-                }
-                default:
-                    out << prefix << conn(isLast) << "Decl\n";
+                // Print local decls
+                for (size_t i = 0; i < pd->getLocalVar().size(); ++i)
+                    printNode(pd->getLocalVar()[i], out, next, i + 1 == pd->getLocalVar().size() && !pd->getBody());
+                // Print body
+                if (pd->getBody())
+                    printStmt(pd->getBody(), out, next, true);
+                break;
+            }
+            case DeclNode::Kind::Func: {
+                auto fd = std::dynamic_pointer_cast<FuncDeclNode>(dn);
+                int idx = symTab.searchTab(fd->getName());
+                out << prefix << conn(isLast)
+                    << "FuncDecl('" << fd->getName() << "')";
+                if (idx >= 0)
+                    out << " \u2192 tab_idx:" << idx
+                        << ", returnType:" << typeToString(symTab.getTab(idx).type)
+                        << ", ref(btab):" << symTab.getTab(idx).ref;
+                out << "\n";
+                std::string next = prefix + ext(isLast);
+                for (size_t i = 0; i < fd->getLocalVar().size(); ++i)
+                    printNode(fd->getLocalVar()[i], out, next, i + 1 == fd->getLocalVar().size() && !fd->getBody());
+                if (fd->getBody())
+                    printStmt(fd->getBody(), out, next, true);
+                break;
+            }
+            default:
+                out << prefix << conn(isLast) << "Decl\n";
         }
+    }
+}
+
+void SemanticAnalyzer::printDecoratedAST(std::shared_ptr<ASTNode> root, std::ostream& out) const {
+    if (!root) { out << "(empty AST)\n"; return; }
+
+    auto prog = std::dynamic_pointer_cast<ProgramNode>(root);
+    if (!prog) { out << "(not a ProgramNode)\n"; return; }
+
+    out << "\n=== DECORATED ABSTRACT SYNTAX TREE ===\n";
+    out << "ProgramNode(name: '" << prog->getName() << "')\n";
+
+    bool hasDecls = !prog->getDeclarations().empty();
+    bool hasBody  = (prog->getMain() != nullptr);
+
+    if (hasDecls) {
+        out << (hasBody ? BRANCH : CORNER) << "Declarations\n";
+        std::string declPfx = hasBody ? PIPE : SPACE;
+        auto decls = prog->getDeclarations();
+        for (size_t i = 0; i < decls.size(); ++i)
+            printNode(decls[i], out, declPfx, i + 1 == decls.size());
+    }
+
+    if (hasBody) {
+        // Find the btab index for the main block
+        // It's btab[1] if there's only one nested block, otherwise the last one
+        out << CORNER << "Block (main compound)\n";
+        auto stmts = prog->getMain()->getStatements();
+        for (size_t i = 0; i < stmts.size(); ++i)
+            printStmt(stmts[i], out, SPACE, i + 1 == stmts.size());
     }
 }

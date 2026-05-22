@@ -123,4 +123,5 @@ private:
     void printExpr(std::shared_ptr<ExprNode> node, std::ostream& out, const std::string& prefix, bool isLast) const;
     void printStmt(std::shared_ptr<StmtNode> node, std::ostream& out, const std::string& prefix, bool isLast) const;
     void printNode(std::shared_ptr<ASTNode> node, std::ostream& out, const std::string& prefix, bool isLast) const;
+    void printDecoratedAST(std::shared_ptr<ASTNode> root, std::ostream& out) const;
 };
