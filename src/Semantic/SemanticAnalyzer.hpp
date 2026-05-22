@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <stdexcept>
+#include <unordered_map>
 #include "AST.hpp"
 #include "SymbolTable.hpp"
 
@@ -33,6 +34,8 @@ private:
         std::cerr << "Semantic Error: " << message << std::endl;
         errorCount++;
     }
+
+    std::unordered_map<void*, int> nodeType;
 
 public:
     SemanticAnalyzer(SymbolTable& st) : lastTypeRef(0), symTab(st), errorCount(0) {}
@@ -95,4 +98,8 @@ private:
     bool isCompatible(int type1, int type2) const;
     bool isAssignmentCompatible(int targetType, int valueType) const;
     std::string typeToString(int typeCode) const;
+    int  getCachedType(void* ptr) const {
+        auto it = nodeType.find(ptr);
+        return it != nodeType.end() ? it->second : T_NONE;
+    }
 };
