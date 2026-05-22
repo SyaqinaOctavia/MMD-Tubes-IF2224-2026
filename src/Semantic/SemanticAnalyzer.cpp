@@ -53,3 +53,42 @@ int SemanticAnalyzer::visitType(std::shared_ptr<TypeNode> node) {
     }
 }
 
+void SemanticAnalyzer::visitProgram(std::shared_ptr<ProgramNode> node) {
+    if (!node) return;
+    std::string name = node->getName();
+    symTab.addTab(name, OBJ_PROC, T_NONE, 0, 1, 0);
+
+    for (auto& decl : node->getDeclarations())
+        visit(decl);
+
+    if (node->getMain())
+        visitCompound(node->getMain());
+}
+
+void SemanticAnalyzer::visitConstDecl(std::shared_ptr<ConstDeclNode> node) {
+    if (!node) return;
+    std::string name = node->getName();
+
+    // Check for redeclaration
+    if (symTab.searchCurrentScope(name) >= 0) {
+        semanticError("Redeclaration of constant '" + node->getName() + "'");
+        return;
+    }
+
+    // Infer type
+    int t = visitExpr(node->getValue());
+
+    // Extract string representation for const_value
+    std::string cval;
+    if (auto lit = std::dynamic_pointer_cast<LiteralNode>(node->getValue()))
+        cval = lit->getValue();
+
+    int idx = symTab.addTab(name, OBJ_CONST, t, 0, 1, 0);
+
+    // Store numeric value in adr
+    symTab.getTab(idx).const_value = cval;
+    if (t == T_INTEGER && !cval.empty()) {
+        try { symTab.getTab(idx).adr = std::stoi(cval); }
+        catch (...) {}
+    }
+}
