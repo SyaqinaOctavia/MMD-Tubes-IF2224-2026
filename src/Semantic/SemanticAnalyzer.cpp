@@ -129,3 +129,25 @@ void SemanticAnalyzer::visitVarDecl(std::shared_ptr<VarDeclNode> node) {
         symTab.getBlockTab(blockIdx).vsze++;
     }
 }
+
+void SemanticAnalyzer::visitParamDecl(std::shared_ptr<ParamDeclNode> node) {
+    if (!node) return;
+    lastTypeRef = 0;
+    int t   = visitType(node->getType());
+    int ref = lastTypeRef;
+    int nrm = node->isVarParam() ? 0 : 1; // 0=by-ref (var param), 1=by-value
+
+    for (const auto& rawName : node->getNames()) {
+        std::string name = rawName;
+
+        if (symTab.searchCurrentScope(name) >= 0) {
+            semanticError("Duplicate parameter name '" + rawName + "'");
+            continue;
+        }
+
+        int blockIdx = symTab.getCurrentBlock();
+        int psze = symTab.getBlockTab(blockIdx).psze;
+        symTab.addTab(name, OBJ_VAR, t, ref, nrm, psze);
+        symTab.getBlockTab(blockIdx).psze++;
+    }
+}
