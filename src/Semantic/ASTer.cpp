@@ -87,18 +87,30 @@ std::vector<std::shared_ptr<DeclNode>> ASTer::buildDeclNodes(std::shared_ptr<Tre
             case Symbol::CONST_DECLARATION:         {
                 auto constDecls = buildConstDeclNode(child);
                 declList.insert(declList.end(), constDecls.begin(), constDecls.end());
+                break;
             }
             case Symbol::TYPE_DECLARATION:          {
                 auto typeDecls = buildTypeDeclNode(child);
                 declList.insert(declList.end(), typeDecls.begin(), typeDecls.end());
+                break;
             }
             case Symbol::VAR_DECLARATION:           {
                 auto varDecls = buildVarDeclNode(child);
                 declList.insert(declList.end(), varDecls.begin(), varDecls.end());
+                break;
             }
             // case Symbol::PARAMETER_GROUP:           declList.push_back(buildParamDeclNode(child, false));
-            case Symbol::PROCEDURE_DECLARATION:     declList.push_back(buildProcDeclNode(child));
-            case Symbol::FUNCTION_DECLARATION:      declList.push_back(buildFuncDeclNode(child));
+            case Symbol::PROCEDURE_DECLARATION: {
+                auto procDecl = buildProcDeclNode(child);
+                if (procDecl) declList.push_back(procDecl);
+                break;
+            }
+            case Symbol::FUNCTION_DECLARATION: {
+                auto funcDecl = buildFuncDeclNode(child);
+                if (funcDecl) declList.push_back(funcDecl);
+                break;
+            }
+            default: break;
         }
     }
 }
@@ -228,14 +240,18 @@ std::shared_ptr<CallNode> ASTer::buildCallNode(std::shared_ptr<TreeNode> root) c
     if (!root) return nullptr;
     auto children = root->getChildren();
 
+    if (children.empty()) return nullptr;
     std::string name = children[0]->getValue();
     std::vector<std::shared_ptr<ExprNode>> args;
 
     // has argument list: ident + lparent + (expression + (comma + expression)*)? + rparent
-    if (children.size() > 1) {
-        for (auto& child : children) {
-            if (child->getNodeType() == Symbol::EXPRESSION) {
-                args.push_back(buildExprNode(child));
+    for (auto& child : children) {
+        if (child->getNodeType() == Symbol::EXPRESSION) {
+            args.push_back(buildExprNode(child));
+        } else if (child->getNodeType() == Symbol::PARAMETER_LIST) {
+            for (auto& grandchild : child->getChildren()) {
+                if (grandchild->getNodeType() == Symbol::EXPRESSION)
+                    args.push_back(buildExprNode(grandchild));
             }
         }
     }
