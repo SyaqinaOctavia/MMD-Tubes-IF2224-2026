@@ -559,3 +559,54 @@ int SemanticAnalyzer::visitArrayType(std::shared_ptr<ArrayTypeNode> node) {
     lastTypeRef = atIdx;
     return T_ARRAY;
 }
+
+int SemanticAnalyzer::visitEnumType(std::shared_ptr<EnumTypeNode> node) {
+    if (!node) return T_INTEGER;
+    int ordinal = 0;
+    for (const auto& val : node->getEnumValues()) {
+        std::string name = val;
+        if (symTab.searchCurrentScope(name) >= 0) {
+            semanticError("Duplicate enumeration value '" + val + "'");
+        } else {
+            int idx = symTab.addTab(name, OBJ_CONST, T_INTEGER, 0, 1, ordinal);
+            symTab.getTab(idx).const_value = val;
+            ordinal++;
+        }
+    }
+    return T_INTEGER;
+}
+
+int SemanticAnalyzer::visitRangeType(std::shared_ptr<RangeTypeNode> node) {
+    if (!node) return T_INTEGER;
+
+    int lowType  = visitExpr(node->getLow());
+    int highType = visitExpr(node->getHigh());
+
+    if (lowType == T_REAL || highType == T_REAL)
+        semanticError("Subrange type cannot use Real bounds");
+    if (lowType != T_NONE && highType != T_NONE && lowType != highType)
+        semanticError("Subrange bounds must have compatible types");
+
+    // Validate low <= high for integer literals
+    auto lowLit  = std::dynamic_pointer_cast<LiteralNode>(node->getLow());
+    auto highLit = std::dynamic_pointer_cast<LiteralNode>(node->getHigh());
+    if (lowLit && highLit
+     && lowLit->getKind()  == LiteralKind::Int
+     && highLit->getKind() == LiteralKind::Int) {
+        try {
+            int lo = std::stoi(lowLit->getValue());
+            int hi = std::stoi(highLit->getValue());
+            if (lo > hi)
+                semanticError("Subrange lower bound (" + std::to_string(lo) + ") cannot exceed upper bound (" + std::to_string(hi) + ")");
+        } catch (...) {}
+    }
+
+    // Record the range in atab so array builders can retrieve bounds
+    int lo = 0, hi = 0;
+    if (lowLit)  try { lo = std::stoi(lowLit->getValue());  } catch (...) {}
+    if (highLit) try { hi = std::stoi(highLit->getValue()); } catch (...) {}
+    int atIdx = symTab.addArray(lowType, lowType, 0, lo, hi);
+    lastTypeRef = atIdx;
+
+    return (lowType != T_NONE) ? lowType : T_INTEGER;
+}
