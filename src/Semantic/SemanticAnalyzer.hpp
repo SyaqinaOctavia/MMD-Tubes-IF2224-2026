@@ -14,20 +14,20 @@ private:
     int errorCount;
     int lastTypeRef;
 
-    const int T_NONE = 0;
-    const int T_INTEGER = 1;
-    const int T_REAL = 2;
-    const int T_BOOLEAN = 3;
-    const int T_CHAR = 4;
-    const int T_ARRAY = 5;
-    const int T_RECORD = 6;
-    const int T_STRING = 7;
+    static const int T_NONE = 0;
+    static const int T_INTEGER = 1;
+    static const int T_REAL = 2;
+    static const int T_BOOLEAN = 3;
+    static const int T_CHAR = 4;
+    static const int T_ARRAY = 5;
+    static const int T_RECORD = 6;
+    static const int T_STRING = 7;
 
-    const int OBJ_CONST = 1;
-    const int OBJ_VAR = 2;
-    const int OBJ_TYPE = 3;
-    const int OBJ_FUNC = 4;
-    const int OBJ_PROC = 5;
+    static const int OBJ_CONST = 1;
+    static const int OBJ_VAR = 2;
+    static const int OBJ_TYPE = 3;
+    static const int OBJ_FUNC = 4;
+    static const int OBJ_PROC = 5;
 
     void semanticError(const std::string& message) {
         std::cerr << "Semantic Error: " << message << std::endl;
@@ -94,4 +94,5 @@ private:
     // helpers
     bool isCompatible(int type1, int type2) const;
     bool isAssignmentCompatible(int targetType, int valueType) const;
+    std::string typeToString(int typeCode) const;
 };
