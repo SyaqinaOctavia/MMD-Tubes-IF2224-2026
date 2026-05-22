@@ -239,3 +239,11 @@ void SemanticAnalyzer::visitAssign(std::shared_ptr<AssignNode> node) {
         semanticError("Assignment incompatible: cannot assign "
                       + typeToString(rhsType) + " to " + typeToString(lhsType));
 }
+
+void SemanticAnalyzer::visitIf(std::shared_ptr<IfNode> node) {
+    if (!node) return;
+    int condType = visitExpr(node->getCondition());
+    if (condType != T_BOOLEAN && condType != T_NONE) semanticError("IF condition must be Boolean, got " + typeToString(condType));
+    visit(node->getThenBlock());
+    if (node->getElseBlock()) visit(node->getElseBlock());
+}
