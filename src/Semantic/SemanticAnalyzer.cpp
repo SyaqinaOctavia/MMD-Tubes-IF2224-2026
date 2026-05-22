@@ -151,3 +151,77 @@ void SemanticAnalyzer::visitParamDecl(std::shared_ptr<ParamDeclNode> node) {
         symTab.getBlockTab(blockIdx).psze++;
     }
 }
+
+
+void SemanticAnalyzer::visitProcDecl(std::shared_ptr<ProcDeclNode> node) {
+    if (!node) return;
+    std::string name = node->getName();
+
+    if (symTab.searchCurrentScope(name) >= 0) {
+        semanticError("Redeclaration of procedure '" + node->getName() + "'");
+        return;
+    }
+
+    // Add procedure to outer
+    int procTabIdx = symTab.addTab(name, OBJ_PROC, T_NONE, 0, 1, 0);
+
+    // Enter new scope for parameters and body
+    symTab.enterScope();
+    int blockIdx = symTab.getCurrentBlock();
+
+    symTab.getTab(procTabIdx).ref = blockIdx;
+
+    // Visit params
+    for (auto& param : node->getParams())
+        visitParamDecl(param);
+
+    // Record lpar = last parameter index in this block
+    symTab.getBlockTab(blockIdx).lpar = symTab.getBlockTab(blockIdx).last;
+
+    // Visit local declarations
+    for (auto& decl : node->getLocalVar())
+        visit(decl);
+
+    // Visit body
+    if (node->getBody())
+        visit(node->getBody());
+
+    symTab.exitScope();
+}
+
+void SemanticAnalyzer::visitFuncDecl(std::shared_ptr<FuncDeclNode> node) {
+    if (!node) return;
+    std::string name = node->getName();
+
+    if (symTab.searchCurrentScope(name) >= 0) {
+        semanticError("Redeclaration of function '" + node->getName() + "'");
+        return;
+    }
+
+    // Resolve return type
+    lastTypeRef = 0;
+    int retType = visitType(node->getReturnType());
+
+    // Add function to the outer scope
+    int funcTabIdx = symTab.addTab(name, OBJ_FUNC, retType, 0, 1, 0);
+
+    // Enter new scope for the function
+    symTab.enterScope();
+    int blockIdx = symTab.getCurrentBlock();
+    symTab.getTab(funcTabIdx).ref = blockIdx;
+
+    // Visit params
+    for (auto& param : node->getParams())
+        visitParamDecl(param);
+
+    symTab.getBlockTab(blockIdx).lpar = symTab.getBlockTab(blockIdx).last;
+
+    // Visit local declarations and body
+    for (auto& decl : node->getLocalVar())
+        visit(decl);
+
+    if (node->getBody())
+        visit(node->getBody());
+
+    symTab.exitScope();
+}
