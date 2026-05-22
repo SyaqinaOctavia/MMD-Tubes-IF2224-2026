@@ -415,3 +415,21 @@ int SemanticAnalyzer::visitBinaryOp(std::shared_ptr<BinaryOpNode> node) {
     semanticError("Unknown binary operator '" + op + "'");
     return T_NONE;
 }
+
+int SemanticAnalyzer::visitUnaryOp(std::shared_ptr<UnaryOpNode> node) {
+    if (!node) return T_NONE;
+    int t = visitExpr(node->getOperand());
+    const std::string& op = node->getOp();
+
+    if (op == "notsy") {
+        if (t != T_BOOLEAN && t != T_NONE)
+            semanticError("'not' requires Boolean operand, got " + typeToString(t));
+        return T_BOOLEAN;
+    }
+    if (op == "plus" || op == "minus") {
+        if (t != T_INTEGER && t != T_REAL && t != T_NONE)
+            semanticError("Unary '" + op + "' requires numeric operand, got " + typeToString(t));
+        return t;
+    }
+    return t;
+}
