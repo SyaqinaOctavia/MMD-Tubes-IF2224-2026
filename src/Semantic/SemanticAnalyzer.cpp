@@ -280,7 +280,7 @@ void SemanticAnalyzer::visitRepeat(std::shared_ptr<RepeatNode> node) {
 void SemanticAnalyzer::visitCase(std::shared_ptr<CaseNode> node) {
     if (!node) return;
     int keyType = visitExpr(node->getKey());
-    
+
     // Case key must be ordinal (Integer, Char, Boolean)
     if (keyType != T_INTEGER && keyType != T_CHAR && keyType != T_BOOLEAN && keyType != T_NONE)
         semanticError("CASE key must be ordinal type (Integer, Char, or Boolean), got "
@@ -294,4 +294,15 @@ void SemanticAnalyzer::visitCase(std::shared_ptr<CaseNode> node) {
         }
         if (stmt) visit(stmt);
     }
+}
+
+void SemanticAnalyzer::visitCompound(std::shared_ptr<CompoundNode> node) {
+    if (!node) return;
+    for (auto& stmt : node->getStatements())
+        visit(stmt);
+}
+
+void SemanticAnalyzer::visitCallStmt(std::shared_ptr<CallStmtNode> node) {
+    if (!node || !node->getCall()) return;
+    visitCall(node->getCall());
 }
