@@ -276,3 +276,22 @@ void SemanticAnalyzer::visitRepeat(std::shared_ptr<RepeatNode> node) {
     if (condType != T_BOOLEAN && condType != T_NONE)
         semanticError("REPEAT-UNTIL condition must be Boolean, got " + typeToString(condType));
 }
+
+void SemanticAnalyzer::visitCase(std::shared_ptr<CaseNode> node) {
+    if (!node) return;
+    int keyType = visitExpr(node->getKey());
+    
+    // Case key must be ordinal (Integer, Char, Boolean)
+    if (keyType != T_INTEGER && keyType != T_CHAR && keyType != T_BOOLEAN && keyType != T_NONE)
+        semanticError("CASE key must be ordinal type (Integer, Char, or Boolean), got "
+                      + typeToString(keyType));
+
+    for (auto& [labels, stmt] : node->getCases()) {
+        for (auto& label : labels) {
+            int lt = visitExpr(label);
+            if (!isCompatible(keyType, lt) && lt != T_NONE && keyType != T_NONE)
+                semanticError("CASE label type incompatible with case expression");
+        }
+        if (stmt) visit(stmt);
+    }
+}
