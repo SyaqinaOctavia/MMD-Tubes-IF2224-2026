@@ -672,3 +672,18 @@ std::string SemanticAnalyzer::typeToString(int typeCode) const {
         default:        return "unknown(" + std::to_string(typeCode) + ")";
     }
 }
+
+std::string SemanticAnalyzer::annotateExpr(std::shared_ptr<ExprNode> node) const {
+    if (!node) return "";
+    int t = getCachedType(node.get());
+    std::string ann = " \u2192 type:" + typeToString(t); // "→ type:…"
+
+    if (node->getASTType() == ASTType::VarRefNode) {
+        auto vr = std::dynamic_pointer_cast<VarRefNode>(node);
+        int idx = symTab.searchTab(vr->getName());  // const-access via mutable sym
+        if (idx >= 0)
+            ann += ", tab_idx:" + std::to_string(idx)
+                 + ", lev:" + std::to_string(symTab.getTab(idx).lev);
+    }
+    return ann;
+}
