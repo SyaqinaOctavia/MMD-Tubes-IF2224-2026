@@ -1,0 +1,36 @@
+program ValidTest;
+var
+    x, y: integer;
+    b: boolean;
+    arr: array [1..10] of integer;
+    rec: record
+        val: integer;
+        flag: boolean
+    end;
+
+function add(val1: integer; val2: integer): integer;
+var temp: integer;
+begin
+    temp := val1 + val2;
+    add := temp;
+end;
+
+begin
+    x := 5;
+    y := 10;
+    b := (x < y) and true;
+    
+    arr[1] := add(x, y);
+    rec.val := 100;
+    rec.flag := false;
+    
+    if b then
+        writeln('Valid')
+    else
+        x := 0;
+        
+    while x > 0 do
+    begin
+        x := x - 1;
+    end;
+end.
