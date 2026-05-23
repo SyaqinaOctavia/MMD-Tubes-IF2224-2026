@@ -1,0 +1,73 @@
+
+SYMBOL TABLE
+IDX  ID              OBJ         TYPE        REF   NRM   LEV   ADR   CONST_VAL       
+0    and             0           0           0     1     0     0                     
+1    array           3           5           0     1     0     0                     
+2    begin           0           0           0     1     0     0                     
+3    case            0           0           0     1     0     0                     
+4    const           0           0           0     1     0     0                     
+5    div             0           0           0     1     0     0                     
+6    downto          0           0           0     1     0     0                     
+7    do              0           0           0     1     0     0                     
+8    else            0           0           0     1     0     0                     
+9    end             0           0           0     1     0     0                     
+10   for             0           0           0     1     0     0                     
+11   function        4           0           0     1     0     0                     
+12   if              0           0           0     1     0     0                     
+13   mod             0           0           0     1     0     0                     
+14   not             0           0           0     1     0     0                     
+15   of              0           0           0     1     0     0                     
+16   or              0           0           0     1     0     0                     
+17   procedure       5           0           0     1     0     0                     
+18   program         0           0           0     1     0     0                     
+19   record          3           6           0     1     0     0                     
+20   repeat          0           0           0     1     0     0                     
+21   integer         3           1           0     1     0     0                     
+22   real            3           2           0     1     0     0                     
+23   boolean         3           3           0     1     0     0                     
+24   char            3           4           0     1     0     0                     
+25   string          3           7           0     1     0     0                     
+26   then            0           0           0     1     0     0                     
+27   to              0           0           0     1     0     0                     
+28   type            0           0           0     1     0     0                     
+29   until           0           0           0     1     0     0                     
+30   var             0           0           0     1     0     0                     
+31   while           0           0           0     1     0     0                     
+32   true            1           3           0     1     0     1     true            
+33   false           1           3           0     1     0     0     false           
+34   readln          5           0           0     1     0     0                     
+35   writeln         5           0           0     1     0     0                     
+36   OutOfScopeCheck 5           0           0     1     0     0                     
+37   globalVar       2           1           0     1     0     0                     
+38   testProc        5           0           1     1     0     0                     
+39   localVar        2           1           0     1     1     0                     
+
+BLOCK TABLE
+IDX  LAST    LPAR    PSZE    VSZE    
+0    38      0       0       1       
+1    39      0       0       1       
+
+ARRAY TABLE
+IDX  XTYP    ETYP    EREF    LOW     HIGH    ELSZ    SIZE    
+idx xtyp etyp eref low high elsz size
+
+=== DECORATED ABSTRACT SYNTAX TREE ===
+ProgramNode(name: 'OutOfScopeCheck')
+├─ Declarations
+│  ├─ VarDecl('globalVar') → tab_idx:37, type:integer, lev:0
+│  └─ ProcDecl('testProc') → tab_idx:38, ref(btab):1
+│     ├─ VarDecl('localVar')
+│     └─ Compound(2 stmts)
+│        ├─ Assign → type:void
+│        │  ├─ Var('localVar')
+│        │  └─ Literal(1) → type:integer
+│        └─ Assign → type:void
+│           ├─ Var('globalVar') → tab_idx:37, type:integer, lev:0
+│           └─ Literal(2) → type:integer
+└─ Block (main compound)
+   ├─ Assign → type:void
+   │  ├─ Var('globalVar') → tab_idx:37, type:integer, lev:0
+   │  └─ Literal(10) → type:integer
+   └─ Assign → type:void
+      ├─ Var('localVar')
+      └─ Literal(5) → type:integer

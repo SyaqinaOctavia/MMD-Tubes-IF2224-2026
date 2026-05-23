@@ -1,0 +1,16 @@
+program OutOfScopeCheck;
+var
+    globalVar: integer;
+
+procedure testProc;
+var
+    localVar: integer;
+begin
+    localVar := 1;
+    globalVar := 2
+end;
+
+begin
+    globalVar := 10;
+    localVar := 5  { eror : out of scope }
+end.
