@@ -5,6 +5,7 @@
 
 class ASTer {
 public:
+    ASTer(){}
     std::pair<std::vector<std::string>, std::shared_ptr<TypeNode>> fieldPartToField(std::shared_ptr<TreeNode> node) const;
     std::shared_ptr<TypeNode> buildSimpleType(std::shared_ptr<TreeNode> node) const;
     std::shared_ptr<TypeNode> buildArrayType(std::shared_ptr<TreeNode> node) const;

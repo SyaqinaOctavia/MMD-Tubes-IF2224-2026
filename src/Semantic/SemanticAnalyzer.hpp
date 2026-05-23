@@ -51,12 +51,18 @@ private:
 
 public:
     SemanticAnalyzer(SymbolTable& st) : lastTypeRef(0), symTab(st), errorCount(0) {}
-    bool analyze(std::shared_ptr<ASTNode> root) {
+    bool analyzeAndOutput(std::shared_ptr<ASTNode> root, std::string filename) {
         errorCount = 0;
         if (!root) return false;
         
         try {
             visit(root);
+            std::ofstream output(filename);
+            if(!output){
+                std::cerr << "Failed to open output file: " << filename << std::endl;
+                return false;
+            }
+            printDecoratedAST(root, output);
         } catch (const std::exception& e) {
             semanticError("Fatal crash saat semantic analysis: " + std::string(e.what()));
         }
