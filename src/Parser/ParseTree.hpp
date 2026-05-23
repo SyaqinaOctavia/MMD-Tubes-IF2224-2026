@@ -18,6 +18,7 @@ class TreeNode {
         std::string getValue(){ return value; }
         void setValue(std::string value){ this->value = value; }
         void addChild(std::shared_ptr<TreeNode> newNode);
+        static std::shared_ptr<TreeNode> readTreeFromFile(std::string sourceFile);
         bool outputTree(std::string destFile) const;
         bool printNode(std::ofstream& file, int depth) const;
 };

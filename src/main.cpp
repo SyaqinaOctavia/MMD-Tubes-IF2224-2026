@@ -1,5 +1,6 @@
 #include "Lexer/lexer.hpp"
 #include "Parser/Parser.hpp"
+#include "Parser/ParseTree.hpp"
 #include "Semantic/ASTer.hpp"
 #include "Semantic/SymbolTable.hpp"
 #include "Semantic/SemanticAnalyzer.hpp"
@@ -37,6 +38,17 @@ int main(int argc, char* argv[]){
         std::shared_ptr<TreeNode> tree = parser.buildTree();
         if(tree != nullptr)
             tree->outputTree(argv[3]);
+    }
+    else if(std::strcmp(argv[1], "3a") == 0){
+        std::shared_ptr<TreeNode> tree = TreeNode::readTreeFromFile(argv[2]);
+        if(tree != nullptr){
+            ASTer aster;
+            std::shared_ptr<ASTNode> astree = aster.buildProgramNode(tree);
+            if(astree == nullptr) cout << "error while building AST tree"; // unreachable sih but who knows
+            SymbolTable symtab;
+            SemanticAnalyzer seman(symtab);
+            seman.analyzeAndOutput(astree, argv[3]);
+        }
     }
     else if(std::strcmp(argv[1], "3b") == 0){
         Lexer lex;
