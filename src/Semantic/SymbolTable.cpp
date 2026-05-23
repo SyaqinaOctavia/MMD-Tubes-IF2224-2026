@@ -1,5 +1,6 @@
 #include "SymbolTable.hpp"
 #include <sstream>
+#include <iomanip>
 
 namespace {
     constexpr int OBJ_RESERVED = 0;
@@ -193,30 +194,76 @@ void SymbolTable::setBlockSizes(int blockIdx, int psze, int vsze){
 std::string SymbolTable::toString() const{
     std::ostringstream out;
 
-    out << "tab\n";
-    out << "idx id obj type ref nrm lev adr link const\n";
+    out << "\nSYMBOL TABLE\n";
+    out << std::left
+        << std::setw(5)  << "IDX"  
+        << std::setw(16) << "ID"
+        << std::setw(12) << "OBJ"
+        << std::setw(12) << "TYPE" 
+        << std::setw(6)  << "REF"
+        << std::setw(6)  << "NRM"  
+        << std::setw(6)  << "LEV"
+        << std::setw(6)  << "ADR"  
+        << std::setw(16) << "CONST_VAL"
+        << std::endl;
     for (std::size_t i = 0; i < tab.size(); ++i) {
         const Tab& entry = tab[i];
-        out << i << ' ' << entry.id << ' ' << entry.obj << ' ' << entry.type << ' '
-            << entry.ref << ' ' << entry.nrm << ' ' << entry.lev << ' '
-            << entry.adr << ' ' << entry.link << ' ' << entry.const_value << '\n';
+        out << std::left
+            << std::setw(5)  << i
+            << std::setw(16) << entry.id
+            << std::setw(12) << entry.obj
+            << std::setw(12) << entry.type
+            << std::setw(6)  << entry.ref
+            << std::setw(6)  << entry.nrm
+            << std::setw(6)  << entry.lev
+            << std::setw(6)  << entry.adr
+            << std::setw(16) << entry.const_value
+            << std::endl;
     }
 
-    out << "btab\n";
-    out << "idx last lpar psze vsze\n";
+    out << "\nBLOCK TABLE\n";
+    out << std::left
+        << std::setw(5)  << "IDX"
+        << std::setw(8)  << "LAST"
+        << std::setw(8)  << "LPAR"
+        << std::setw(8)  << "PSZE"
+        << std::setw(8)  << "VSZE"
+        << std::endl;
     for (std::size_t i = 0; i < btab.size(); ++i) {
         const BlockTab& block = btab[i];
-        out << i << ' ' << block.last << ' ' << block.lpar << ' '
-            << block.psze << ' ' << block.vsze << '\n';
+        out << std::left
+            << std::setw(5)  << i
+            << std::setw(8)  << block.last
+            << std::setw(8)  << block.lpar
+            << std::setw(8)  << block.psze
+            << std::setw(8)  << block.vsze
+            << std::endl;
     }
 
-    out << "atab\n";
+    out << "\nARRAY TABLE\n";
+    out << std::left
+        << std::setw(5)  << "IDX"
+        << std::setw(8)  << "XTYP"
+        << std::setw(8)  << "ETYP"
+        << std::setw(8)  << "EREF"
+        << std::setw(8)  << "LOW"
+        << std::setw(8)  << "HIGH"
+        << std::setw(8)  << "ELSZ"
+        << std::setw(8)  << "SIZE"
+        << std::endl;
     out << "idx xtyp etyp eref low high elsz size\n";
     for (std::size_t i = 0; i < atab.size(); ++i) {
         const ArrayTab& array = atab[i];
-        out << i << ' ' << array.xtyp << ' ' << array.etyp << ' '
-            << array.eref << ' ' << array.low << ' ' << array.high << ' '
-            << array.elsz << ' ' << array.size << '\n';
+        out << std::left
+            << std::setw(5)  << i
+            << std::setw(8)  << array.xtyp
+            << std::setw(8)  << array.etyp
+            << std::setw(8)  << array.eref
+            << std::setw(8)  << array.low
+            << std::setw(8)  << array.high
+            << std::setw(8)  << array.elsz
+            << std::setw(8)  << array.size
+            << std::endl;
     }
 
     return out.str();

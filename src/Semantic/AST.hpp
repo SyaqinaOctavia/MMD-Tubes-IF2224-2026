@@ -47,6 +47,7 @@ protected:
     ASTType nodeType;
 public:
     ASTType getASTType() { return nodeType; }
+    virtual ~ASTNode() = default;
 };
 
 class ExprNode : public ASTNode {
