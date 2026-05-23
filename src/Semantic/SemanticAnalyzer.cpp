@@ -353,7 +353,34 @@ int SemanticAnalyzer::visitCall(std::shared_ptr<CallNode> node) {
     if (e.obj != OBJ_PROC && e.obj != OBJ_FUNC)
         semanticError("'" + node->getName() + "' is not a procedure or function");
 
-    for (auto& arg : node->getArgs()) visitExpr(arg);
+    // Ekstrak parameter
+    std::vector<int> paramTypes;
+    int blockIdx = e.ref;
+    if (blockIdx > 0 && blockIdx < symTab.getBlocktabSize()) {
+        int currParam = symTab.getBlockTab(blockIdx).lpar;
+        while (currParam > 0) {
+            paramTypes.push_back(symTab.getTab(currParam).type);
+            currParam = symTab.getTab(currParam).link;
+        }
+        std::reverse(paramTypes.begin(), paramTypes.end()); 
+    }
+
+    // Validasi Jumlah Argumen
+    auto args = node->getArgs();
+    if (args.size() != paramTypes.size()) {
+        semanticError("Incorrect number of arguments for '" + name + "'. Expected " + 
+                      std::to_string(paramTypes.size()) + ", got " + std::to_string(args.size()));
+    } else {
+        // Validasi Tipe Data per Argumen
+        for (size_t i = 0; i < args.size(); ++i) {
+            int argType = visitExpr(args[i]);
+            if (!isAssignmentCompatible(paramTypes[i], argType)) {
+                semanticError("Type mismatch for parameter " + std::to_string(i + 1) + 
+                              " in call to '" + name + "'. Expected " + typeToString(paramTypes[i]) + 
+                              ", got " + typeToString(argType));
+            }
+        }
+    }
 
     return e.type; 
 }
