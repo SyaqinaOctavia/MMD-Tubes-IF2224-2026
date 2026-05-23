@@ -342,6 +342,21 @@ int SemanticAnalyzer::visitVarRef(std::shared_ptr<VarRefNode> node) {
 int SemanticAnalyzer::visitCall(std::shared_ptr<CallNode> node) {
     if (!node) return T_NONE;
     std::string name = node->getName();
+    
+    if (name == "writeln" || name == "write" || name == "readln" || name == "read") {
+        for (auto& arg : node->getArgs()) {
+            int argType = visitExpr(arg);
+            
+            // type validation
+            if (argType != T_INTEGER && argType != T_REAL && 
+                argType != T_CHAR && argType != T_STRING && 
+                argType != T_BOOLEAN && argType != T_NONE) {
+                semanticError("Invalid argument type for built-in procedure '" + name + "'. Got " + typeToString(argType));
+            }
+        }
+        return T_NONE;
+    }
+
     int idx = symTab.searchTab(name);
     if (idx < 0) {
         semanticError("Undeclared procedure/function '" + node->getName() + "'");
