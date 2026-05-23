@@ -62,6 +62,7 @@ public:
                 std::cerr << "Failed to open output file: " << filename << std::endl;
                 return false;
             }
+            symTab.outputTable(output);
             printDecoratedAST(root, output);
         } catch (const std::exception& e) {
             semanticError("Fatal crash saat semantic analysis: " + std::string(e.what()));
@@ -121,10 +122,6 @@ private:
     bool isCompatible(int type1, int type2) const;
     bool isAssignmentCompatible(int targetType, int valueType) const;
     std::string typeToString(int typeCode) const;
-    int  getCachedType(void* ptr) const {
-        auto it = nodeType.find(ptr);
-        return it != nodeType.end() ? it->second : T_NONE;
-    }
     std::string annotateExpr(std::shared_ptr<ExprNode> node) const;
     void printExpr(std::shared_ptr<ExprNode> node, std::ostream& out, const std::string& prefix, bool isLast) const;
     void printStmt(std::shared_ptr<StmtNode> node, std::ostream& out, const std::string& prefix, bool isLast) const;

@@ -83,4 +83,5 @@ class SymbolTable {
         void setBlockSizes(int blockIdx, int psze, int vsze);
 
         std::string toString() const;
+        void outputTable(std::ostream& out) const;
 };

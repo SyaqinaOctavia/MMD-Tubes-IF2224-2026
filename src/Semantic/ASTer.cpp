@@ -113,6 +113,7 @@ std::vector<std::shared_ptr<DeclNode>> ASTer::buildDeclNodes(std::shared_ptr<Tre
             default: break;
         }
     }
+    return declList;
 }
 std::vector<std::shared_ptr<ConstDeclNode>> ASTer::buildConstDeclNode(std::shared_ptr<TreeNode> root) const {
     // root = const-declaration: constsy + (ident + eql + constant + semicolon)+
@@ -754,19 +755,6 @@ std::shared_ptr<CaseNode>ASTer::buildCaseNode(std::shared_ptr<TreeNode> root) co
     }
     
     return std::make_shared<CaseNode>(key, cases);
-}
-
-std::shared_ptr<CompoundNode>
-ASTer::buildCompoundNode(std::shared_ptr<TreeNode> root) const {
-    if (!root || root->getNodeType() != Symbol::COMPOUND_STATEMENT) return nullptr;
-    auto children = root->getChildren();
-    // beginsy + STATEMENT_LIST + endsy
-    if (children.size() < 2) return nullptr;
-    for (auto& child : children) {
-        if (child->getNodeType() == Symbol::STATEMENT_LIST)
-            return buildStatementList(child);
-    }
-    return std::make_shared<CompoundNode>(std::vector<std::shared_ptr<StmtNode>>{});
 }
 
 std::shared_ptr<CompoundNode> ASTer::buildCompoundNode(std::shared_ptr<TreeNode> root) const {

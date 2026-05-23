@@ -222,28 +222,6 @@ std::string SymbolTable::toString() const{
     return out.str();
 }
 
-std::string objToString(int obj) {
-    switch(obj) {
-        case 0: return "reserved";
-        case 1: return "constant";
-        case 2: return "variable";
-        case 3: return "type";
-        case 4: return "function";
-        case 5: return "procedure";
-        default: return "unknown";
-    }
-}
-
-std::string typeToString(int type) {
-    switch(type) {
-        case 0: return "none/proc";
-        case 1: return "integer";
-        case 2: return "real";
-        case 3: return "boolean";
-        case 4: return "char";
-        case 5: return "array";
-        case 6: return "record";
-        case 7: return "string";
-        default: return "unknown";
-    }
+void SymbolTable::outputTable(std::ostream& out) const {
+    out << this->toString();
 }

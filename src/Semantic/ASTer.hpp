@@ -20,13 +20,13 @@ public:
     std::vector<std::shared_ptr<TypeDeclNode>> buildTypeDeclNode(std::shared_ptr<TreeNode> root) const;
     std::vector<std::shared_ptr<VarDeclNode>> buildVarDeclNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<ParamDeclNode> buildParamDeclNode(std::shared_ptr<TreeNode> root) const;
-    std::vector<std::shared_ptr<ParamDeclNode>> ASTer::buildFormalParams(std::shared_ptr<TreeNode> root) const;
+    std::vector<std::shared_ptr<ParamDeclNode>> buildFormalParams(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<ProcDeclNode> buildProcDeclNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<FuncDeclNode> buildFuncDeclNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<LiteralNode> buildLiteralNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<CallNode> buildCallNode(std::shared_ptr<TreeNode> root) const;
-    std::shared_ptr<BinaryOpNode> ASTer::buildBinaryOpNode(std::shared_ptr<ExprNode> lhs, std::shared_ptr<TreeNode> opNode, std::shared_ptr<ExprNode> rhs) const;
-    std::shared_ptr<UnaryOpNode> ASTer::buildUnaryOpNode(std::shared_ptr<TreeNode> opNode, std::shared_ptr<ExprNode> operand) const;
+    std::shared_ptr<BinaryOpNode> buildBinaryOpNode(std::shared_ptr<ExprNode> lhs, std::shared_ptr<TreeNode> opNode, std::shared_ptr<ExprNode> rhs) const;
+    std::shared_ptr<UnaryOpNode> buildUnaryOpNode(std::shared_ptr<TreeNode> opNode, std::shared_ptr<ExprNode> operand) const;
     std::shared_ptr<VarRefNode> buildVarRefNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<ArrayAccessNode> buildArrayAccessNode(std::shared_ptr<TreeNode> root) const;
     std::shared_ptr<FieldAccessNode> buildFieldAccessNode(std::shared_ptr<TreeNode> root) const;
