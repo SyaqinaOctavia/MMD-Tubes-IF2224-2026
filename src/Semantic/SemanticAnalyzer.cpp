@@ -343,7 +343,7 @@ int SemanticAnalyzer::visitCall(std::shared_ptr<CallNode> node) {
     if (!node) return T_NONE;
     std::string name = node->getName();
     
-    if (name == "writeln" || name == "write" || name == "readln" || name == "read") {
+    if (name == "writeln" || name == "readln") {
         for (auto& arg : node->getArgs()) {
             int argType = visitExpr(arg);
             
