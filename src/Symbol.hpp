@@ -105,3 +105,4 @@ enum class Symbol {
 
 std::string toString(Symbol s);
 bool isToken(Symbol s);
+Symbol toSymbol(const std::string &s);
