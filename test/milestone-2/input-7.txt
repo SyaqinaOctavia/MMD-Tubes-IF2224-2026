@@ -1,6 +1,7 @@
 program TestIntegerOps;
 var
   counter: integer;
+  blabla: integer;
 begin
   counter := 0;
   blabla := 2;
