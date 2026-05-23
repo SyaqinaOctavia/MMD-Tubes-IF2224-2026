@@ -99,6 +99,19 @@ std::vector<std::shared_ptr<DeclNode>> ASTer::buildDeclNodes(std::shared_ptr<Tre
                 declList.insert(declList.end(), varDecls.begin(), varDecls.end());
                 break;
             }
+            case Symbol::SUBPROGRAM_DECLARATION: {
+                if (!child->getChildren().empty()) {
+                    auto subChild = child->getChildren()[0];
+                    if (subChild->getNodeType() == Symbol::PROCEDURE_DECLARATION) {
+                        auto procDecl = buildProcDeclNode(subChild);
+                        if (procDecl) declList.push_back(procDecl);
+                    } else if (subChild->getNodeType() == Symbol::FUNCTION_DECLARATION) {
+                        auto funcDecl = buildFuncDeclNode(subChild);
+                        if (funcDecl) declList.push_back(funcDecl);
+                    }
+                }
+                break;
+            }
             // case Symbol::PARAMETER_GROUP:           declList.push_back(buildParamDeclNode(child, false));
             case Symbol::PROCEDURE_DECLARATION: {
                 auto procDecl = buildProcDeclNode(child);
