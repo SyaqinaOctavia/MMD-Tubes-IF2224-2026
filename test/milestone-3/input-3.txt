@@ -1,0 +1,96 @@
+<program>
+├─ <program-header>
+│  ├─ programsy
+│  ├─ ident(TestRangeArray)
+│  ├─ semicolon
+├─ <declaration-part>
+│  ├─ <var-declaration>
+│  │  ├─ varsy
+│  │  ├─ <identifier-list>
+│  │  │  ├─ ident(data)
+│  │  ├─ colon
+│  │  ├─ <type>
+│  │  │  ├─ <array-type>
+│  │  │  │  ├─ arraysy
+│  │  │  │  ├─ lbrack
+│  │  │  │  ├─ <range>
+│  │  │  │  │  ├─ <constant>
+│  │  │  │  │  │  ├─ intcon(1)
+│  │  │  │  │  ├─ period
+│  │  │  │  │  ├─ period
+│  │  │  │  │  ├─ <constant>
+│  │  │  │  │  │  ├─ intcon(3)
+│  │  │  │  ├─ rbrack
+│  │  │  │  ├─ ofsy
+│  │  │  │  ├─ <type>
+│  │  │  │  │  ├─ ident(integer)
+│  │  ├─ semicolon
+├─ <compound-statement>
+│  ├─ beginsy
+│  ├─ <statement-list>
+│  │  ├─ <statement>
+│  │  │  ├─ <assignment-statement>
+│  │  │  │  ├─ <variable>
+│  │  │  │  │  ├─ ident(data)
+│  │  │  │  │  ├─ <component-variable>
+│  │  │  │  │  │  ├─ lbrack
+│  │  │  │  │  │  ├─ <index-list>
+│  │  │  │  │  │  │  ├─ intcon(1)
+│  │  │  │  │  │  ├─ rbrack
+│  │  │  │  ├─ becomes
+│  │  │  │  ├─ <expression>
+│  │  │  │  │  ├─ <simple-expression>
+│  │  │  │  │  │  ├─ <term>
+│  │  │  │  │  │  │  ├─ <factor>
+│  │  │  │  │  │  │  │  ├─ intcon(6)
+│  │  ├─ semicolon
+│  │  ├─ <statement>
+│  │  │  ├─ <assignment-statement>
+│  │  │  │  ├─ <variable>
+│  │  │  │  │  ├─ ident(data)
+│  │  │  │  │  ├─ <component-variable>
+│  │  │  │  │  │  ├─ lbrack
+│  │  │  │  │  │  ├─ <index-list>
+│  │  │  │  │  │  │  ├─ intcon(2)
+│  │  │  │  │  │  ├─ rbrack
+│  │  │  │  ├─ becomes
+│  │  │  │  ├─ <expression>
+│  │  │  │  │  ├─ <simple-expression>
+│  │  │  │  │  │  ├─ <term>
+│  │  │  │  │  │  │  ├─ <factor>
+│  │  │  │  │  │  │  │  ├─ intcon(7)
+│  │  ├─ semicolon
+│  │  ├─ <statement>
+│  │  │  ├─ <assignment-statement>
+│  │  │  │  ├─ <variable>
+│  │  │  │  │  ├─ ident(data)
+│  │  │  │  │  ├─ <component-variable>
+│  │  │  │  │  │  ├─ lbrack
+│  │  │  │  │  │  ├─ <index-list>
+│  │  │  │  │  │  │  ├─ intcon(3)
+│  │  │  │  │  │  ├─ rbrack
+│  │  │  │  ├─ becomes
+│  │  │  │  ├─ <expression>
+│  │  │  │  │  ├─ <simple-expression>
+│  │  │  │  │  │  ├─ <term>
+│  │  │  │  │  │  │  ├─ <factor>
+│  │  │  │  │  │  │  │  ├─ <variable>
+│  │  │  │  │  │  │  │  │  ├─ ident(data)
+│  │  │  │  │  │  │  │  │  ├─ <component-variable>
+│  │  │  │  │  │  │  │  │  │  ├─ lbrack
+│  │  │  │  │  │  │  │  │  │  ├─ <index-list>
+│  │  │  │  │  │  │  │  │  │  │  ├─ intcon(1)
+│  │  │  │  │  │  │  │  │  │  ├─ rbrack
+│  │  │  │  │  │  ├─ <additive-operator>
+│  │  │  │  │  │  │  ├─ plus
+│  │  │  │  │  │  ├─ <term>
+│  │  │  │  │  │  │  ├─ <factor>
+│  │  │  │  │  │  │  │  ├─ <variable>
+│  │  │  │  │  │  │  │  │  ├─ ident(data)
+│  │  │  │  │  │  │  │  │  ├─ <component-variable>
+│  │  │  │  │  │  │  │  │  │  ├─ lbrack
+│  │  │  │  │  │  │  │  │  │  ├─ <index-list>
+│  │  │  │  │  │  │  │  │  │  │  ├─ intcon(2)
+│  │  │  │  │  │  │  │  │  │  ├─ rbrack
+│  ├─ endsy
+├─ period
