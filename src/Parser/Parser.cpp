@@ -318,38 +318,24 @@ std::shared_ptr<TreeNode> Parser::typeNode(){
     int start = currentToken;
     std::shared_ptr<TreeNode> ptr = std::make_shared<TreeNode>(Symbol::TYPE);
 
-    std::shared_ptr<TreeNode> child = terminal(Symbol::ident);
-    if(child != nullptr){
-        ptr->addChild(child);
-        currentProd = prevProd; return ptr;
-    }
-
-    child = arrayType();
-    if(child != nullptr){
-        ptr->addChild(child);
-        currentProd = prevProd; return ptr;
-    }
+    std::shared_ptr<TreeNode> child = arrayType();
+    if(child) { ptr->addChild(child); currentProd = prevProd; return ptr; }
 
     child = rangeNode();
-    if(child != nullptr){
-        ptr->addChild(child);
-        currentProd = prevProd; return ptr;
-    }
+    if(child) { ptr->addChild(child); currentProd = prevProd; return ptr; }
 
     child = enumerated();
-    if(child != nullptr){
-        ptr->addChild(child);
-        currentProd = prevProd; return ptr;
-    }
+    if(child) { ptr->addChild(child); currentProd = prevProd; return ptr; }
 
     child = recordType();
-    if(child != nullptr){
-        ptr->addChild(child);
-        currentProd = prevProd; return ptr;
-    }
+    if(child) { ptr->addChild(child); currentProd = prevProd; return ptr; }
+
+    child = terminal(Symbol::ident);
+    if(child) { ptr->addChild(child); currentProd = prevProd; return ptr; }
 
     currentToken = start;
-    currentProd = prevProd; return nullptr;
+    currentProd = prevProd; 
+    return nullptr;
 }
 
 // <<array-type> -> arraysy + lbrack + (range | ident) + rbrack + ofsy + type
