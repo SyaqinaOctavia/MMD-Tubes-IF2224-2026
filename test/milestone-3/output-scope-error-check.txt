@@ -1,0 +1,62 @@
+
+SYMBOL TABLE
+IDX  ID              OBJ         TYPE        REF   NRM   LEV   ADR   CONST_VAL       
+0    and             0           0           0     1     0     0                     
+1    array           3           5           0     1     0     0                     
+2    begin           0           0           0     1     0     0                     
+3    case            0           0           0     1     0     0                     
+4    const           0           0           0     1     0     0                     
+5    div             0           0           0     1     0     0                     
+6    downto          0           0           0     1     0     0                     
+7    do              0           0           0     1     0     0                     
+8    else            0           0           0     1     0     0                     
+9    end             0           0           0     1     0     0                     
+10   for             0           0           0     1     0     0                     
+11   function        4           0           0     1     0     0                     
+12   if              0           0           0     1     0     0                     
+13   mod             0           0           0     1     0     0                     
+14   not             0           0           0     1     0     0                     
+15   of              0           0           0     1     0     0                     
+16   or              0           0           0     1     0     0                     
+17   procedure       5           0           0     1     0     0                     
+18   program         0           0           0     1     0     0                     
+19   record          3           6           0     1     0     0                     
+20   repeat          0           0           0     1     0     0                     
+21   integer         3           1           0     1     0     0                     
+22   real            3           2           0     1     0     0                     
+23   boolean         3           3           0     1     0     0                     
+24   char            3           4           0     1     0     0                     
+25   string          3           7           0     1     0     0                     
+26   then            0           0           0     1     0     0                     
+27   to              0           0           0     1     0     0                     
+28   type            0           0           0     1     0     0                     
+29   until           0           0           0     1     0     0                     
+30   var             0           0           0     1     0     0                     
+31   while           0           0           0     1     0     0                     
+32   true            1           3           0     1     0     1     true            
+33   false           1           3           0     1     0     0     false           
+34   readln          5           0           0     1     0     0                     
+35   writeln         5           0           0     1     0     0                     
+36   ScopeError      5           0           0     1     0     0                     
+37   a               2           1           0     1     0     0                     
+
+BLOCK TABLE
+IDX  LAST    LPAR    PSZE    VSZE    
+0    37      0       0       1       
+
+ARRAY TABLE
+IDX  XTYP    ETYP    EREF    LOW     HIGH    ELSZ    SIZE    
+idx xtyp etyp eref low high elsz size
+
+=== DECORATED ABSTRACT SYNTAX TREE ===
+ProgramNode(name: 'ScopeError')
+├─ Declarations
+│  ├─ VarDecl('a') → tab_idx:37, type:integer, lev:0
+│  └─ VarDecl('a') → tab_idx:37, type:integer, lev:0
+└─ Block (main compound)
+   ├─ Assign → type:void
+   │  ├─ Var('a') → tab_idx:37, type:integer, lev:0
+   │  └─ Literal(10) → type:integer
+   └─ Assign → type:void
+      ├─ Var('b')
+      └─ Literal(20) → type:integer

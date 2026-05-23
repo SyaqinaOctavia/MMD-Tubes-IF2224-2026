@@ -1,0 +1,8 @@
+program ScopeError;
+var
+    a: integer;
+    a: real; { eror 1: Redeclaration of 'a' }
+begin
+    a := 10;
+    b := 20  { eror 2: Undeclared identifier 'b' }
+end.
