@@ -257,3 +257,45 @@ void IntermediateCode::genCase(std::shared_ptr<CaseNode> node) {
     for (int jmpAddr : jmpToEndAddrs)
         patch(jmpAddr, nextAddr());
 }
+
+
+void IntermediateCode::genCallStmt(std::shared_ptr<CallStmtNode> node) {
+    if (!node || !node->getCall()) return;
+
+    auto call = node->getCall();
+    std::string name = call->getName();
+
+    if (name == "writeln") {
+        auto args = call->getArgs();
+        if (args.empty()) {
+            emit(Opcode::LIT, 0, 0);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::WRTLN));
+        } else {
+            for (size_t i = 0; i < args.size(); i++) {
+                genExpr(args[i]);
+                if (i + 1 == args.size())
+                    emit(Opcode::OPR, 0, static_cast<int>(OprCode::WRTLN));
+                else
+                    emit(Opcode::OPR, 0, static_cast<int>(OprCode::WRT));
+            }
+        }
+    } else if (name == "write") {
+        for (auto& arg : call->getArgs()) {
+            genExpr(arg);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::WRT));
+        }
+    } else if (name == "readln") {
+        std::cerr << "ICG: readln belum didukung penuh\n";
+    } else {
+        auto it = procAddr.find(name);
+        if (it == procAddr.end()) {
+            std::cerr << "ICG: prosedur tidak ditemukan: " << name << "\n";
+            return;
+        }
+        for (auto& arg : call->getArgs())
+            genExpr(arg);
+        int index = lookupVar(name);
+        int level = (index >= 0) ? levelDiff(index) : 0;
+        emit(Opcode::CAL, level, it->second);
+    }
+}
