@@ -373,3 +373,136 @@ void IntermediateCode::genCallStmt(std::shared_ptr<CallStmtNode> node) {
         emit(Opcode::CAL, level, it->second);
     }
 }
+
+void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
+    if (!target) return;
+
+    if (auto vr = std::dynamic_pointer_cast<VarRefNode>(target)) {
+        int idx = lookupVar(vr->getName());
+        if (idx < 0) {
+            std::cerr << "ICG: variabel tidak ditemukan saat store: " << vr->getName() << "\n";
+            return;
+        }
+        emit(Opcode::STO, levelDiff(idx), symTab.getTab(idx).adr);
+
+    } else if (auto aa = std::dynamic_pointer_cast<ArrayAccessNode>(target)) {
+        auto base = std::dynamic_pointer_cast<VarRefNode>(aa->getArray());
+        if (!base) { std::cerr << "ICG: array store kompleks belum didukung\n"; return; }
+        int idx = lookupVar(base->getName());
+        if (idx < 0) { std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n"; return; }
+        genExpr(aa->getIndex());
+        emit(Opcode::STO, levelDiff(idx), symTab.getTab(idx).adr);
+    }
+}
+
+void IntermediateCode::genIf(std::shared_ptr<IfNode> node) {
+    if (!node) return;
+
+    genExpr(node->getCondition());
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+    genStmt(node->getThenBlock());
+
+    if (node->getElseBlock()) {
+        int jmpAddr = emit(Opcode::JMP, 0, 0);
+        patch(jpcAddr, nextAddr());
+        genStmt(node->getElseBlock());
+        patch(jmpAddr, nextAddr());
+    } else {
+        patch(jpcAddr, nextAddr());
+    }
+}
+
+void IntermediateCode::genCase(std::shared_ptr<CaseNode> node) {
+    if (!node) return;
+
+    auto cases = node->getCases();
+    std::vector<int> jmpToEndAddrs;
+
+    for (size_t i = 0; i < cases.size(); i++) {
+        auto& [labels, stmt] = cases[i];
+
+        std::vector<int> jpcToNext;
+
+        for (auto& lbl : labels) {
+            genExpr(node->getKey());
+            genExpr(lbl);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));
+            jpcToNext.push_back(emit(Opcode::JPC, 0, 0));
+        }
+
+        if (!jpcToNext.empty()) {
+
+            genStmt(stmt);
+            int jmpEnd = emit(Opcode::JMP, 0, 0);
+            jmpToEndAddrs.push_back(jmpEnd);
+
+            for (int jpcAddr : jpcToNext)
+                patch(jpcAddr, nextAddr());
+        }
+    }
+
+    for (int jmpAddr : jmpToEndAddrs)
+        patch(jmpAddr, nextAddr());
+}
+
+void IntermediateCode::genWhile(std::shared_ptr<WhileNode> node) {
+    if (!node) return;
+
+    int loopStart = nextAddr(); // catat posisi awal loop
+    genExpr(node->getCondition());
+
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+    genStmt(node->getBody());
+    emit(Opcode::JMP, 0, loopStart);
+    patch(jpcAddr, nextAddr());
+}
+
+void IntermediateCode::genFor(std::shared_ptr<ForNode> node) {
+    if (!node) return;
+
+    int varIdx = lookupVar(node->getMovingVar());
+    if (varIdx < 0) {
+        std::cerr << "ICG: FOR variable tidak ditemukan: " << node->getMovingVar() << "\n";
+        return;
+    }
+    int lev = levelDiff(varIdx);
+    int adr = symTab.getTab(varIdx).adr;
+
+    genExpr(node->getStartPoint());
+    emit(Opcode::STO, lev, adr);
+
+
+    int loopStart = nextAddr();
+
+    emit(Opcode::LOD, lev, adr);
+    genExpr(node->getEndPoint());
+
+    if (node->goesUp())
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::LEQ));
+    else
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::GEQ));
+
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+
+    genStmt(node->getBody());
+
+    emit(Opcode::LOD, lev, adr);
+    emit(Opcode::LIT, 0, 1);
+    if (node->goesUp())
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
+    else
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
+    emit(Opcode::STO, lev, adr);
+
+    emit(Opcode::JMP, 0, loopStart);
+    patch(jpcAddr, nextAddr());
+}
+
+void IntermediateCode::genRepeat(std::shared_ptr<RepeatNode> node) {
+    if (!node) return;
+
+    int loopStart = nextAddr();
+    genStmt(node->getBody());
+    genExpr(node->getUntilCondition());
+    emit(Opcode::JPC, 0, loopStart);
+}
