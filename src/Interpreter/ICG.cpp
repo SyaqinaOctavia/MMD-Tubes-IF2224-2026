@@ -226,3 +226,34 @@ void IntermediateCode::genRepeat(std::shared_ptr<RepeatNode> node) {
     genExpr(node->getUntilCondition());
     emit(Opcode::JPC, 0, loopStart);
 }
+
+void IntermediateCode::genCase(std::shared_ptr<CaseNode> node) {
+    if (!node) return;
+
+    auto cases = node->getCases();
+    std::vector<int> jmpToEndAddrs; 
+
+    for (size_t i = 0; i < cases.size(); i++) {
+        auto& [labels, stmt] = cases[i];
+
+        std::vector<int> jpcToNext; 
+
+        for (auto& lbl : labels) {
+            genExpr(node->getKey());
+            genExpr(lbl);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));
+            jpcToNext.push_back(emit(Opcode::JPC, 0, 0));
+        }
+
+        if (!jpcToNext.empty()) {
+            genStmt(stmt);
+            int jmpEnd = emit(Opcode::JMP, 0, 0);
+            jmpToEndAddrs.push_back(jmpEnd);
+            for (int jpcAddr : jpcToNext)
+                patch(jpcAddr, nextAddr());
+        }
+    }
+
+    for (int jmpAddr : jmpToEndAddrs)
+        patch(jmpAddr, nextAddr());
+}
