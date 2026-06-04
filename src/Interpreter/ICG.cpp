@@ -62,3 +62,37 @@ OprCode IntermediateCode::opToOpr(const std::string& op) const {
     throw std::runtime_error("ICG: operator tidak dikenal: " + op);
 }
 
+void IntermediateCode::genProgram(std::shared_ptr<ProgramNode> node) {
+    int mainBlockIdx = 1; 
+    int fsize = 3; 
+
+    if (symTab.getBlocktabSize() > mainBlockIdx) {
+        fsize = frameSizeFromBlock(mainBlockIdx);
+    }
+
+    std::vector<std::shared_ptr<ProcDeclNode>> procs;
+    std::vector<std::shared_ptr<FuncDeclNode>> funcs;
+    for (auto& decl : node->getDeclarations()) {
+        if (auto pd = std::dynamic_pointer_cast<ProcDeclNode>(decl))
+            procs.push_back(pd);
+        else if (auto fd = std::dynamic_pointer_cast<FuncDeclNode>(decl))
+            funcs.push_back(fd);
+    }
+
+    int jmpToMain = -1;
+    if (!procs.empty() || !funcs.empty())
+        jmpToMain = emit(Opcode::JMP, 0, 0);
+
+    for (auto& pd : procs) genProcDecl(pd);
+    for (auto& fd : funcs) genFuncDecl(fd);
+
+    if (jmpToMain >= 0)
+        patch(jmpToMain, nextAddr());
+
+    emit(Opcode::INT, 0, fsize);
+
+    if (node->getMain())
+        genCompound(node->getMain());
+
+    emit(Opcode::RET, 0, 0);
+}
