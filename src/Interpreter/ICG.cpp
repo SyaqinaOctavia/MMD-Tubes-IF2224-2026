@@ -169,3 +169,60 @@ void IntermediateCode::genIf(std::shared_ptr<IfNode> node) {
     } else {
         patch(jpcAddr, nextAddr());
     }
+}
+
+void IntermediateCode::genWhile(std::shared_ptr<WhileNode> node) {
+    if (!node) return;
+    int loopStart = nextAddr();
+    genExpr(node->getCondition());
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+    genStmt(node->getBody());
+    emit(Opcode::JMP, 0, loopStart);
+    patch(jpcAddr, nextAddr());
+}
+
+void IntermediateCode::genFor(std::shared_ptr<ForNode> node) {
+    if (!node) return;
+
+    int varIdx = lookupVar(node->getMovingVar());
+    if (varIdx < 0) {
+        std::cerr << "ICG: FOR variable tidak ditemukan: " << node->getMovingVar() << "\n";
+        return;
+    }
+    int lev = levelDiff(varIdx);
+    int addr = symTab.getTab(varIdx).adr;
+
+    genExpr(node->getStartPoint());
+    emit(Opcode::STO, lev, addr);
+    int loopStart = nextAddr();
+    emit(Opcode::LOD, lev, addr);
+    genExpr(node->getEndPoint());
+
+    if (node->goesUp())
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::LEQ));
+    else
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::GEQ));
+
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+    genStmt(node->getBody());
+
+    emit(Opcode::LOD, lev, addr);
+    emit(Opcode::LIT, 0, 1);
+
+    if (node->goesUp())
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
+    else
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
+    emit(Opcode::STO, lev, addr);
+
+    emit(Opcode::JMP, 0, loopStart);
+    patch(jpcAddr, nextAddr());
+}
+
+void IntermediateCode::genRepeat(std::shared_ptr<RepeatNode> node) {
+    if (!node) return;
+    int loopStart = nextAddr();
+    genStmt(node->getBody());
+    genExpr(node->getUntilCondition());
+    emit(Opcode::JPC, 0, loopStart);
+}
