@@ -21,7 +21,7 @@ private:
     
     void patch(int index, int newTarget){
         if (index < 0 || index >= static_cast<int>(code.size()))
-        throw std::runtime_error("ICG: patch ke alamat tidak valid: " + std::to_string(addr));
+        throw std::runtime_error("ICG: patch ke alamat tidak valid: " + std::to_string(index));
         code.at(index).setTarget(newTarget);
     }
 

@@ -97,6 +97,50 @@ void IntermediateCode::genProgram(std::shared_ptr<ProgramNode> node) {
     emit(Opcode::RET, 0, 0);
 }
 
+int IntermediateCode::frameSize(std::shared_ptr<ProcDeclNode> node) const {
+    int idx = const_cast<SymbolTable&>(symTab).searchTab(node->getName());
+    if (idx < 0) return 3;
+    int blockIdx = symTab.getTab(idx).ref;
+    return frameSizeFromBlock(blockIdx);
+}
+
+int IntermediateCode::frameSize(std::shared_ptr<FuncDeclNode> node) const {
+    int idx = const_cast<SymbolTable&>(symTab).searchTab(node->getName());
+    if (idx < 0) return 3;
+    int blockIdx = symTab.getTab(idx).ref;
+    return frameSizeFromBlock(blockIdx);
+}
+
+void IntermediateCode::genProcDecl(std::shared_ptr<ProcDeclNode> node) {
+    procAddr[node->getName()] = nextAddr();
+
+    currentLevel++;
+
+    int fsize = frameSize(node);
+    emit(Opcode::INT, 0, fsize);
+
+    if (node->getBody())
+        genStmt(node->getBody());
+
+    emit(Opcode::RET, 0, 0);
+
+    currentLevel--;
+}
+
+void IntermediateCode::genFuncDecl(std::shared_ptr<FuncDeclNode> node) {
+    procAddr[node->getName()] = nextAddr();
+    currentLevel++;
+
+    int fsize = frameSize(node);
+    emit(Opcode::INT, 0, fsize);
+
+    if (node->getBody())
+        genStmt(node->getBody());
+
+    emit(Opcode::RET, 0, 0);
+    currentLevel--;
+}
+
 void IntermediateCode::genExpr(std::shared_ptr<ExprNode> node) {
     if (!node) return;
     switch (node->getASTType()) {
