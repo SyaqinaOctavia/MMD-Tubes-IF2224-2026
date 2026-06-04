@@ -96,3 +96,40 @@ void IntermediateCode::genProgram(std::shared_ptr<ProgramNode> node) {
 
     emit(Opcode::RET, 0, 0);
 }
+
+void IntermediateCode::genStmt(std::shared_ptr<StmtNode> node) {
+    if (!node) return;
+    switch (node->getASTType()) {
+        case ASTType::CompoundNode:
+            genCompound(std::dynamic_pointer_cast<CompoundNode>(node)); break;
+        case ASTType::AssignNode:
+            genAssign(std::dynamic_pointer_cast<AssignNode>(node)); break;
+        case ASTType::IfNode:
+            genIf(std::dynamic_pointer_cast<IfNode>(node)); break;
+        case ASTType::WhileNode:
+            genWhile(std::dynamic_pointer_cast<WhileNode>(node)); break;
+        case ASTType::ForNode:
+            genFor(std::dynamic_pointer_cast<ForNode>(node)); break;
+        case ASTType::RepeatNode:
+            genRepeat(std::dynamic_pointer_cast<RepeatNode>(node)); break;
+        case ASTType::CaseNode:
+            genCase(std::dynamic_pointer_cast<CaseNode>(node)); break;
+        case ASTType::CallStmtNode:
+            genCallStmt(std::dynamic_pointer_cast<CallStmtNode>(node)); break;
+        default:
+            std::cerr << "ICG: genStmt - tipe statement tidak dikenal\n"; break;
+    }
+}
+
+void IntermediateCode::genCompound(std::shared_ptr<CompoundNode> node) {
+    if (!node) return;
+    for (auto& stmt : node->getStatements())
+        genStmt(stmt);
+}
+
+void IntermediateCode::genAssign(std::shared_ptr<AssignNode> node) {
+    if (!node) return;
+    genExpr(node->getValue());
+    genStore(node->getTarget());
+}
+
