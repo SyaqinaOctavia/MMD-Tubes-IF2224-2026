@@ -171,3 +171,205 @@ void IntermediateCode::genVarRef(std::shared_ptr<VarRefNode> node) {
         emit(Opcode::LOD, levelDiff(idx), entry.adr);
     }
 }
+void IntermediateCode::genStmt(std::shared_ptr<StmtNode> node) {
+    if (!node) return;
+    switch (node->getASTType()) {
+        case ASTType::CompoundNode:
+            genCompound(std::dynamic_pointer_cast<CompoundNode>(node)); break;
+        case ASTType::AssignNode:
+            genAssign(std::dynamic_pointer_cast<AssignNode>(node)); break;
+        case ASTType::IfNode:
+            genIf(std::dynamic_pointer_cast<IfNode>(node)); break;
+        case ASTType::WhileNode:
+            genWhile(std::dynamic_pointer_cast<WhileNode>(node)); break;
+        case ASTType::ForNode:
+            genFor(std::dynamic_pointer_cast<ForNode>(node)); break;
+        case ASTType::RepeatNode:
+            genRepeat(std::dynamic_pointer_cast<RepeatNode>(node)); break;
+        case ASTType::CaseNode:
+            genCase(std::dynamic_pointer_cast<CaseNode>(node)); break;
+        case ASTType::CallStmtNode:
+            genCallStmt(std::dynamic_pointer_cast<CallStmtNode>(node)); break;
+        default:
+            std::cerr << "ICG: genStmt - tipe statement tidak dikenal\n"; break;
+    }
+}
+
+void IntermediateCode::genCompound(std::shared_ptr<CompoundNode> node) {
+    if (!node) return;
+    for (auto& stmt : node->getStatements())
+        genStmt(stmt);
+}
+
+void IntermediateCode::genAssign(std::shared_ptr<AssignNode> node) {
+    if (!node) return;
+    genExpr(node->getValue());
+    genStore(node->getTarget());
+}
+
+void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
+    if (!target) return;
+
+    if (auto vr = std::dynamic_pointer_cast<VarRefNode>(target)) {
+        int idx = lookupVar(vr->getName());
+        if (idx < 0) {
+            std::cerr << "ICG: variabel tidak ditemukan saat store: " << vr->getName() << "\n";
+            return;
+        }
+        emit(Opcode::STO, levelDiff(idx), symTab.getTab(idx).adr);
+
+    } else if (auto aa = std::dynamic_pointer_cast<ArrayAccessNode>(target)) {
+        auto base = std::dynamic_pointer_cast<VarRefNode>(aa->getArray());
+        if (!base) { std::cerr << "ICG: array store kompleks belum didukung\n"; return; }
+        int idx = lookupVar(base->getName());
+        if (idx < 0) { std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n"; return; }
+        genExpr(aa->getIndex());
+        emit(Opcode::STO, levelDiff(idx), symTab.getTab(idx).adr);
+    }
+}
+
+void IntermediateCode::genIf(std::shared_ptr<IfNode> node) {
+    if (!node) return;
+    genExpr(node->getCondition());
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+
+    genStmt(node->getThenBlock());
+
+    if (node->getElseBlock()) {
+        int jmpAddr = emit(Opcode::JMP, 0, 0);
+        patch(jpcAddr, nextAddr());
+        genStmt(node->getElseBlock());
+        patch(jmpAddr, nextAddr());
+    } else {
+        patch(jpcAddr, nextAddr());
+    }
+}
+
+void IntermediateCode::genWhile(std::shared_ptr<WhileNode> node) {
+    if (!node) return;
+    int loopStart = nextAddr();
+    genExpr(node->getCondition());
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+    genStmt(node->getBody());
+    emit(Opcode::JMP, 0, loopStart);
+    patch(jpcAddr, nextAddr());
+}
+
+void IntermediateCode::genFor(std::shared_ptr<ForNode> node) {
+    if (!node) return;
+
+    int varIdx = lookupVar(node->getMovingVar());
+    if (varIdx < 0) {
+        std::cerr << "ICG: FOR variable tidak ditemukan: " << node->getMovingVar() << "\n";
+        return;
+    }
+    int lev = levelDiff(varIdx);
+    int addr = symTab.getTab(varIdx).adr;
+
+    genExpr(node->getStartPoint());
+    emit(Opcode::STO, lev, addr);
+    int loopStart = nextAddr();
+    emit(Opcode::LOD, lev, addr);
+    genExpr(node->getEndPoint());
+
+    if (node->goesUp())
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::LEQ));
+    else
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::GEQ));
+
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+    genStmt(node->getBody());
+
+    emit(Opcode::LOD, lev, addr);
+    emit(Opcode::LIT, 0, 1);
+
+    if (node->goesUp())
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
+    else
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
+    emit(Opcode::STO, lev, addr);
+
+    emit(Opcode::JMP, 0, loopStart);
+    patch(jpcAddr, nextAddr());
+}
+
+void IntermediateCode::genRepeat(std::shared_ptr<RepeatNode> node) {
+    if (!node) return;
+    int loopStart = nextAddr();
+    genStmt(node->getBody());
+    genExpr(node->getUntilCondition());
+    emit(Opcode::JPC, 0, loopStart);
+}
+
+void IntermediateCode::genCase(std::shared_ptr<CaseNode> node) {
+    if (!node) return;
+
+    auto cases = node->getCases();
+    std::vector<int> jmpToEndAddrs; 
+
+    for (size_t i = 0; i < cases.size(); i++) {
+        auto& [labels, stmt] = cases[i];
+
+        std::vector<int> jpcToNext; 
+
+        for (auto& lbl : labels) {
+            genExpr(node->getKey());
+            genExpr(lbl);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));
+            jpcToNext.push_back(emit(Opcode::JPC, 0, 0));
+        }
+
+        if (!jpcToNext.empty()) {
+            genStmt(stmt);
+            int jmpEnd = emit(Opcode::JMP, 0, 0);
+            jmpToEndAddrs.push_back(jmpEnd);
+            for (int jpcAddr : jpcToNext)
+                patch(jpcAddr, nextAddr());
+        }
+    }
+
+    for (int jmpAddr : jmpToEndAddrs)
+        patch(jmpAddr, nextAddr());
+}
+
+
+void IntermediateCode::genCallStmt(std::shared_ptr<CallStmtNode> node) {
+    if (!node || !node->getCall()) return;
+
+    auto call = node->getCall();
+    std::string name = call->getName();
+
+    if (name == "writeln") {
+        auto args = call->getArgs();
+        if (args.empty()) {
+            emit(Opcode::LIT, 0, 0);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::WRTLN));
+        } else {
+            for (size_t i = 0; i < args.size(); i++) {
+                genExpr(args[i]);
+                if (i + 1 == args.size())
+                    emit(Opcode::OPR, 0, static_cast<int>(OprCode::WRTLN));
+                else
+                    emit(Opcode::OPR, 0, static_cast<int>(OprCode::WRT));
+            }
+        }
+    } else if (name == "write") {
+        for (auto& arg : call->getArgs()) {
+            genExpr(arg);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::WRT));
+        }
+    } else if (name == "readln") {
+        std::cerr << "ICG: readln belum didukung penuh\n";
+    } else {
+        auto it = procAddr.find(name);
+        if (it == procAddr.end()) {
+            std::cerr << "ICG: prosedur tidak ditemukan: " << name << "\n";
+            return;
+        }
+        for (auto& arg : call->getArgs())
+            genExpr(arg);
+        int index = lookupVar(name);
+        int level = (index >= 0) ? levelDiff(index) : 0;
+        emit(Opcode::CAL, level, it->second);
+    }
+}
