@@ -133,3 +133,39 @@ void IntermediateCode::genAssign(std::shared_ptr<AssignNode> node) {
     genStore(node->getTarget());
 }
 
+void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
+    if (!target) return;
+
+    if (auto vr = std::dynamic_pointer_cast<VarRefNode>(target)) {
+        int idx = lookupVar(vr->getName());
+        if (idx < 0) {
+            std::cerr << "ICG: variabel tidak ditemukan saat store: " << vr->getName() << "\n";
+            return;
+        }
+        emit(Opcode::STO, levelDiff(idx), symTab.getTab(idx).adr);
+
+    } else if (auto aa = std::dynamic_pointer_cast<ArrayAccessNode>(target)) {
+        auto base = std::dynamic_pointer_cast<VarRefNode>(aa->getArray());
+        if (!base) { std::cerr << "ICG: array store kompleks belum didukung\n"; return; }
+        int idx = lookupVar(base->getName());
+        if (idx < 0) { std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n"; return; }
+        genExpr(aa->getIndex());
+        emit(Opcode::STO, levelDiff(idx), symTab.getTab(idx).adr);
+    }
+}
+
+void IntermediateCode::genIf(std::shared_ptr<IfNode> node) {
+    if (!node) return;
+    genExpr(node->getCondition());
+    int jpcAddr = emit(Opcode::JPC, 0, 0);
+
+    genStmt(node->getThenBlock());
+
+    if (node->getElseBlock()) {
+        int jmpAddr = emit(Opcode::JMP, 0, 0);
+        patch(jpcAddr, nextAddr());
+        genStmt(node->getElseBlock());
+        patch(jmpAddr, nextAddr());
+    } else {
+        patch(jpcAddr, nextAddr());
+    }
