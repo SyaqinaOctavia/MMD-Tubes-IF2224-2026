@@ -1,7 +1,9 @@
 #pragma once
 #include <vector>
+#include <string>
+#include <stdexcept>
 
-enum class Operator {
+enum class Opcode {
     LIT,
     LOD,
     STO,
@@ -13,7 +15,7 @@ enum class Operator {
     RET
 };
 
-enum class OPRInst {
+enum class OprCode {
     NEG,
     ADD,
     SUB,
@@ -33,33 +35,42 @@ enum class OPRInst {
 class Bytecode {
 private:
     int index;
-    Operator op;
+    Opcode opcode;
     int level;
     int target;
 public:
-    Bytecode(int index, Operator op, int level, int target) :
-        index(index), op(op), level(level), target(target) {}
+    Bytecode(int index, Opcode op, int lev, int oper)
+        : index(index), opcode(op), level(lev), target(oper) {}
     int getIndex(){ return index; }
-    Operator getOp() { return op; }
+    Opcode getOp() { return opcode; }
     int getLevel(){ return level; }
     int getTarget(){ return target; }
     void setTarget(int newTarget){ this->target = newTarget; }
+    std::string opcodeToStr() const {
+        switch (opcode) {
+            case Opcode::LIT: return "LIT";
+            case Opcode::LOD: return "LOD";
+            case Opcode::STO: return "STO";
+            case Opcode::CAL: return "CAL";
+            case Opcode::INT: return "INT";
+            case Opcode::JMP: return "JMP";
+            case Opcode::JPC: return "JPC";
+            case Opcode::OPR: return "OPR";
+            case Opcode::RET: return "RET";
+            default: return "???";
+        }
+    }
 };
 
-class InterCode {
-private:
-    std::vector<Bytecode> bytecodes;
-public:
-    void addLine(Operator op, int level, int target){
-        int index = bytecodes.size();
-        Bytecode newLine(index, op, level, target);
-        bytecodes.push_back(newLine);
-    }
-
-    void patch(int index, int newTarget){
-        bytecodes[index].setTarget(newTarget);
-    }
-
-    int size(){ return bytecodes.size(); }
-    Bytecode& get(int index){ return bytecodes[index]; }
-};
+inline Opcode strToOpcode(const std::string& s) {
+    if (s == "LIT") return Opcode::LIT;
+    if (s == "LOD") return Opcode::LOD;
+    if (s == "STO") return Opcode::STO;
+    if (s == "CAL") return Opcode::CAL;
+    if (s == "INT") return Opcode::INT;
+    if (s == "JMP") return Opcode::JMP;
+    if (s == "JPC") return Opcode::JPC;
+    if (s == "OPR") return Opcode::OPR;
+    if (s == "RET") return Opcode::RET;
+    throw std::runtime_error("Unknown opcode: " + s);
+}
