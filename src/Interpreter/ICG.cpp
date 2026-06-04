@@ -96,3 +96,78 @@ void IntermediateCode::genProgram(std::shared_ptr<ProgramNode> node) {
 
     emit(Opcode::RET, 0, 0);
 }
+
+void IntermediateCode::genExpr(std::shared_ptr<ExprNode> node) {
+    if (!node) return;
+    switch (node->getASTType()) {
+        case ASTType::LiteralNode:
+            genLiteral(std::dynamic_pointer_cast<LiteralNode>(node)); break;
+        case ASTType::VarRefNode:
+            genVarRef(std::dynamic_pointer_cast<VarRefNode>(node)); break;
+        case ASTType::BinaryOpNode:
+            genBinaryOp(std::dynamic_pointer_cast<BinaryOpNode>(node)); break;
+        case ASTType::UnaryOpNode:
+            genUnaryOp(std::dynamic_pointer_cast<UnaryOpNode>(node)); break;
+        case ASTType::CallNode:
+            genCall(std::dynamic_pointer_cast<CallNode>(node)); break;
+        case ASTType::ArrayAccessNode:
+            genArrayAccess(std::dynamic_pointer_cast<ArrayAccessNode>(node)); break;
+        default:
+            std::cerr << "ICG: genExpr - tipe ekspresi tidak dikenal\n"; break;
+    }
+}
+
+void IntermediateCode::genLiteral(std::shared_ptr<LiteralNode> node) {
+    if (!node) return;
+    int val = 0;
+    switch (node->getKind()) {
+        case LiteralKind::Int:
+            val = std::stoi(node->getValue());
+            emit(Opcode::LIT, 0, val);
+            break;
+        case LiteralKind::Bool:
+            val = (node->getValue() == "true") ? 1 : 0;
+            emit(Opcode::LIT, 0, val);
+            break;
+        case LiteralKind::Char:
+            if (!node->getValue().empty())
+                val = static_cast<int>(node->getValue()[0]);
+            emit(Opcode::LIT, 0, val);
+            break;
+        case LiteralKind::Real:
+            val = static_cast<int>(std::stod(node->getValue()));
+            emit(Opcode::LIT, 0, val);
+            break;
+        case LiteralKind::String:
+            std::cerr << "ICG: literal string '" << node->getValue()
+                      << "' — push sebagai 0 (belum didukung penuh)\n";
+            emit(Opcode::LIT, 0, 0);
+            break;
+    }
+}
+
+void IntermediateCode::genVarRef(std::shared_ptr<VarRefNode> node) {
+    if (!node) return;
+    int idx = lookupVar(node->getName());
+    if (idx < 0) {
+        std::cerr << "ICG: variabel tidak ditemukan: " << node->getName() << "\n";
+        emit(Opcode::LIT, 0, 0); 
+        return;
+    }
+    const Tab& entry = symTab.getTab(idx);
+
+    if (entry.obj == 1) {
+        int val = 0;
+        if (!entry.const_value.empty()) {
+            if (entry.const_value == "true") val = 1;
+            else if (entry.const_value == "false") val = 0;
+            else {
+                try { val = std::stoi(entry.const_value); }
+                catch (const std::exception& e) { val = 0; }
+            }
+        }
+        emit(Opcode::LIT, 0, val);
+    } else {
+        emit(Opcode::LOD, levelDiff(idx), entry.adr);
+    }
+}
