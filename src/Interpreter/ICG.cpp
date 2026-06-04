@@ -374,135 +374,95 @@ void IntermediateCode::genCallStmt(std::shared_ptr<CallStmtNode> node) {
     }
 }
 
-void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
-    if (!target) return;
-
-    if (auto vr = std::dynamic_pointer_cast<VarRefNode>(target)) {
-        int idx = lookupVar(vr->getName());
-        if (idx < 0) {
-            std::cerr << "ICG: variabel tidak ditemukan saat store: " << vr->getName() << "\n";
-            return;
-        }
-        emit(Opcode::STO, levelDiff(idx), symTab.getTab(idx).adr);
-
-    } else if (auto aa = std::dynamic_pointer_cast<ArrayAccessNode>(target)) {
-        auto base = std::dynamic_pointer_cast<VarRefNode>(aa->getArray());
-        if (!base) { std::cerr << "ICG: array store kompleks belum didukung\n"; return; }
-        int idx = lookupVar(base->getName());
-        if (idx < 0) { std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n"; return; }
-        genExpr(aa->getIndex());
-        emit(Opcode::STO, levelDiff(idx), symTab.getTab(idx).adr);
-    }
-}
-
-void IntermediateCode::genIf(std::shared_ptr<IfNode> node) {
+void IntermediateCode::genBinaryOp(std::shared_ptr<BinaryOpNode> node) {
     if (!node) return;
 
-    genExpr(node->getCondition());
-    int jpcAddr = emit(Opcode::JPC, 0, 0);
-    genStmt(node->getThenBlock());
+    std::string op = node->getOp();
 
-    if (node->getElseBlock()) {
-        int jmpAddr = emit(Opcode::JMP, 0, 0);
-        patch(jpcAddr, nextAddr());
-        genStmt(node->getElseBlock());
-        patch(jmpAddr, nextAddr());
-    } else {
-        patch(jpcAddr, nextAddr());
-    }
-}
-
-void IntermediateCode::genCase(std::shared_ptr<CaseNode> node) {
-    if (!node) return;
-
-    auto cases = node->getCases();
-    std::vector<int> jmpToEndAddrs;
-
-    for (size_t i = 0; i < cases.size(); i++) {
-        auto& [labels, stmt] = cases[i];
-
-        std::vector<int> jpcToNext;
-
-        for (auto& lbl : labels) {
-            genExpr(node->getKey());
-            genExpr(lbl);
-            emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));
-            jpcToNext.push_back(emit(Opcode::JPC, 0, 0));
-        }
-
-        if (!jpcToNext.empty()) {
-
-            genStmt(stmt);
-            int jmpEnd = emit(Opcode::JMP, 0, 0);
-            jmpToEndAddrs.push_back(jmpEnd);
-
-            for (int jpcAddr : jpcToNext)
-                patch(jpcAddr, nextAddr());
-        }
-    }
-
-    for (int jmpAddr : jmpToEndAddrs)
-        patch(jmpAddr, nextAddr());
-}
-
-void IntermediateCode::genWhile(std::shared_ptr<WhileNode> node) {
-    if (!node) return;
-
-    int loopStart = nextAddr(); // catat posisi awal loop
-    genExpr(node->getCondition());
-
-    int jpcAddr = emit(Opcode::JPC, 0, 0);
-    genStmt(node->getBody());
-    emit(Opcode::JMP, 0, loopStart);
-    patch(jpcAddr, nextAddr());
-}
-
-void IntermediateCode::genFor(std::shared_ptr<ForNode> node) {
-    if (!node) return;
-
-    int varIdx = lookupVar(node->getMovingVar());
-    if (varIdx < 0) {
-        std::cerr << "ICG: FOR variable tidak ditemukan: " << node->getMovingVar() << "\n";
+    if (op == "and") {
+        genExpr(node->getLeft());
+        int jpc1 = emit(Opcode::JPC, 0, 0);
+        genExpr(node->getRight());
+        int jpc2 = emit(Opcode::JPC, 0, 0);
+        emit(Opcode::LIT, 0, 1); // true
+        int jmpEnd = emit(Opcode::JMP, 0, 0);
+        int falseLabel = nextAddr();
+        emit(Opcode::LIT, 0, 0); // false
+        int endLabel = nextAddr();
+        patch(jpc1, falseLabel);
+        patch(jpc2, falseLabel);
+        patch(jmpEnd, endLabel);
         return;
     }
-    int lev = levelDiff(varIdx);
-    int adr = symTab.getTab(varIdx).adr;
+    if (op == "or") {
+        genExpr(node->getLeft());
+        int jpcLeft = emit(Opcode::JPC, 0, 0); 
+        emit(Opcode::LIT, 0, 1);               
+        int jmpEnd1 = emit(Opcode::JMP, 0, 0);
+        int checkRight = nextAddr();
+        genExpr(node->getRight());
+        int jpcRight = emit(Opcode::JPC, 0, 0);
+        emit(Opcode::LIT, 0, 1);               
+        int jmpEnd2 = emit(Opcode::JMP, 0, 0);
+        int falseLabel = nextAddr();
+        emit(Opcode::LIT, 0, 0);               
+        int endLabel = nextAddr();
+        patch(jpcLeft, checkRight);
+        patch(jmpEnd1, endLabel);
+        patch(jpcRight, falseLabel);
+        patch(jmpEnd2, endLabel);
+        return;
+    }
 
-    genExpr(node->getStartPoint());
-    emit(Opcode::STO, lev, adr);
-
-
-    int loopStart = nextAddr();
-
-    emit(Opcode::LOD, lev, adr);
-    genExpr(node->getEndPoint());
-
-    if (node->goesUp())
-        emit(Opcode::OPR, 0, static_cast<int>(OprCode::LEQ));
-    else
-        emit(Opcode::OPR, 0, static_cast<int>(OprCode::GEQ));
-
-    int jpcAddr = emit(Opcode::JPC, 0, 0);
-
-    genStmt(node->getBody());
-
-    emit(Opcode::LOD, lev, adr);
-    emit(Opcode::LIT, 0, 1);
-    if (node->goesUp())
-        emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
-    else
-        emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
-    emit(Opcode::STO, lev, adr);
-
-    emit(Opcode::JMP, 0, loopStart);
-    patch(jpcAddr, nextAddr());
+    genExpr(node->getLeft());
+    genExpr(node->getRight());
+    emit(Opcode::OPR, 0, static_cast<int>(opToOpr(op)));
 }
 
-void IntermediateCode::genRepeat(std::shared_ptr<RepeatNode> node) {
+void IntermediateCode::genUnaryOp(std::shared_ptr<UnaryOpNode> node) {
     if (!node) return;
+    genExpr(node->getOperand());
+    std::string op = node->getOp();
+    if (op == "-")
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::NEG));
+    else if (op == "not") {
+        emit(Opcode::LIT, 0, 0);
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));
+    }
+}
 
-    int loopStart = nextAddr();
-    genStmt(node->getBody());
-    genExpr(node->getUntilCondition());
-    emit(Opcode::JPC, 0, loopStart);
+void IntermediateCode::genCall(std::shared_ptr<CallNode> node) {
+    if (!node) return;
+    std::string name = node->getName();
+
+    auto it = procAddr.find(name);
+    if (it == procAddr.end()) {
+        std::cerr << "ICG: fungsi '" << name << "' tidak ditemukan, push 0\n";
+        emit(Opcode::LIT, 0, 0);
+        return;
+    }
+
+    for (auto& arg : node->getArgs())
+        genExpr(arg);
+
+    int idx = lookupVar(name);
+    int lev = (idx >= 0) ? levelDiff(idx) : 0;
+    emit(Opcode::CAL, lev, it->second);
+}
+
+void IntermediateCode::genArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
+    if (!node) return;
+    auto base = std::dynamic_pointer_cast<VarRefNode>(node->getArray());
+    if (!base) {
+        std::cerr << "ICG: array access kompleks belum didukung\n";
+        emit(Opcode::LIT, 0, 0);
+        return;
+    }
+    int idx = lookupVar(base->getName());
+    if (idx < 0) {
+        std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n";
+        emit(Opcode::LIT, 0, 0);
+        return;
+    }
+    emit(Opcode::LOD, levelDiff(idx), symTab.getTab(idx).adr);
 }
