@@ -60,6 +60,12 @@ public:
             default: return "???";
         }
     }
+    std::string toString(int lineNum) const {
+        return std::to_string(lineNum) + " "
+             + opcodeToStr() + " "
+             + std::to_string(level) + " "
+             + std::to_string(target);
+    }
 };
 
 inline Opcode strToOpcode(const std::string& s) {

@@ -12,14 +12,17 @@ private:
     std::vector<Bytecode> code;   // hasil instruksi yang sedang dibangun
     int currentLevel;                // lexical level saat ini (0 = global)
 
-    void emit(Opcode op, int level, int target){
+    int emit(Opcode op, int level, int target){
         int index = code.size();
         Bytecode newLine(index, op, level, target);
         code.push_back(newLine);
+        return index;
     }
     
     void patch(int index, int newTarget){
-        code[index].setTarget(newTarget);
+        if (index < 0 || index >= static_cast<int>(code.size()))
+        throw std::runtime_error("ICG: patch ke alamat tidak valid: " + std::to_string(addr));
+        code.at(index).setTarget(newTarget);
     }
 
     int size(){ return code.size(); }
