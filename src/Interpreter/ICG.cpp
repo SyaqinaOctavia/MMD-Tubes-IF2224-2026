@@ -185,11 +185,16 @@ void IntermediateCode::genLiteral(std::shared_ptr<LiteralNode> node) {
             val = static_cast<int>(std::stod(node->getValue()));
             emit(Opcode::LIT, 0, val);
             break;
-        case LiteralKind::String:
-            std::cerr << "ICG: literal string '" << node->getValue()
-                      << "' — push sebagai 0 (belum didukung penuh)\n";
-            emit(Opcode::LIT, 0, 0);
+        case LiteralKind::String: {
+            std::string raw = node->getValue();
+            if (raw.size() >= 2 && raw.front() == '\'' && raw.back() == '\'')
+                raw = raw.substr(1, raw.size() - 2);
+            else if (raw.size() >= 1 && raw.front() == '\'')
+                raw = raw.substr(1);
+            int strIdx = internString(raw);
+            emit(Opcode::LITS, 0, strIdx);
             break;
+        }
     }
 }
 

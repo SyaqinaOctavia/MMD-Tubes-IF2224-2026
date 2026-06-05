@@ -5,6 +5,7 @@
 
 enum class Opcode {
     LIT,
+    LITS,
     LOD,
     STO,
     CAL,

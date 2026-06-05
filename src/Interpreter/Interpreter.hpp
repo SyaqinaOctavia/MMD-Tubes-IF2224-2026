@@ -12,16 +12,24 @@ public:
         : std::runtime_error("Runtime Error: " + msg) {}
 };
 
+static constexpr int STRING_TAG = 0x40000000;
+
+inline bool isStringVal(int v)  { return (v & STRING_TAG) != 0; }
+inline int  makeStringVal(int i) { return STRING_TAG | i; }
+inline int  getStringIdx(int v)  { return v & ~STRING_TAG; }
+
 class Interpreter {
 public:
     static const int STACK_SIZE  = 10000;
     static const int MAX_CALL_DEPTH = 500;
     Interpreter() : stack(STACK_SIZE, 0), sp(-1), bp(0), pc(0), callDepth(0) {}
+    void setStringTable(const std::vector<std::string>& st) { stringTable = st; }
     void execute(std::vector<Bytecode>& code);
     void execute(std::vector<Bytecode>& code, std::ostream& out);
 
 private:
     std::vector<int> stack;
+    std::vector<std::string> stringTable;
     int sp;
     int bp;
     int pc;
@@ -33,7 +41,10 @@ private:
 
     int base(int levelDiff) const;
 
+    void printVal(int val, std::ostream& out) const;
+
     void execLIT(Bytecode instr);
+    void execLITS(Bytecode instr);
     void execLOD(Bytecode instr);
     void execSTO(Bytecode instr);
     void execCAL(Bytecode instr, const std::vector<Bytecode>& code);

@@ -65,6 +65,14 @@ private:
     int varAddr(int tabIdx) const { return symTab.getTab(tabIdx).adr + 3; }
     OprCode opToOpr(const std::string& op) const;
     
+    std::vector<std::string> stringTable;
+    int internString(const std::string& s) {
+        for (int i = 0; i < (int)stringTable.size(); i++)
+            if (stringTable[i] == s) return i;
+        stringTable.push_back(s);
+        return (int)stringTable.size() - 1;
+    }
+
 public:
     IntermediateCode(SymbolTable& symTab)
         : symTab(symTab), currentLevel(0) {}
@@ -72,7 +80,6 @@ public:
     std::vector<Bytecode> generate(std::shared_ptr<ASTNode> root);
 
     void writeToFile(const std::vector<Bytecode>& instrs, const std::string& filename) const;
-
     void writeToStream(const std::vector<Bytecode>& instrs, std::ostream& out) const;
-
+    const std::vector<std::string>& getStringTable() const { return stringTable; }
 };

@@ -18,15 +18,16 @@ void Interpreter::execute(std::vector<Bytecode>& code, std::ostream& out) {
         pc++;
 
         switch (instr.getOp()) {
-            case Opcode::LIT: execLIT(instr);             break;
-            case Opcode::LOD: execLOD(instr);             break;
-            case Opcode::STO: execSTO(instr);             break;
-            case Opcode::CAL: execCAL(instr, code);       break;
-            case Opcode::INT: execINT(instr);             break;
-            case Opcode::JMP: execJMP(instr);             break;
-            case Opcode::JPC: execJPC(instr);             break;
-            case Opcode::OPR: execOPR(instr, out);        break;
-            case Opcode::RET: execRET();                  break;
+            case Opcode::LIT:  execLIT(instr);             break;
+            case Opcode::LITS: execLITS(instr);            break;
+            case Opcode::LOD:  execLOD(instr);             break;
+            case Opcode::STO:  execSTO(instr);             break;
+            case Opcode::CAL:  execCAL(instr, code);       break;
+            case Opcode::INT:  execINT(instr);             break;
+            case Opcode::JMP:  execJMP(instr);             break;
+            case Opcode::JPC:  execJPC(instr);             break;
+            case Opcode::OPR:  execOPR(instr, out);        break;
+            case Opcode::RET:  execRET();                  break;
             default:
                 throw RuntimeError("Opcode tidak dikenal di instruksi " + std::to_string(pc - 1));
         }
@@ -83,6 +84,25 @@ void Interpreter::checkStackIndex(int idx) const {
 
 void Interpreter::execLIT(Bytecode instr) {
     push(instr.getTarget());
+}
+
+void Interpreter::execLITS(Bytecode instr) {
+    int strIdx = instr.getTarget();
+    if (strIdx < 0 || strIdx >= (int)stringTable.size())
+        throw RuntimeError("LITS: indeks string " + std::to_string(strIdx) + " di luar string table");
+    push(makeStringVal(strIdx));
+}
+
+// Helper
+void Interpreter::printVal(int val, std::ostream& out) const {
+    if (isStringVal(val)) {
+        int idx = getStringIdx(val);
+        if (idx < 0 || idx >= (int)stringTable.size())
+            throw RuntimeError("printVal: indeks string tidak valid: " + std::to_string(idx));
+        out << stringTable[idx];
+    } else {
+        out << val;
+    }
 }
 
 void Interpreter::execLOD(Bytecode instr) {
@@ -230,12 +250,13 @@ void Interpreter::execOPR(Bytecode instr, std::ostream& out) {
         }
         case OprCode::WRT: {
             int val = pop();
-            out << val;
+            printVal(val, out);
             break;
         }
         case OprCode::WRTLN: {
             int val = pop();
-            out << val << "\n";
+            printVal(val, out);
+            out << "\n";
             break;
         }
         default:
