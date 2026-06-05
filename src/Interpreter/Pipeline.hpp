@@ -33,7 +33,7 @@ static void runPipeline(const string& sourceFile, const string& icodeFile) {
     bool ok = seman.analyzeAndOutput(astree, tempAst);
     if (!ok) { cerr << "Semantic Analysis menemukan error.\n"; return; }
 
-    // 4. Intermediate Code Generation
+    // Intermediate Code Generation
     IntermediateCode icg(symtab);
     vector<Bytecode> code;
     try {
@@ -56,6 +56,7 @@ static void runPipeline(const string& sourceFile, const string& icodeFile) {
 
     cout << "=== OUTPUT PROGRAM ===\n";
     Interpreter interp;
+    interp.setStringTable(icg.getStringTable());
     try {
         interp.execute(code);
     } catch (const RuntimeError& e) {
