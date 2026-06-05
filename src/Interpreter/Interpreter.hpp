@@ -33,14 +33,14 @@ private:
 
     int base(int levelDiff) const;
 
-    void execLIT(const Bytecode& instr);
-    void execLOD(const Bytecode& instr);
-    void execSTO(const Bytecode& instr);
-    void execCAL(const Bytecode& instr, const std::vector<Bytecode>& code);
-    void execINT(const Bytecode& instr);
-    void execJMP(const Bytecode& instr);
-    void execJPC(const Bytecode& instr);
-    void execOPR(const Bytecode& instr, std::ostream& out);
+    void execLIT(Bytecode instr);
+    void execLOD(Bytecode instr);
+    void execSTO(Bytecode instr);
+    void execCAL(Bytecode instr, const std::vector<Bytecode>& code);
+    void execINT(Bytecode instr);
+    void execJMP(Bytecode instr);
+    void execJPC(Bytecode instr);
+    void execOPR(Bytecode instr, std::ostream& out);
     void execRET();
 
     void checkStackOverflow()  const;
