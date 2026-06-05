@@ -43,7 +43,9 @@ int IntermediateCode::levelDiff(int tabIdx) const {
 }
 
 int IntermediateCode::frameSizeFromBlock(int blockIdx) const {
-    return 3 + symTab.getBlockTab(blockIdx).vsze;
+    int vars   = symTab.getBlockTab(blockIdx).vsze;
+    int params = symTab.getBlockTab(blockIdx).psze;
+    return 3 + vars + params;
 }
 
 OprCode IntermediateCode::opToOpr(const std::string& op) const {
@@ -63,7 +65,7 @@ OprCode IntermediateCode::opToOpr(const std::string& op) const {
 }
 
 void IntermediateCode::genProgram(std::shared_ptr<ProgramNode> node) {
-    int mainBlockIdx = 1; 
+    int mainBlockIdx = 0; 
     int fsize = 3; 
 
     if (symTab.getBlocktabSize() > mainBlockIdx) {
