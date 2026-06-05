@@ -366,7 +366,6 @@ void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
         emit(Opcode::STO, levelDiff(recIdx), varAddr(recIdx) + fieldAddr);
 
     } else if (auto arrAcc = std::dynamic_pointer_cast<ArrayAccessNode>(target)) {
-        // Array element assignment: arr[i] := value
         auto base = std::dynamic_pointer_cast<VarRefNode>(arrAcc->getArray());
         if (!base) {
             std::cerr << "ICG: array store kompleks belum didukung\n";
@@ -640,15 +639,4 @@ void IntermediateCode::genFieldAccess(std::shared_ptr<FieldAccessNode> node) {
     }
     int fieldAddr = getRecordFieldAddr(recIdx, node->getFieldName());
     emit(Opcode::LOD, levelDiff(recIdx), varAddr(recIdx) + fieldAddr);
-}
-
-int IntermediateCode::getRecordFieldAddr(int recTabIdx, const std::string& fieldName) const {
-    // Record fields are stored in the symbol table with lev = recTab.lev + 1
-    // and have their own adr (offset within the record)
-    int recLev = symTab.getTab(recTabIdx).lev;
-    for (int i = 0; i < symTab.getTabSize(); ++i) {
-        if (symTab.getTab(i).id == fieldName && symTab.getTab(i).lev == recLev + 1)
-            return symTab.getTab(i).adr;
-    }
-    return 0;
 }
