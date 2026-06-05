@@ -4,6 +4,7 @@
 #include "Semantic/ASTer.hpp"
 #include "Semantic/SymbolTable.hpp"
 #include "Semantic/SemanticAnalyzer.hpp"
+#include "Interpreter/Pipeline.hpp"
 #include <cstring>
 #include <iostream>
 
@@ -64,7 +65,15 @@ int main(int argc, char* argv[]){
             seman.analyzeAndOutput(astree, argv[3]);
         }
     }
+    else if (strcmp(argv[1], "4a") == 0) {
+        runPipeline(argv[2], "");
+    }
+    else if (strcmp(argv[1], "4b") == 0) {
+        if (argc < 4) { cerr << "4b butuh <input> <output>\n"; return 1; }
+        runPipeline(argv[2], argv[3]);
+    }
     else {
-        cout << "OPTION INVALID!" << endl;
+        cout << "OPTION INVALID!\n";
+        return 1;
     }
 }
