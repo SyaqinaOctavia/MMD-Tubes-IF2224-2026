@@ -19,6 +19,8 @@ int main(int argc, char* argv[]){
         cout << "         2b. Lexer and Parser (input with code, output as parse tree)" << endl;
         cout << "         3a. Semantic Analyzer (input with parse tree, output as AST)" << endl;
         cout << "         3b. Lexer, Parser, and Semantic Analyzer (input with code, output as AST)" << endl;
+        cout << "         4a. Full pipeline (input: code, output: intermediate code + run)\n";
+        cout << "         4b. Full pipeline to file (input: code, output file: intermediate code)\n";
         return 0;
     }
     if(std::strcmp(argv[1], "1") == 0){
