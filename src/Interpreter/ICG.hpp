@@ -62,8 +62,9 @@ private:
     int frameSizeFromBlock(int blockIdx) const;
 
     std::unordered_map<std::string, int> procAddr;
-
+    int varAddr(int tabIdx) const { return symTab.getTab(tabIdx).adr + 3; }
     OprCode opToOpr(const std::string& op) const;
+    
 public:
     IntermediateCode(SymbolTable& symTab)
         : symTab(symTab), currentLevel(0) {}
