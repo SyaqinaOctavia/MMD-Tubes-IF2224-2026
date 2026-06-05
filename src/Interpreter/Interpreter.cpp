@@ -80,6 +80,7 @@ void Interpreter::checkStackIndex(int idx) const {
 }
 
 // ========================== executors =========================
+
 void Interpreter::execLIT(Bytecode instr) {
     push(instr.getTarget());
 }
@@ -104,7 +105,7 @@ void Interpreter::execCAL(Bytecode instr, const std::vector<Bytecode>& code) {
     if (callDepth > MAX_CALL_DEPTH)
         throw RuntimeError("Stack Overflow: kedalaman call melebihi batas " + std::to_string(MAX_CALL_DEPTH) + " (infinite recursion?)");
 
-    checkJumpTarget(instr.getTarget(),code.size());
+    checkJumpTarget(instr.getTarget(), code.size());
 
     push(base(instr.getLevel()));
     push(bp);
@@ -125,14 +126,13 @@ void Interpreter::execINT(Bytecode instr) {
 }
 
 void Interpreter::execJMP(Bytecode instr) {
-    pc = instr.getLevel();
+    pc = instr.getTarget();
 }
-
 
 void Interpreter::execJPC(Bytecode instr) {
     int cond = pop();
     if (cond == 0)
-        pc = instr.getLevel();
+        pc = instr.getTarget();
 }
 
 void Interpreter::execRET() {
@@ -149,4 +149,96 @@ void Interpreter::execRET() {
     pc = retAddr;
 
     if (callDepth > 0) callDepth--;
+}
+
+void Interpreter::execOPR(Bytecode instr, std::ostream& out) {
+    OprCode opr = static_cast<OprCode>(instr.getTarget()); 
+
+    switch (opr) {
+        case OprCode::NEG: {
+            int a = pop();
+            push(-a);
+            break;
+        }
+        case OprCode::ADD: {
+            int b = pop();
+            int a = pop();
+            push(a + b);
+            break;
+        }
+        case OprCode::SUB: {
+            int b = pop();
+            int a = pop();
+            push(a - b);
+            break;
+        }
+        case OprCode::MUL: {
+            int b = pop();
+            int a = pop();
+            push(a * b);
+            break;
+        }
+        case OprCode::DIV: {
+            int b = pop();
+            int a = pop();
+            checkDivision(b);
+            push(a / b);
+            break;
+        }
+        case OprCode::MOD: {
+            int b = pop();
+            int a = pop();
+            checkDivision(b);
+            push(a % b);
+            break;
+        }
+        case OprCode::EQL: {
+            int b = pop();
+            int a = pop();
+            push(a == b ? 1 : 0);
+            break;
+        }
+        case OprCode::NEQ: {
+            int b = pop();
+            int a = pop();
+            push(a != b ? 1 : 0);
+            break;
+        }
+        case OprCode::LSS: {
+            int b = pop();
+            int a = pop();
+            push(a < b ? 1 : 0);
+            break;
+        }
+        case OprCode::GEQ: {
+            int b = pop();
+            int a = pop();
+            push(a >= b ? 1 : 0);
+            break;
+        }
+        case OprCode::GTR: {
+            int b = pop();
+            int a = pop();
+            push(a > b ? 1 : 0);
+            break;
+        }
+        case OprCode::LEQ: {
+            int b = pop();
+            int a = pop();
+            push(a <= b ? 1 : 0);
+            break;
+        }
+        case OprCode::WRT: {
+            int val = pop();
+            out << val;
+            break;
+        }
+        case OprCode::WRTLN: {
+            int val = pop();
+            out << val << "\n";
+            break;
+        }
+        default:
+            throw RuntimeError("OPR tidak dikenal: " + instr.opcodeToStr());
+    }
 }
