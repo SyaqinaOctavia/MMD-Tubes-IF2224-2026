@@ -17,8 +17,8 @@ public:
     static const int STACK_SIZE  = 10000;
     static const int MAX_CALL_DEPTH = 500;
     Interpreter() : stack(STACK_SIZE, 0), sp(-1), bp(0), pc(0), callDepth(0) {}
-    void execute(const std::vector<Bytecode>& code);
-    void execute(const std::vector<Bytecode>& code, std::ostream& out);
+    void execute(std::vector<Bytecode>& code);
+    void execute(std::vector<Bytecode>& code, std::ostream& out);
 
 private:
     std::vector<int> stack;
