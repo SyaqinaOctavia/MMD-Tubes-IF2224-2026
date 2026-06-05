@@ -8,6 +8,10 @@ std::vector<Bytecode> IntermediateCode::generate(std::shared_ptr<ASTNode> root) 
     code.clear();
     procAddr.clear();
     currentLevel = 0;
+    blockStack.clear();
+    blockStack.push_back(0);
+    currentFuncName = "";
+    currentFuncTabIdx = -1;
 
     if (!root) throw std::runtime_error("ICG: null AST root");
 
@@ -34,8 +38,24 @@ void IntermediateCode::writeToStream(
 }
 
 int IntermediateCode::lookupVar(const std::string& name) const {
-    int idx = const_cast<SymbolTable&>(symTab).searchTab(name);
-    return idx;
+    for (int lvl = currentLevel; lvl >= 0; --lvl) {
+        if (lvl >= (int)blockStack.size()) continue;
+        int blkIdx = blockStack[lvl];
+        if (blkIdx < 0 || blkIdx >= symTab.getBlocktabSize()) continue;
+
+        int idx = symTab.getBlockTab(blkIdx).last;
+        while (idx > 0 && idx < symTab.getTabSize()) {
+            if (symTab.getTab(idx).id == name)
+                return idx;
+            idx = symTab.getTab(idx).link;
+        }
+    }
+    // Search predefined / global tab entries not caught by block chain
+    for (int i = 0; i < symTab.getTabSize(); ++i) {
+        if (symTab.getTab(i).id == name)
+            return i;
+    }
+    return -1;
 }
 
 int IntermediateCode::levelDiff(int tabIdx) const {
@@ -62,12 +82,11 @@ OprCode IntermediateCode::opToOpr(const std::string& op) const {
     if (op == "gtr"   || op == ">")   return OprCode::GTR;
     if (op == "leq"   || op == "<=")  return OprCode::LEQ;
     throw std::runtime_error("ICG: operator tidak dikenal: " + op);
-    throw std::runtime_error("ICG: operator tidak dikenal: " + op);
 }
 
 void IntermediateCode::genProgram(std::shared_ptr<ProgramNode> node) {
-    int mainBlockIdx = 0; 
-    int fsize = 3; 
+    int mainBlockIdx = 0;
+    int fsize = 3;
 
     if (symTab.getBlocktabSize() > mainBlockIdx) {
         fsize = frameSizeFromBlock(mainBlockIdx);
@@ -100,48 +119,80 @@ void IntermediateCode::genProgram(std::shared_ptr<ProgramNode> node) {
     emit(Opcode::RET, 0, 0);
 }
 
-int IntermediateCode::frameSize(std::shared_ptr<ProcDeclNode> node) const {
-    int idx = const_cast<SymbolTable&>(symTab).searchTab(node->getName());
-    if (idx < 0) return 3;
-    int blockIdx = symTab.getTab(idx).ref;
-    return frameSizeFromBlock(blockIdx);
-}
-
-int IntermediateCode::frameSize(std::shared_ptr<FuncDeclNode> node) const {
-    int idx = const_cast<SymbolTable&>(symTab).searchTab(node->getName());
-    if (idx < 0) return 3;
-    int blockIdx = symTab.getTab(idx).ref;
-    return frameSizeFromBlock(blockIdx);
+// Helper: find function/proc btab index by name and object type
+int IntermediateCode::findProcBtab(const std::string& name, int objType) const {
+    for (int i = 0; i < symTab.getTabSize(); ++i) {
+        const Tab& t = symTab.getTab(i);
+        if (t.id == name && t.obj == objType)
+            return t.ref;
+    }
+    return -1;
 }
 
 void IntermediateCode::genProcDecl(std::shared_ptr<ProcDeclNode> node) {
     procAddr[node->getName()] = nextAddr();
 
-    currentLevel++;
+    int blkIdx = findProcBtab(node->getName(), 5 /* OBJ_PROC */);
 
-    int fsize = frameSize(node);
+    currentLevel++;
+    if ((int)blockStack.size() <= currentLevel)
+        blockStack.push_back(blkIdx);
+    else
+        blockStack[currentLevel] = blkIdx;
+
+    int fsize = (blkIdx >= 0) ? frameSizeFromBlock(blkIdx) : 3;
     emit(Opcode::INT, 0, fsize);
+
+    std::string savedFunc = currentFuncName;
+    int savedFuncTabIdx = currentFuncTabIdx;
+    currentFuncName = "";
+    currentFuncTabIdx = -1;
 
     if (node->getBody())
         genStmt(node->getBody());
 
     emit(Opcode::RET, 0, 0);
 
+    currentFuncName = savedFunc;
+    currentFuncTabIdx = savedFuncTabIdx;
     currentLevel--;
+    blockStack.resize(currentLevel + 1);
 }
 
 void IntermediateCode::genFuncDecl(std::shared_ptr<FuncDeclNode> node) {
     procAddr[node->getName()] = nextAddr();
-    currentLevel++;
 
-    int fsize = frameSize(node);
+    int blkIdx = findProcBtab(node->getName(), 4 /* OBJ_FUNC */);
+
+    int funcTabIdx = -1;
+    for (int i = 0; i < symTab.getTabSize(); ++i) {
+        if (symTab.getTab(i).id == node->getName() && symTab.getTab(i).obj == 4)
+            funcTabIdx = i;
+    }
+
+    currentLevel++;
+    if ((int)blockStack.size() <= currentLevel)
+        blockStack.push_back(blkIdx);
+    else
+        blockStack[currentLevel] = blkIdx;
+
+    std::string savedFunc = currentFuncName;
+    int savedFuncTabIdx = currentFuncTabIdx;
+    currentFuncName = node->getName();
+    currentFuncTabIdx = funcTabIdx;
+
+    int fsize = (blkIdx >= 0) ? frameSizeFromBlock(blkIdx) : 3;
     emit(Opcode::INT, 0, fsize);
 
     if (node->getBody())
         genStmt(node->getBody());
 
     emit(Opcode::RET, 0, 0);
+
+    currentFuncName = savedFunc;
+    currentFuncTabIdx = savedFuncTabIdx;
     currentLevel--;
+    blockStack.resize(currentLevel + 1);
 }
 
 void IntermediateCode::genExpr(std::shared_ptr<ExprNode> node) {
@@ -159,6 +210,8 @@ void IntermediateCode::genExpr(std::shared_ptr<ExprNode> node) {
             genCall(std::dynamic_pointer_cast<CallNode>(node)); break;
         case ASTType::ArrayAccessNode:
             genArrayAccess(std::dynamic_pointer_cast<ArrayAccessNode>(node)); break;
+        case ASTType::FieldAccessNode:
+            genFieldAccess(std::dynamic_pointer_cast<FieldAccessNode>(node)); break;
         default:
             std::cerr << "ICG: genExpr - tipe ekspresi tidak dikenal\n"; break;
     }
@@ -200,15 +253,26 @@ void IntermediateCode::genLiteral(std::shared_ptr<LiteralNode> node) {
 
 void IntermediateCode::genVarRef(std::shared_ptr<VarRefNode> node) {
     if (!node) return;
+
+    if (node->getName() == "true") {
+        emit(Opcode::LIT, 0, 1);
+        return;
+    }
+    if (node->getName() == "false") {
+        emit(Opcode::LIT, 0, 0);
+        return;
+    }
+
     int idx = lookupVar(node->getName());
     if (idx < 0) {
         std::cerr << "ICG: variabel tidak ditemukan: " << node->getName() << "\n";
-        emit(Opcode::LIT, 0, 0); // push 0 sebagai fallback
+        emit(Opcode::LIT, 0, 0);
         return;
     }
     const Tab& entry = symTab.getTab(idx);
 
     if (entry.obj == 1) {
+        // Constant
         int val = 0;
         if (!entry.const_value.empty()) {
             if (entry.const_value == "true")       val = 1;
@@ -260,23 +324,59 @@ void IntermediateCode::genAssign(std::shared_ptr<AssignNode> node) {
     genStore(node->getTarget());
 }
 
+int IntermediateCode::getRecordFieldAddr(int recTabIdx, const std::string& fieldName) const {
+    int recLev = symTab.getTab(recTabIdx).lev;
+    for (int i = 0; i < symTab.getTabSize(); ++i) {
+        if (symTab.getTab(i).id == fieldName && symTab.getTab(i).lev == recLev + 1)
+            return symTab.getTab(i).adr;
+    }
+    return 0;
+}
+
 void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
     if (!target) return;
 
     if (auto vr = std::dynamic_pointer_cast<VarRefNode>(target)) {
-        int idx = lookupVar(vr->getName());
+        std::string name = vr->getName();
+
+        if (!currentFuncName.empty() && name == currentFuncName) {
+            emit(Opcode::STO, 0, FUNC_RETVAL_SLOT);
+            return;
+        }
+
+        int idx = lookupVar(name);
         if (idx < 0) {
-            std::cerr << "ICG: variabel tidak ditemukan saat store: " << vr->getName() << "\n";
+            std::cerr << "ICG: variabel tidak ditemukan saat store: " << name << "\n";
             return;
         }
         emit(Opcode::STO, levelDiff(idx), varAddr(idx));
 
-    } else if (auto temp = std::dynamic_pointer_cast<ArrayAccessNode>(target)) {
-        auto base = std::dynamic_pointer_cast<VarRefNode>(temp->getArray());
-        if (!base) { std::cerr << "ICG: array store kompleks belum didukung\n"; return; }
+    } else if (auto fa = std::dynamic_pointer_cast<FieldAccessNode>(target)) {
+        auto base = std::dynamic_pointer_cast<VarRefNode>(fa->getRecord());
+        if (!base) {
+            std::cerr << "ICG: record store kompleks belum didukung\n";
+            return;
+        }
+        int recIdx = lookupVar(base->getName());
+        if (recIdx < 0) {
+            std::cerr << "ICG: record tidak ditemukan: " << base->getName() << "\n";
+            return;
+        }
+        int fieldAddr = getRecordFieldAddr(recIdx, fa->getFieldName());
+        emit(Opcode::STO, levelDiff(recIdx), varAddr(recIdx) + fieldAddr);
+
+    } else if (auto arrAcc = std::dynamic_pointer_cast<ArrayAccessNode>(target)) {
+        // Array element assignment: arr[i] := value
+        auto base = std::dynamic_pointer_cast<VarRefNode>(arrAcc->getArray());
+        if (!base) {
+            std::cerr << "ICG: array store kompleks belum didukung\n";
+            return;
+        }
         int idx = lookupVar(base->getName());
-        if (idx < 0) { std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n"; return; }
-        genExpr(temp->getIndex());
+        if (idx < 0) {
+            std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n";
+            return;
+        }
         emit(Opcode::STO, levelDiff(idx), varAddr(idx));
     }
 }
@@ -349,6 +449,8 @@ void IntermediateCode::genRepeat(std::shared_ptr<RepeatNode> node) {
     int loopStart = nextAddr();
     genStmt(node->getBody());
     genExpr(node->getUntilCondition());
+    emit(Opcode::LIT, 0, 0);
+    emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));  // NOT
     emit(Opcode::JPC, 0, loopStart);
 }
 
@@ -356,12 +458,11 @@ void IntermediateCode::genCase(std::shared_ptr<CaseNode> node) {
     if (!node) return;
 
     auto cases = node->getCases();
-    std::vector<int> jmpToEndAddrs; 
+    std::vector<int> jmpToEndAddrs;
 
     for (size_t i = 0; i < cases.size(); i++) {
         auto& [labels, stmt] = cases[i];
-
-        std::vector<int> jpcToNext; 
+        std::vector<int> jpcToNext;
 
         for (auto& lbl : labels) {
             genExpr(node->getKey());
@@ -382,7 +483,6 @@ void IntermediateCode::genCase(std::shared_ptr<CaseNode> node) {
     for (int jmpAddr : jmpToEndAddrs)
         patch(jmpAddr, nextAddr());
 }
-
 
 void IntermediateCode::genCallStmt(std::shared_ptr<CallStmtNode> node) {
     if (!node || !node->getCall()) return;
@@ -430,33 +530,35 @@ void IntermediateCode::genBinaryOp(std::shared_ptr<BinaryOpNode> node) {
 
     std::string op = node->getOp();
 
-    if (op == "and") {
+    if (op == "and" || op == "andsy") {
         genExpr(node->getLeft());
         int jpc1 = emit(Opcode::JPC, 0, 0);
         genExpr(node->getRight());
-        int jpc2 = emit(Opcode::JPC, 0, 0);
-        emit(Opcode::LIT, 0, 1); // true
+        int jpc2 = emit(Opcode::JPC, 0, 0);  
+        emit(Opcode::LIT, 0, 1); 
         int jmpEnd = emit(Opcode::JMP, 0, 0);
         int falseLabel = nextAddr();
-        emit(Opcode::LIT, 0, 0); // false
+        emit(Opcode::LIT, 0, 0);
         int endLabel = nextAddr();
         patch(jpc1, falseLabel);
         patch(jpc2, falseLabel);
         patch(jmpEnd, endLabel);
         return;
     }
-    if (op == "or") {
+
+    if (op == "or" || op == "orsy") {
+        // Short-circuit OR: if left is true, result is true
         genExpr(node->getLeft());
-        int jpcLeft = emit(Opcode::JPC, 0, 0); 
-        emit(Opcode::LIT, 0, 1);               
+        int jpcLeft = emit(Opcode::JPC, 0, 0);
+        emit(Opcode::LIT, 0, 1);
         int jmpEnd1 = emit(Opcode::JMP, 0, 0);
         int checkRight = nextAddr();
         genExpr(node->getRight());
         int jpcRight = emit(Opcode::JPC, 0, 0);
-        emit(Opcode::LIT, 0, 1);               
+        emit(Opcode::LIT, 0, 1); 
         int jmpEnd2 = emit(Opcode::JMP, 0, 0);
         int falseLabel = nextAddr();
-        emit(Opcode::LIT, 0, 0);               
+        emit(Opcode::LIT, 0, 0);   
         int endLabel = nextAddr();
         patch(jpcLeft, checkRight);
         patch(jmpEnd1, endLabel);
@@ -474,12 +576,13 @@ void IntermediateCode::genUnaryOp(std::shared_ptr<UnaryOpNode> node) {
     if (!node) return;
     genExpr(node->getOperand());
     std::string op = node->getOp();
-    if (op == "-")
+    if (op == "-" || op == "minus")
         emit(Opcode::OPR, 0, static_cast<int>(OprCode::NEG));
-    else if (op == "not") {
+    else if (op == "not" || op == "notsy") {
         emit(Opcode::LIT, 0, 0);
         emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));
     }
+    // unary plus: no-op
 }
 
 void IntermediateCode::genCall(std::shared_ptr<CallNode> node) {
@@ -493,12 +596,14 @@ void IntermediateCode::genCall(std::shared_ptr<CallNode> node) {
         return;
     }
 
+    // Push arguments before call
     for (auto& arg : node->getArgs())
         genExpr(arg);
 
     int idx = lookupVar(name);
     int lev = (idx >= 0) ? levelDiff(idx) : 0;
     emit(Opcode::CAL, lev, it->second);
+    emit(Opcode::RETVAL, 0, 0);
 }
 
 void IntermediateCode::genArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
@@ -515,5 +620,35 @@ void IntermediateCode::genArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
         emit(Opcode::LIT, 0, 0);
         return;
     }
-    emit(Opcode::LOD, levelDiff(idx), symTab.getTab(idx).adr);
+    // Load array base address element (simplified)
+    emit(Opcode::LOD, levelDiff(idx), varAddr(idx));
+}
+
+void IntermediateCode::genFieldAccess(std::shared_ptr<FieldAccessNode> node) {
+    if (!node) return;
+    auto base = std::dynamic_pointer_cast<VarRefNode>(node->getRecord());
+    if (!base) {
+        std::cerr << "ICG: field access kompleks belum didukung\n";
+        emit(Opcode::LIT, 0, 0);
+        return;
+    }
+    int recIdx = lookupVar(base->getName());
+    if (recIdx < 0) {
+        std::cerr << "ICG: record tidak ditemukan: " << base->getName() << "\n";
+        emit(Opcode::LIT, 0, 0);
+        return;
+    }
+    int fieldAddr = getRecordFieldAddr(recIdx, node->getFieldName());
+    emit(Opcode::LOD, levelDiff(recIdx), varAddr(recIdx) + fieldAddr);
+}
+
+int IntermediateCode::getRecordFieldAddr(int recTabIdx, const std::string& fieldName) const {
+    // Record fields are stored in the symbol table with lev = recTab.lev + 1
+    // and have their own adr (offset within the record)
+    int recLev = symTab.getTab(recTabIdx).lev;
+    for (int i = 0; i < symTab.getTabSize(); ++i) {
+        if (symTab.getTab(i).id == fieldName && symTab.getTab(i).lev == recLev + 1)
+            return symTab.getTab(i).adr;
+    }
+    return 0;
 }
