@@ -49,18 +49,19 @@ int IntermediateCode::frameSizeFromBlock(int blockIdx) const {
 }
 
 OprCode IntermediateCode::opToOpr(const std::string& op) const {
-    if (op == "+")   return OprCode::ADD;
-    if (op == "-")   return OprCode::SUB;
-    if (op == "*")   return OprCode::MUL;
-    if (op == "/")   return OprCode::DIV;
-    if (op == "div") return OprCode::DIV;
-    if (op == "mod") return OprCode::MOD;
-    if (op == "=")   return OprCode::EQL;
-    if (op == "<>")  return OprCode::NEQ;
-    if (op == "<")   return OprCode::LSS;
-    if (op == ">=")  return OprCode::GEQ;
-    if (op == ">")   return OprCode::GTR;
-    if (op == "<=")  return OprCode::LEQ;
+    if (op == "plus"  || op == "+")   return OprCode::ADD;
+    if (op == "minus" || op == "-")   return OprCode::SUB;
+    if (op == "times" || op == "*")   return OprCode::MUL;
+    if (op == "rdiv"  || op == "/")   return OprCode::DIV;
+    if (op == "idiv"  || op == "div") return OprCode::DIV;
+    if (op == "imod"  || op == "mod") return OprCode::MOD;
+    if (op == "eql"   || op == "=")   return OprCode::EQL;
+    if (op == "neq"   || op == "<>")  return OprCode::NEQ;
+    if (op == "lss"   || op == "<")   return OprCode::LSS;
+    if (op == "geq"   || op == ">=")  return OprCode::GEQ;
+    if (op == "gtr"   || op == ">")   return OprCode::GTR;
+    if (op == "leq"   || op == "<=")  return OprCode::LEQ;
+    throw std::runtime_error("ICG: operator tidak dikenal: " + op);
     throw std::runtime_error("ICG: operator tidak dikenal: " + op);
 }
 
