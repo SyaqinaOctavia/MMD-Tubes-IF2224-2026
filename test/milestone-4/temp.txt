@@ -1,0 +1,22 @@
+x := 5;
+    y := 10;
+    b := (x < y) and true;
+    
+    arr[1].val := add(x, y);
+    arr[1].flag := true;
+    
+    rec.val := 100;
+    rec.flag := false;
+    
+    if b then
+        writeln('Valid')
+    else
+        x := 0;
+    
+    { Mencetak field tertentu dari array of record }
+    writeln(arr[1].val);
+    
+    while x > 0 do
+    begin
+        x := x - 1;
+    end;

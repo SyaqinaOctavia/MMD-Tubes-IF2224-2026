@@ -1,0 +1,110 @@
+program UjiKomprehensif;
+
+const
+  BATAS_MIN = 1;
+  BATAS_MAX = 5;
+  PI = 3.14159;
+
+type
+  RentangIndeks = 1..5;
+  AngkaBulat = integer;
+  StatusPemain = (HIDUP, MATI, BERTAHAN, MENYERANG);
+  PapanCatur = array [1..5] of array [1..5] of integer;
+  Karakter = record
+    id: integer;
+    darah: real;
+    status: integer;
+    papan: array [1..5] of array [1..5] of integer;
+    is_aktif: boolean
+  end;
+
+var
+  hero: Karakter;
+  i, j, langkah: integer;
+  hasilFibo, hasilFak: integer;
+  r, c: integer;
+
+function fibonacci(n: integer): integer;
+begin
+  if (n <= 1) then
+    fibonacci := n
+  else
+    fibonacci := fibonacci(n - 1) + fibonacci(n - 2);
+end;
+
+function faktorial(n: integer): integer;
+begin
+  if (n = 0) then
+    faktorial := 1
+  else
+    faktorial := n * faktorial(n - 1);
+end;
+
+procedure inisialisasiPapan();
+begin
+  for r := 1 to 5 do
+  begin
+    for c := 1 to 5 do
+    begin
+      if (r = c) then
+        hero.papan[r][c] := 1
+      else if ((r + c) = 6) then
+        hero.papan[r][c] := 2
+      else
+        hero.papan[r][c] := 0;
+    end;
+  end;
+end;
+
+begin
+  hero.id := 99;
+  hero.darah := 100.5;
+  hero.status := 1;
+  hero.is_aktif := true;
+  
+  inisialisasiPapan();
+  
+  hasilFibo := fibonacci(6);
+  hasilFak := faktorial(4);
+  writeln(hasilFibo);
+  writeln(hasilFak);
+  
+  langkah := 5;
+  while (langkah > 0) and (hero.is_aktif = true) do
+  begin
+    hero.darah := hero.darah - 10.0;
+    langkah := langkah - 1;
+    
+    if (hero.darah <= 0.0) then
+      hero.is_aktif := false;
+  end;
+  
+  i := 1;
+  repeat
+    j := 1;
+    repeat
+      hero.papan[i][j] := (hero.papan[i][j] * 2) div 1 + (10 mod 3);
+      j := j + 1;
+    until j > 5;
+    i := i + 1;
+  until i > 5;
+
+  langkah := 2;
+  case langkah of
+    1: 
+      hero.status := 3;
+    2, 3: 
+      begin
+        hero.status := 2;
+        hero.darah := hero.darah + 25.5;
+      end;
+    4: 
+      hero.status := 4
+  end;
+  
+  if not (hero.status = 4) or (hero.darah > 50.0) then
+    writeln('Hero Bertahan!')
+  else
+    writeln('Game Over');
+
+end.
