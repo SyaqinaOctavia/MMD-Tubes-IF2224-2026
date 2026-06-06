@@ -29,7 +29,18 @@ static void runPipeline(const string& sourceFile, const string& icodeFile) {
     SymbolTable symtab;
     SemanticAnalyzer seman(symtab);
 
-    string tempAst = icodeFile.empty() ? "temp_ast.txt" : icodeFile + ".ast.tmp";
+    string tempAst;
+    if (icodeFile.empty()) {
+        size_t lastSlash = sourceFile.find_last_of("/\\");
+        size_t lastDot = sourceFile.find_last_of(".");
+        string baseName = sourceFile.substr(lastSlash != string::npos ? lastSlash + 1 : 0, 
+                                           (lastDot != string::npos && lastDot > lastSlash ? lastDot : sourceFile.length()) - 
+                                           (lastSlash != string::npos ? lastSlash + 1 : 0));
+        string dir = (lastSlash != string::npos ? sourceFile.substr(0, lastSlash + 1) : "");
+        tempAst = dir + baseName + ".ast.tmp";
+    } else {
+        tempAst = icodeFile + ".ast.tmp";
+    }
     bool ok = seman.analyzeAndOutput(astree, tempAst);
     if (!ok) { cerr << "Semantic Analysis menemukan error.\n"; return; }
 
