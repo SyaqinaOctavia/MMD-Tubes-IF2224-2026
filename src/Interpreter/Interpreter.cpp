@@ -28,6 +28,9 @@ void Interpreter::execute(std::vector<Bytecode>& code, std::ostream& out) {
             case Opcode::JPC:  execJPC(instr);             break;
             case Opcode::OPR:  execOPR(instr, out);        break;
             case Opcode::RET:  execRET();                  break;
+            case Opcode::RETVAL: execRETVAL(instr);        break;
+            case Opcode::LODI:   execLODI(instr);          break;
+            case Opcode::STOI:   execSTOI(instr);          break;
             default:
                 throw RuntimeError("Opcode tidak dikenal di instruksi " + std::to_string(pc - 1));
         }
@@ -127,11 +130,21 @@ void Interpreter::execCAL(Bytecode instr, const std::vector<Bytecode>& code) {
 
     checkJumpTarget(instr.getTarget(), code.size());
 
-    push(base(instr.getLevel()));
-    push(bp);
-    push(pc);
+    int nArgs = instr.getLevel();
+    std::vector<int> args(nArgs);
+    for (int i = nArgs - 1; i >= 0; i--) args[i] = pop();
 
-    bp = sp - 2;
+    push(bp);       // static link
+    push(bp);       // dynamic link
+    push(pc);       // return address
+    bp = sp - 2;    // bp+0=static, bp+1=dynamic, bp+2=ret_addr
+
+    for (int i = 0; i < nArgs; i++) {
+        int addr = bp + 3 + i;
+        if (addr >= STACK_SIZE) throw RuntimeError("Stack Overflow saat memindahkan argumen");
+        stack[addr] = args[i];
+        if (sp < addr) sp = addr;
+    }
     pc = instr.getTarget();
 }
 
@@ -140,9 +153,9 @@ void Interpreter::execINT(Bytecode instr) {
     if (newSp >= STACK_SIZE)
         throw RuntimeError("Stack Overflow: INT " + instr.opcodeToStr() + " melebihi ukuran stack");
 
-    for (int i = bp; i <= newSp; i++)
+    for (int i = sp + 1; i <= newSp; i++)
         stack[i] = 0;
-    sp = newSp;
+    if (newSp > sp) sp = newSp;
 }
 
 void Interpreter::execJMP(Bytecode instr) {
@@ -161,6 +174,10 @@ void Interpreter::execRET() {
         return;
     }
 
+    int retValSlot = bp + 3;
+    if (retValSlot >= 0 && retValSlot < STACK_SIZE)
+        returnValue = stack[retValSlot];
+
     int retAddr     = stack[bp + 2];
     int callerBp    = stack[bp + 1]; 
 
@@ -171,8 +188,29 @@ void Interpreter::execRET() {
     if (callDepth > 0) callDepth--;
 }
 
+void Interpreter::execRETVAL(Bytecode instr) {
+    push(returnValue);
+}
+
+void Interpreter::execLODI(Bytecode instr) {
+    int offset = pop();
+    int b = base(instr.getLevel());
+    int addr = b + offset;
+    checkStackIndex(addr);
+    push(stack[addr]);
+}
+
+void Interpreter::execSTOI(Bytecode instr) {
+    int offset = pop();
+    int val    = pop();
+    int b = base(instr.getLevel());
+    int addr = b + offset;
+    checkStackIndex(addr);
+    stack[addr] = val;
+}
+
 void Interpreter::execOPR(Bytecode instr, std::ostream& out) {
-    OprCode opr = static_cast<OprCode>(instr.getTarget()); 
+    OprCode opr = static_cast<OprCode>(instr.getTarget());
 
     switch (opr) {
         case OprCode::NEG: {

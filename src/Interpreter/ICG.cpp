@@ -325,6 +325,16 @@ void IntermediateCode::genAssign(std::shared_ptr<AssignNode> node) {
 }
 
 int IntermediateCode::getRecordFieldAddr(int recTabIdx, const std::string& fieldName) const {
+    int blkRef = symTab.getTab(recTabIdx).ref;
+    if (blkRef > 0 && blkRef < symTab.getBlocktabSize()) {
+        int cur = symTab.getBlockTab(blkRef).last;
+        while (cur > 0 && cur < symTab.getTabSize()) {
+            if (symTab.getTab(cur).id == fieldName)
+                return symTab.getTab(cur).adr;
+            cur = symTab.getTab(cur).link;
+        }
+    }
+    
     int recLev = symTab.getTab(recTabIdx).lev;
     for (int i = 0; i < symTab.getTabSize(); ++i) {
         if (symTab.getTab(i).id == fieldName && symTab.getTab(i).lev == recLev + 1)
@@ -376,7 +386,25 @@ void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
             std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n";
             return;
         }
-        emit(Opcode::STO, levelDiff(idx), varAddr(idx));
+
+        int low = 0;
+        int aref = symTab.getTab(idx).ref;
+        if (aref >= 0 && aref < symTab.getArraytabSize())
+            low = symTab.getArrayTab(aref).low;
+
+        int baseAddr = varAddr(idx);
+        int lev = levelDiff(idx);
+
+        emit(Opcode::LIT, 0, baseAddr);
+        // Push index expr
+        if (!!arrAcc->getIndex())
+            genExpr(arrAcc->getIndex());
+        else
+            emit(Opcode::LIT, 0, 0);
+        emit(Opcode::LIT, 0, low);
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
+        emit(Opcode::STOI, lev, 0);
     }
 }
 
@@ -516,11 +544,12 @@ void IntermediateCode::genCallStmt(std::shared_ptr<CallStmtNode> node) {
             std::cerr << "ICG: prosedur tidak ditemukan: " << name << "\n";
             return;
         }
+        int nArgs = static_cast<int>(call->getArgs().size());
         for (auto& arg : call->getArgs())
             genExpr(arg);
         int index = lookupVar(name);
-        int level = (index >= 0) ? levelDiff(index) : 0;
-        emit(Opcode::CAL, level, it->second);
+        (void)index;
+        emit(Opcode::CAL, nArgs, it->second);
     }
 }
 
@@ -581,7 +610,6 @@ void IntermediateCode::genUnaryOp(std::shared_ptr<UnaryOpNode> node) {
         emit(Opcode::LIT, 0, 0);
         emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));
     }
-    // unary plus: no-op
 }
 
 void IntermediateCode::genCall(std::shared_ptr<CallNode> node) {
@@ -596,13 +624,15 @@ void IntermediateCode::genCall(std::shared_ptr<CallNode> node) {
     }
 
     // Push arguments before call
+    int nArgs = static_cast<int>(node->getArgs().size());
     for (auto& arg : node->getArgs())
         genExpr(arg);
 
     int idx = lookupVar(name);
     int lev = (idx >= 0) ? levelDiff(idx) : 0;
     emit(Opcode::CAL, lev, it->second);
-    emit(Opcode::RETVAL, 0, 0);
+    // RETVAL pops the nArgs items that were pushed for arguments
+    emit(Opcode::RETVAL, 0, nArgs);
 }
 
 void IntermediateCode::genArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
@@ -619,8 +649,28 @@ void IntermediateCode::genArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
         emit(Opcode::LIT, 0, 0);
         return;
     }
-    // Load array base address element (simplified)
-    emit(Opcode::LOD, levelDiff(idx), varAddr(idx));
+
+    // Get array metadata: low bound
+    int low = 0;
+    int aref = symTab.getTab(idx).ref;
+    if (aref >= 0 && aref < symTab.getArraytabSize())
+        low = symTab.getArrayTab(aref).low;
+
+    int baseAddr = varAddr(idx);
+    int lev = levelDiff(idx);
+
+    // Push base address as literal
+    emit(Opcode::LIT, 0, baseAddr);
+    // Push index expression
+    if (!!node->getIndex())
+        genExpr(node->getIndex());
+    else
+        emit(Opcode::LIT, 0, 0);
+
+    emit(Opcode::LIT, 0, low);
+    emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
+    emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
+    emit(Opcode::LODI, lev, 0);
 }
 
 void IntermediateCode::genFieldAccess(std::shared_ptr<FieldAccessNode> node) {

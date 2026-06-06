@@ -14,7 +14,9 @@ enum class Opcode {
     JPC,
     OPR,
     RET,
-    RETVAL
+    RETVAL,
+    LODI,   // Load Indirect: pops address from stack, pushes stack[bp + addr]
+    STOI    // Store Indirect: pops address then value, stores value at stack[bp + addr]
 };
 
 enum class OprCode {
@@ -61,6 +63,8 @@ public:
             case Opcode::OPR:    return "OPR";
             case Opcode::RET:    return "RET";
             case Opcode::RETVAL: return "RETVAL";
+            case Opcode::LODI:   return "LODI";
+            case Opcode::STOI:   return "STOI";
             default: return "???";
         }
     }
@@ -84,5 +88,7 @@ inline Opcode strToOpcode(const std::string& s) {
     if (s == "OPR")    return Opcode::OPR;
     if (s == "RET")    return Opcode::RET;
     if (s == "RETVAL") return Opcode::RETVAL;
+    if (s == "LODI")   return Opcode::LODI;
+    if (s == "STOI")   return Opcode::STOI;
     throw std::runtime_error("Unknown opcode: " + s);
 }

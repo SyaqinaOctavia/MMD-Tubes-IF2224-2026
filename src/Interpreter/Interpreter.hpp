@@ -22,7 +22,7 @@ class Interpreter {
 public:
     static const int STACK_SIZE  = 10000;
     static const int MAX_CALL_DEPTH = 500;
-    Interpreter() : stack(STACK_SIZE, 0), sp(-1), bp(0), pc(0), callDepth(0) {}
+    Interpreter() : stack(STACK_SIZE, 0), sp(-1), bp(0), pc(0), callDepth(0), returnValue(0), lastCallNArgs(0) {}
     void setStringTable(const std::vector<std::string>& st) { stringTable = st; }
     void execute(std::vector<Bytecode>& code);
     void execute(std::vector<Bytecode>& code, std::ostream& out);
@@ -34,6 +34,8 @@ private:
     int bp;
     int pc;
     int callDepth;
+    int returnValue;   // saved return value from the last function call
+    int lastCallNArgs; // number of args of the last CAL (saved at CAL time, used by RETVAL)
 
     void push(int val);
     int  pop();
@@ -53,6 +55,9 @@ private:
     void execJPC(Bytecode instr);
     void execOPR(Bytecode instr, std::ostream& out);
     void execRET();
+    void execRETVAL(Bytecode instr);
+    void execLODI(Bytecode instr);
+    void execSTOI(Bytecode instr);
 
     void checkStackOverflow()  const;
     void checkStackUnderflow() const;

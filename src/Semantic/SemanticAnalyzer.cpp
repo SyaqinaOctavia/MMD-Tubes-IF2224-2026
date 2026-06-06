@@ -110,24 +110,34 @@ void SemanticAnalyzer::visitTypeDecl(std::shared_ptr<TypeDeclNode> node) {
     symTab.addTab(name, OBJ_TYPE, t, ref, 1, 0);
 }
 
+
+int SemanticAnalyzer::typeSlotSize(int t, int ref) const {
+    if (t == T_ARRAY && ref >= 0 && ref < symTab.getArraytabSize())
+        return std::max(1, symTab.getArrayTab(ref).size);
+    if (t == T_RECORD && ref > 0 && ref < symTab.getBlocktabSize())
+        return std::max(1, symTab.getBlockTab(ref).vsze);
+    return 1;
+}
+
 void SemanticAnalyzer::visitVarDecl(std::shared_ptr<VarDeclNode> node) {
     if (!node) return;
     lastTypeRef = 0;
     int t   = visitType(node->getType());
     int ref = lastTypeRef;
+    int slots = typeSlotSize(t, ref);
 
     for (const auto& rawName : node->getNames()) {
         std::string name = rawName;
 
         if (symTab.searchCurrentScope(name) >= 0) {
-            semanticError("Redeclaration of variable '" + rawName + "' in current scope");
+            semanticError("Redeclaration of variable \'" + rawName + "\' in current scope");
             continue;
         }
 
         int blockIdx = symTab.getCurrentBlock();
         int vsze = symTab.getBlockTab(blockIdx).vsze;
         symTab.addTab(name, OBJ_VAR, t, ref, 1, vsze);
-        symTab.getBlockTab(blockIdx).vsze++;
+        symTab.getBlockTab(blockIdx).vsze += slots;
     }
 }
 
@@ -179,9 +189,16 @@ void SemanticAnalyzer::visitProcDecl(std::shared_ptr<ProcDeclNode> node) {
     // Record lpar = last parameter index in this block
     symTab.getBlockTab(blockIdx).lpar = symTab.getBlockTab(blockIdx).last;
 
+    // Locals start after params in the frame; seed vsze from psze
+    symTab.getBlockTab(blockIdx).vsze = symTab.getBlockTab(blockIdx).psze;
+
     // Visit local declarations
     for (auto& decl : node->getLocalVar())
         visit(decl);
+
+    // After visiting locals, vsze now = psze + localCount; store net local count
+    int totalVsze = symTab.getBlockTab(blockIdx).vsze;
+    symTab.getBlockTab(blockIdx).vsze = totalVsze;
 
     // Visit body
     if (node->getBody())
@@ -216,6 +233,9 @@ void SemanticAnalyzer::visitFuncDecl(std::shared_ptr<FuncDeclNode> node) {
         visitParamDecl(param);
 
     symTab.getBlockTab(blockIdx).lpar = symTab.getBlockTab(blockIdx).last;
+
+    // Locals start after params in the frame; seed vsze from psze
+    symTab.getBlockTab(blockIdx).vsze = symTab.getBlockTab(blockIdx).psze;
 
     // Visit local declarations and body
     for (auto& decl : node->getLocalVar())
@@ -666,17 +686,21 @@ int SemanticAnalyzer::visitFieldType(std::shared_ptr<FieldTypeNode> node) {
         lastTypeRef = 0;
         int ft  = visitType(typeSpec);
         int ref = lastTypeRef;
+        int fslots = typeSlotSize(ft, ref);
         for (const auto& rawName : names) {
             std::string name = rawName;
             if (symTab.searchCurrentScope(name) >= 0) {
-                semanticError("Duplicate field '" + rawName + "' in record");
+                semanticError("Duplicate field \'" + rawName + "\' in record");
             } else {
-                symTab.addTab(name, OBJ_VAR, ft, ref, 1, offset++);
+                symTab.addTab(name, OBJ_VAR, ft, ref, 1, offset);
+                offset += fslots;
             }
         }
     }
+    symTab.getBlockTab(blockIdx).vsze = offset;
 
-    symTab.exitScope();
+    symTab.exitScope();// Returns stack slots needed for a variable of type t with ref.
+
     lastTypeRef = blockIdx;
     return T_RECORD;
 }
@@ -947,12 +971,13 @@ void SemanticAnalyzer::printNode(std::shared_ptr<ASTNode> node, std::ostream& ou
                 out << "\n";
                 // Print params
                 std::string next = prefix + ext(isLast);
-                for (size_t i = 0; i < pd->getParams().size(); ++i) {
-                    auto& p = pd->getParams()[i];
-                    bool last = (i + 1 == pd->getParams().size()) && pd->getLocalVar().empty() && !pd->getBody();
+                auto pdParams = pd->getParams();
+                for (size_t i = 0; i < pdParams.size(); ++i) {
+                    auto& p = pdParams[i];
+                    bool last = (i + 1 == pdParams.size()) && pd->getLocalVar().empty() && !pd->getBody();
                     out << next << conn(last) << "Param(";
                     for (const auto& n : p->getNames()) out << n << " ";
-                    out << ")\n";
+                    out << ")\\n";
                 }
                 // Print local decls
                 for (size_t i = 0; i < pd->getLocalVar().size(); ++i)

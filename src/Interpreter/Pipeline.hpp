@@ -33,6 +33,8 @@ static void runPipeline(const string& sourceFile, const string& icodeFile) {
     bool ok = seman.analyzeAndOutput(astree, tempAst);
     if (!ok) { cerr << "Semantic Analysis menemukan error.\n"; return; }
 
+    cerr << "[DEBUG] Semantic OK, starting ICG...\n";
+
     // Intermediate Code Generation
     IntermediateCode icg(symtab);
     vector<Bytecode> code;
@@ -42,6 +44,8 @@ static void runPipeline(const string& sourceFile, const string& icodeFile) {
         cerr << "ICG Error: " << e.what() << "\n";
         return;
     }
+
+    cerr << "[DEBUG] ICG done, " << code.size() << " instructions\n";
 
     if (!icodeFile.empty()) {
         icg.writeToFile(code, icodeFile);
