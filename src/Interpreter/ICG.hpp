@@ -82,6 +82,14 @@ private:
         return (int)stringTable.size() - 1;
     }
 
+    std::vector<double> realValues;
+    int internReal(double r) {
+        for (int i = 0; i < (int)realValues.size(); i++)
+            if (realValues[i] == r) return i;
+        realValues.push_back(r);
+        return (int)realValues.size() - 1;
+    }
+
 public:
     IntermediateCode(SymbolTable& symTab)
         : symTab(symTab), currentLevel(0), currentFuncTabIdx(-1) {}
@@ -91,4 +99,5 @@ public:
     void writeToFile(const std::vector<Bytecode>& instrs, const std::string& filename) const;
     void writeToStream(const std::vector<Bytecode>& instrs, std::ostream& out) const;
     const std::vector<std::string>& getStringTable() const { return stringTable; }
+    const std::vector<double>& getRealValues() const { return realValues; }
 };

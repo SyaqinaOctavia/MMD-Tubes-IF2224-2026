@@ -20,6 +20,7 @@ void Interpreter::execute(std::vector<Bytecode>& code, std::ostream& out) {
         switch (instr.getOp()) {
             case Opcode::LIT:  execLIT(instr);             break;
             case Opcode::LITS: execLITS(instr);            break;
+            case Opcode::LITR: execLITR(instr);            break;
             case Opcode::LOD:  execLOD(instr);             break;
             case Opcode::STO:  execSTO(instr);             break;
             case Opcode::CAL:  execCAL(instr, code);       break;
@@ -96,6 +97,13 @@ void Interpreter::execLITS(Bytecode instr) {
     push(makeStringVal(strIdx));
 }
 
+void Interpreter::execLITR(Bytecode instr) {
+    int realIdx = instr.getTarget();
+    if (realIdx < 0 || realIdx >= (int)realValues.size())
+        throw RuntimeError("LITR: indeks real " + std::to_string(realIdx) + " di luar real table");
+    push(makeRealVal(realIdx));
+}
+
 // Helper
 void Interpreter::printVal(int val, std::ostream& out) const {
     if (isStringVal(val)) {
@@ -103,6 +111,11 @@ void Interpreter::printVal(int val, std::ostream& out) const {
         if (idx < 0 || idx >= (int)stringTable.size())
             throw RuntimeError("printVal: indeks string tidak valid: " + std::to_string(idx));
         out << stringTable[idx];
+    } else if (isRealVal(val)) {
+        int idx = getRealIdx(val);
+        if (idx < 0 || idx >= (int)realValues.size())
+            throw RuntimeError("printVal: indeks real tidak valid: " + std::to_string(idx));
+        out << realValues[idx];
     } else {
         out << val;
     }

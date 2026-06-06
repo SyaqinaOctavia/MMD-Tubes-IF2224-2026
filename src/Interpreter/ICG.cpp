@@ -232,10 +232,12 @@ void IntermediateCode::genLiteral(std::shared_ptr<LiteralNode> node) {
                 val = static_cast<int>(node->getValue()[0]);
             emit(Opcode::LIT, 0, val);
             break;
-        case LiteralKind::Real:
-            val = static_cast<int>(std::stod(node->getValue()));
-            emit(Opcode::LIT, 0, val);
+        case LiteralKind::Real: {
+            double realVal = std::stod(node->getValue());
+            int realIdx = internReal(realVal);
+            emit(Opcode::LITR, 0, realIdx);
             break;
+        }
         case LiteralKind::String: {
             std::string raw = node->getValue();
             if (raw.size() >= 2 && raw.front() == '\'' && raw.back() == '\'')

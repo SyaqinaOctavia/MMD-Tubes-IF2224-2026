@@ -6,6 +6,7 @@
 enum class Opcode {
     LIT,
     LITS,
+    LITR,
     LOD,
     STO,
     CAL,
@@ -54,6 +55,7 @@ public:
         switch (opcode) {
             case Opcode::LIT:    return "LIT";
             case Opcode::LITS:   return "LITS";
+            case Opcode::LITR:   return "LITR";
             case Opcode::LOD:    return "LOD";
             case Opcode::STO:    return "STO";
             case Opcode::CAL:    return "CAL";
@@ -79,6 +81,7 @@ public:
 inline Opcode strToOpcode(const std::string& s) {
     if (s == "LIT")    return Opcode::LIT;
     if (s == "LITS")   return Opcode::LITS;
+    if (s == "LITR")   return Opcode::LITR;
     if (s == "LOD")    return Opcode::LOD;
     if (s == "STO")    return Opcode::STO;
     if (s == "CAL")    return Opcode::CAL;

@@ -72,6 +72,7 @@ static void runPipeline(const string& sourceFile, const string& icodeFile) {
     cout << "=== OUTPUT PROGRAM ===\n";
     Interpreter interp;
     interp.setStringTable(icg.getStringTable());
+    interp.setRealValues(icg.getRealValues());
     try {
         interp.execute(code);
     } catch (const RuntimeError& e) {
