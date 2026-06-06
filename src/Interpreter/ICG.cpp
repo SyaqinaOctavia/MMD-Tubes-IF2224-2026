@@ -4,6 +4,8 @@
 #include <iostream>
 #include <algorithm>
 
+static constexpr int TYPE_ARRAY = 5;
+
 std::vector<Bytecode> IntermediateCode::generate(std::shared_ptr<ASTNode> root) {
     code.clear();
     procAddr.clear();
@@ -343,6 +345,63 @@ int IntermediateCode::getRecordFieldAddr(int recTabIdx, const std::string& field
     return 0;
 }
 
+int IntermediateCode::getArrayElementSlotCount(int arrayRef) const {
+    if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize())
+        return 1;
+    const ArrayTab& arr = symTab.getArrayTab(arrayRef);
+    if (arr.etyp == TYPE_ARRAY && arr.eref >= 0 && arr.eref < symTab.getArraytabSize()) {
+        return arr.size * getArrayElementSlotCount(arr.eref);
+    }
+    return arr.size;
+}
+
+bool IntermediateCode::collectArrayAccessInfo(std::shared_ptr<ArrayAccessNode> node,
+                                              int& baseIdx,
+                                              std::vector<std::shared_ptr<ExprNode>>& indices,
+                                              std::vector<int>& lowers,
+                                              std::vector<int>& multipliers) const {
+    std::vector<std::shared_ptr<ArrayAccessNode>> accessChain;
+    auto current = node;
+    while (current) {
+        accessChain.push_back(current);
+        current = std::dynamic_pointer_cast<ArrayAccessNode>(current->getArray());
+    }
+    if (accessChain.empty()) return false;
+    std::reverse(accessChain.begin(), accessChain.end());
+
+    auto baseExpr = accessChain.front()->getArray();
+    if (!baseExpr || baseExpr->getASTType() != ASTType::VarRefNode)
+        return false;
+    auto baseVar = std::dynamic_pointer_cast<VarRefNode>(baseExpr);
+    baseIdx = lookupVar(baseVar->getName());
+    if (baseIdx < 0) return false;
+
+    int arrayRef = symTab.getTab(baseIdx).ref;
+    if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize()) return false;
+
+    indices.clear();
+    lowers.clear();
+    multipliers.clear();
+    for (size_t i = 0; i < accessChain.size(); ++i) {
+        if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize())
+            return false;
+        const ArrayTab& arr = symTab.getArrayTab(arrayRef);
+        indices.push_back(accessChain[i]->getIndex());
+        // Use the declared lower bound for each dimension when computing
+        // the zero-based offset into the array storage.
+        lowers.push_back(arr.low);
+        if (i + 1 < accessChain.size()) {
+            int elementWidth = 1;
+            if (arr.etyp == TYPE_ARRAY && arr.eref >= 0 && arr.eref < symTab.getArraytabSize()) {
+                elementWidth = getArrayElementSlotCount(arr.eref);
+            }
+            multipliers.push_back(elementWidth);
+        }
+        arrayRef = arr.eref;
+    }
+    return true;
+}
+
 void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
     if (!target) return;
 
@@ -376,35 +435,36 @@ void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
         emit(Opcode::STO, levelDiff(recIdx), varAddr(recIdx) + fieldAddr);
 
     } else if (auto arrAcc = std::dynamic_pointer_cast<ArrayAccessNode>(target)) {
-        auto base = std::dynamic_pointer_cast<VarRefNode>(arrAcc->getArray());
-        if (!base) {
-            std::cerr << "ICG: array store kompleks belum didukung\n";
+        int baseIdx = -1;
+        std::vector<std::shared_ptr<ExprNode>> indices;
+        std::vector<int> lowers;
+        std::vector<int> multipliers;
+        if (!collectArrayAccessInfo(arrAcc, baseIdx, indices, lowers, multipliers)) {
+            std::cerr << "ICG: array tidak ditemukan atau tidak didukung saat store\n";
             return;
         }
-        int idx = lookupVar(base->getName());
-        if (idx < 0) {
-            std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n";
+
+        if (indices.empty()) {
+            std::cerr << "ICG: array store tanpa indeks tidak didukung\n";
             return;
         }
 
-        int low = 0;
-        int aref = symTab.getTab(idx).ref;
-        if (aref >= 0 && aref < symTab.getArraytabSize())
-            low = symTab.getArrayTab(aref).low;
+        int lev = levelDiff(baseIdx);
+        emit(Opcode::LIT, 0, varAddr(baseIdx));
 
-        int baseAddr = varAddr(idx);
-        int lev = levelDiff(idx);
+        for (size_t i = 0; i < indices.size(); ++i) {
+            genExpr(indices[i]);
+            emit(Opcode::LIT, 0, lowers[i]);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
+            if (i + 1 < indices.size()) {
+                emit(Opcode::LIT, 0, multipliers[i]);
+                emit(Opcode::OPR, 0, static_cast<int>(OprCode::MUL));
+            }
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
+        }
 
-        emit(Opcode::LIT, 0, baseAddr);
-        // Push index expr
-        if (!!arrAcc->getIndex())
-            genExpr(arrAcc->getIndex());
-        else
-            emit(Opcode::LIT, 0, 0);
-        emit(Opcode::LIT, 0, low);
-        emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
-        emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
         emit(Opcode::STOI, lev, 0);
+        return;
     }
 }
 
@@ -628,8 +688,6 @@ void IntermediateCode::genCall(std::shared_ptr<CallNode> node) {
     for (auto& arg : node->getArgs())
         genExpr(arg);
 
-    int idx = lookupVar(name);
-    int lev = (idx >= 0) ? levelDiff(idx) : 0;
     emit(Opcode::CAL, nArgs, it->second);
     // RETVAL pops the nArgs items that were pushed for arguments
     emit(Opcode::RETVAL, 0, nArgs);
@@ -637,40 +695,29 @@ void IntermediateCode::genCall(std::shared_ptr<CallNode> node) {
 
 void IntermediateCode::genArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
     if (!node) return;
-    auto base = std::dynamic_pointer_cast<VarRefNode>(node->getArray());
-    if (!base) {
-        std::cerr << "ICG: array access kompleks belum didukung\n";
+
+    int baseIdx = -1;
+    std::vector<std::shared_ptr<ExprNode>> indices;
+    std::vector<int> lowers;
+    std::vector<int> multipliers;
+    if (!collectArrayAccessInfo(node, baseIdx, indices, lowers, multipliers)) {
+        std::cerr << "ICG: array tidak ditemukan atau tidak didukung\n";
         emit(Opcode::LIT, 0, 0);
         return;
     }
-    int idx = lookupVar(base->getName());
-    if (idx < 0) {
-        std::cerr << "ICG: array tidak ditemukan: " << base->getName() << "\n";
-        emit(Opcode::LIT, 0, 0);
-        return;
+
+    emit(Opcode::LIT, 0, varAddr(baseIdx));
+    for (size_t i = 0; i < indices.size(); ++i) {
+        genExpr(indices[i]);
+        emit(Opcode::LIT, 0, lowers[i]);
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
+        if (i + 1 < indices.size()) {
+            emit(Opcode::LIT, 0, multipliers[i]);
+            emit(Opcode::OPR, 0, static_cast<int>(OprCode::MUL));
+        }
+        emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
     }
-
-    // Get array metadata: low bound
-    int low = 0;
-    int aref = symTab.getTab(idx).ref;
-    if (aref >= 0 && aref < symTab.getArraytabSize())
-        low = symTab.getArrayTab(aref).low;
-
-    int baseAddr = varAddr(idx);
-    int lev = levelDiff(idx);
-
-    // Push base address as literal
-    emit(Opcode::LIT, 0, baseAddr);
-    // Push index expression
-    if (!!node->getIndex())
-        genExpr(node->getIndex());
-    else
-        emit(Opcode::LIT, 0, 0);
-
-    emit(Opcode::LIT, 0, low);
-    emit(Opcode::OPR, 0, static_cast<int>(OprCode::SUB));
-    emit(Opcode::OPR, 0, static_cast<int>(OprCode::ADD));
-    emit(Opcode::LODI, lev, 0);
+    emit(Opcode::LODI, levelDiff(baseIdx), 0);
 }
 
 void IntermediateCode::genFieldAccess(std::shared_ptr<FieldAccessNode> node) {

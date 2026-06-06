@@ -112,8 +112,15 @@ void SemanticAnalyzer::visitTypeDecl(std::shared_ptr<TypeDeclNode> node) {
 
 
 int SemanticAnalyzer::typeSlotSize(int t, int ref) const {
-    if (t == T_ARRAY && ref >= 0 && ref < symTab.getArraytabSize())
-        return std::max(1, symTab.getArrayTab(ref).size);
+    if (t == T_ARRAY && ref >= 0 && ref < symTab.getArraytabSize()) {
+        const ArrayTab& arr = symTab.getArrayTab(ref);
+        int elementSlots = 1;
+        if (arr.etyp == T_ARRAY)
+            elementSlots = typeSlotSize(arr.etyp, arr.eref);
+        else if (arr.etyp == T_RECORD)
+            elementSlots = std::max(1, symTab.getBlockTab(arr.eref).vsze);
+        return std::max(1, arr.size * elementSlots);
+    }
     if (t == T_RECORD && ref > 0 && ref < symTab.getBlocktabSize())
         return std::max(1, symTab.getBlockTab(ref).vsze);
     return 1;
@@ -515,20 +522,35 @@ int SemanticAnalyzer::visitArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
     if (idxType != T_INTEGER && idxType != T_CHAR && idxType != T_BOOLEAN && idxType != T_NONE)
         semanticError("Array index must be ordinal type, got " + typeToString(idxType));
 
-    auto arr = node->getArray();
-    while (arr && arr->getASTType() == ASTType::ArrayAccessNode)
-        arr = std::dynamic_pointer_cast<ArrayAccessNode>(arr)->getArray();
-
-    if (arr && arr->getASTType() == ASTType::VarRefNode) {
-        auto vr = std::dynamic_pointer_cast<VarRefNode>(arr);
-        int idx = symTab.searchTab(vr->getName());
-        if (idx >= 0) {
-            int ref = symTab.getTab(idx).ref;
-            if (ref > 0 && ref < symTab.getArraytabSize())
-                return symTab.getArrayTab(ref).etyp;
-        }
+    std::vector<std::shared_ptr<ArrayAccessNode>> accessChain;
+    auto current = node;
+    while (current) {
+        accessChain.push_back(current);
+        auto parent = std::dynamic_pointer_cast<ArrayAccessNode>(current->getArray());
+        current = parent;
     }
-    return T_NONE;
+    if (accessChain.empty()) return T_NONE;
+
+    std::reverse(accessChain.begin(), accessChain.end());
+    auto baseExpr = accessChain.front()->getArray();
+    if (!baseExpr || baseExpr->getASTType() != ASTType::VarRefNode)
+        return T_NONE;
+
+    auto baseVar = std::dynamic_pointer_cast<VarRefNode>(baseExpr);
+    int baseIdx = symTab.searchTab(baseVar->getName());
+    if (baseIdx < 0) return T_NONE;
+
+    int arrayRef = symTab.getTab(baseIdx).ref;
+    if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize()) return T_NONE;
+
+    int resultType = T_NONE;
+    for (size_t i = 0; i < accessChain.size(); ++i) {
+        if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize())
+            return T_NONE;
+        resultType = symTab.getArrayTab(arrayRef).etyp;
+        arrayRef = symTab.getArrayTab(arrayRef).eref;
+    }
+    return resultType;
 }
 
 int SemanticAnalyzer::visitFieldAccess(std::shared_ptr<FieldAccessNode> node) {

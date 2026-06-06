@@ -68,6 +68,12 @@ private:
     int frameSizeFromBlock(int blockIdx) const;
     int findProcBtab(const std::string& name, int objType) const;
     int getRecordFieldAddr(int recTabIdx, const std::string& fieldName) const;
+    int getArrayElementSlotCount(int arrayRef) const;
+    bool collectArrayAccessInfo(std::shared_ptr<ArrayAccessNode> node,
+                                int& baseIdx,
+                                std::vector<std::shared_ptr<ExprNode>>& indices,
+                                std::vector<int>& lowers,
+                                std::vector<int>& multipliers) const;
 
     std::unordered_map<std::string, int> procAddr;
 
