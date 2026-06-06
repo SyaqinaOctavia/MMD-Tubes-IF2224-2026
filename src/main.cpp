@@ -25,8 +25,7 @@ int main(int argc, char* argv[]){
     }
     if(std::strcmp(argv[1], "1") == 0){
         Lexer lex;
-        std::vector<Token> tokens = lex.generateToken(argv[2]);
-        cout << "Tokenized " << tokens.size() << " tokens" << endl;
+        lex.generateTokenToFile(argv[2],argv[3]);
     } 
     else if(std::strcmp(argv[1], "2a") == 0){
         std::vector<Token> tokens = Token::readTokens(argv[2]);

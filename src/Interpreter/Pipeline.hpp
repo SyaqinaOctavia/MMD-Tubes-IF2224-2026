@@ -37,9 +37,9 @@ static void runPipeline(const string& sourceFile, const string& icodeFile) {
                                            (lastDot != string::npos && lastDot > lastSlash ? lastDot : sourceFile.length()) - 
                                            (lastSlash != string::npos ? lastSlash + 1 : 0));
         string dir = (lastSlash != string::npos ? sourceFile.substr(0, lastSlash + 1) : "");
-        // tempAst = dir + baseName + ".ast.tmp";
+        tempAst = dir + baseName + ".ast.tmp";
     } else {
-        // tempAst = icodeFile + ".ast.tmp";
+        tempAst = icodeFile + ".ast.tmp";
     }
     bool ok = seman.analyzeAndOutput(astree, tempAst);
     if (!ok) { cerr << "Semantic Analysis menemukan error.\n"; return; }
