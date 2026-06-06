@@ -194,7 +194,7 @@ std::vector<Token> Lexer::generateToken(string srcFile){
             // No valid token found
             bool allAlnum = true;
             for(char c : lexeme){
-                if(!isalnum(c)){
+                if(!isalnum(c) && c != '_'){
                     tokens.push_back(Token(Symbol::unknown, lexeme, line));
                     allAlnum = false;
                     break;

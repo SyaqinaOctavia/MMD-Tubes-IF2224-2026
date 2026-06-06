@@ -30,7 +30,7 @@ void transition::addTransition(string qprev, string input_symbol, string qnext){
         wildcard_transitions[qprev] = qnext;
     } else if (input_symbol.compare("ANY2") == 0){
         for (unsigned char c = 0; c < 128; c++)
-            if ( isalnum(c) && transitions[{qprev,(char)c}] == ""){
+            if ( (isalnum(c) || c == '_') && transitions[{qprev,(char)c}] == ""){
                 transitions[{qprev, (char)c}] = qnext;
             }
     } else {
