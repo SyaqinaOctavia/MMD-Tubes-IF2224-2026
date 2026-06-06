@@ -2,11 +2,13 @@
 ![source: emesan desu](mascot.jpg)
 
 # Arion Compiler
-Codebase ini merupakan implementasi Lexical, Syntax, dan Semantic Analyzer, untuk bahasa pemrograman Arion sebagai bagian dari Tugas Besar mata kuliah IF2224 Teori Bahasa Formal dan Automata.
+Codebase ini merupakan implementasi Lexical, Syntax, Semantic Analyzer, dan Interpreter untuk bahasa pemrograman Arion sebagai bagian dari Tugas Besar mata kuliah IF2224 Teori Bahasa Formal dan Automata.
 
 ## Deskripsi Program
 
-Program ini menggabungkan proses *Lexical Analyzer* (Lexer), *Syntax Analysis* (Parser), dengan *Semantic Analyzer* dari sebuah *source code*. Proses pembentukan token dalam lexer menggunakan **Deterministic Finite Automata (DFA)** untuk mengenali pola karakter dan menghasilkan token sesuai dengan spesifikasi bahasa pemrograman Arion. Selanjutnya, proses analisa syntax dari token yang dihasilkan menggunakan algoritma **Recursive Descent** yang didasarkan pada **Context Free Grammar (CFG)**. Terakhir, proses analisa semantic dari parse tree dilakukan menggunakan **Decorated AST** dan **Symbol Table**.
+<p align="justify">
+Program ini menggabungkan proses <i>Lexical Analyzer</i> (Lexer), <i>Syntax Analysis</i> (Parser), <i>Semantic Analyzer</i>, dan <i>Interpreter</i> dari sebuah <i>source code</i>. Proses pembentukan token dalam lexer menggunakan <b>Deterministic Finite Automata (DFA)</b> untuk mengenali pola karakter dan menghasilkan token sesuai dengan spesifikasi bahasa pemrograman Arion. Selanjutnya, proses analisa syntax dari token yang dihasilkan menggunakan algoritma <b>Recursive Descent</b> yang didasarkan pada <b>Context Free Grammar (CFG)</b>. Proses analisa semantic dari parse tree dilakukan menggunakan <b>Decorated AST</b> dan <b>Symbol Table</b>. Terakhir, interpreter menghasilkan <b>Intermediate Code (ICG)</b> dan mengeksekusi program.
+</p>
 
 ## Identitas Kelompok
 
@@ -44,24 +46,36 @@ MMD-TUBES-IF2224-2026/
 │ │ └── ParseTree.hpp
 │ │
 │ └── Semantic/
-│ ├── AST.cpp
-│ ├── AST.hpp
-│ ├── ASTer.cpp
-│ ├── ASTer.hpp
-│ ├── SemanticAnalyzer.cpp
-│ ├── SemanticAnalyzer.hpp
-│ ├── SymbolTable.cpp
-│ └── SymbolTable.hpp
+│ │ ├── AST.cpp
+│ │ ├── AST.hpp
+│ │ ├── ASTer.cpp
+│ │ ├── ASTer.hpp
+│ │ ├── SemanticAnalyzer.cpp
+│ │ ├── SemanticAnalyzer.hpp
+│ │ ├── SymbolTable.cpp
+│ │ └── SymbolTable.hpp
+│ │
+│ └── Interpreter/
+│   ├── ICG.cpp
+│   ├── ICG.hpp
+│   ├── Instructions.hpp
+│   ├── Interpreter.cpp
+│   ├── Interpreter.hpp
+│   ├── Pipeline.hpp
+│   └── Stack.hpp
 │
 ├── test/
 │   ├── milestone-1/
 │   ├── milestone-2/
-│   └── milestone-3/
+│   ├── milestone-3/
+│   └── milestone-4/
 │
 ├── doc/
-│   ├── Laporan-1-MMD.pdf
-│   ├── Laporan-2-MMD.pdf
-│   └── Laporan-3-MMD.pdf
+│   └── ...
+│
+├── README.md
+├── Makefile
+└── main
 │
 ├── README.md
 └── Makefile
@@ -105,12 +119,29 @@ atau
 ./main <option> <intput-file> <output-file>
 ```
 
-`option` digunakan untuk memilih antara *lexer* (`option == 1`), *parser* (`option == 2a` untuk input file berisi token dan `option == 2b` untuk input *source code*), dan *semantic analyzer* (`option == 3a` untuk input file berisi hasil parse tree dan `option == 3b` untuk input *source code*).
+`option` digunakan untuk memilih antara:
+- *Lexer* (`option == 1`)
+- *Parser* (`option == 2a` untuk input file berisi token; `option == 2b` untuk input *source code*)
+- *Semantic Analyzer* (`option == 3a` untuk input file berisi hasil parse tree; `option == 3b` untuk input *source code*)
+- *Interpreter* (`option == 4a` untuk menjalankan dan output intermediate code; `option == 4b` untuk output intermediate code ke file)
 
 ### Contoh Penggunaan
 
 ```bash
-make run ARGS="1 test/input-1.txt test/output-1.txt"
+# Lexer
+make run ARGS="1 test/milestone-1/input-1.txt test/milestone-1/output-1.txt"
+
+# Parser dari source code
+make run ARGS="2b test/milestone-2/input-1.txt test/milestone-2/output-1.txt"
+
+# Semantic Analyzer dari source code
+make run ARGS="3b test/milestone-3/input-1.txt test/milestone-3/output-1.txt"
+
+# Interpreter (run code)
+make run ARGS="4a test/milestone-4/input-1.txt"
+
+# Interpreter (output to file)
+make run ARGS="4b test/milestone-4/input-1.txt test/milestone-4/output-1.txt"
 ```
 
 ### Format Input
@@ -180,7 +211,6 @@ Contoh output hasil *parser*:
 Contoh output hasil *semantic analyzer*:
 
 ```text
-
 SYMBOL TABLE
 IDX  ID              OBJ         TYPE        REF   NRM   LEV   ADR   CONST_VAL       
 0    and             0           0           0     1     0     0                     
@@ -189,9 +219,7 @@ IDX  ID              OBJ         TYPE        REF   NRM   LEV   ADR   CONST_VAL
 3    case            0           0           0     1     0     0                     
 4    const           0           0           0     1     0     0                     
 5    div             0           0           0     1     0     0                     
-.
-.
-.             
+...
 
 BLOCK TABLE
 IDX  LAST    LPAR    PSZE    VSZE    
@@ -219,6 +247,23 @@ ProgramNode(name: 'Hello')
    │  ├─ Literal('Result = ') → type:string
    │  └─ Var('b') → tab_idx:38, type:integer, lev:0
    └─ Compound(0 stmts)
+```
+
+Contoh output hasil *interpreter* (intermediate code):
+
+```text
+0 INT 0 5
+1 LIT 0 5
+2 STO 0 3
+3 LOD 0 3
+4 LIT 0 10
+5 OPR 0 2
+6 STO 0 4
+7 LITS 0 0
+8 OPR 0 13
+9 LOD 0 4
+10 OPR 0 14
+11 RET 0 0
 ```
 
 ### Token yang Dapat Dikenali
@@ -311,10 +356,50 @@ Program menggunakan DFA yang didefinisikan dalam file `src/dfa_rules.txt` dengan
 - **Built-in Subprograms:**
   `function`, `procedure`, `readln`, `writeln`
 
+## Intermediate Code Generator (ICG)
+
+### Opcodes
+
+* **Data Loading & Storage:**
+  `LIT`, `LITS`, `LITR`, `LOD`, `STO`, `LODI`, `STOI`
+
+* **Control Flow:**
+  `JMP`, `JPC`, `CAL`, `RET`, `RETVAL`
+
+* **Memory Management:**
+  `INT`
+
+* **Operation Dispatch:**
+  `OPR`
+
+### OPR Operations
+
+* **Arithmetic Operations:**
+  `NEG`, `ADD`, `SUB`, `MUL`, `DIV`, `IDIV`, `MOD`
+
+* **Relational Operations:**
+  `EQL`, `NEQ`, `LSS`, `LEQ`, `GTR`, `GEQ`
+
+* **Input / Output Operations:**
+  `WRT`, `WRTLN`
+
+### Runtime Support
+
+* **Activation Record Entries:**
+  `Static Link`, `Dynamic Link`,
+  `Return Address`, `Local Variables`,
+  `Parameters`, `Function Return Value`
+
+* **Literal Pools:**
+  `String Table`, `Real Constant Table`
+
+* **Structured Types:**
+  `Array`, `Record`
+
 ## Pembagian Tugas
 | NIM | Kontribusi Tugas | Persentase |
 |:---:|:---:|:---:|
-| 13524040 | Tokenizer, diagram DFA, production functions, debugging and testing, testcase input-output, Decorated AST | 25% |
-| 13524042 | Penulisan laporan, DFA rules, diagram DFA, production functions, AST productions, Symbol Table | 25% |
-| 13524048 | Class lexer, DFA, Parser, dan ParseTree, diagram DFA, production functions, AST definition, AST productions, Decorated AST Output | 25% |
-| 13524088 | Penulisan laporan, DFA rules, diagram DFA, production functions, AST productions | 25% |
+| 13524040 | Tokenizer, diagram DFA, production functions, debugging and testing, testcase input-output, Decorated AST, ICG, Interpreter | 25% |
+| 13524042 | Penulisan laporan, DFA rules, diagram DFA, production functions, AST productions, Symbol Table, ICG | 25% |
+| 13524048 | Class lexer, DFA, Parser, dan ParseTree, diagram DFA, production functions, AST definition, AST productions, Decorated AST Output, ICG, Interpreter | 25% |
+| 13524088 | Penulisan laporan, DFA rules, diagram DFA, production functions, AST productions, ICG | 25% |
