@@ -140,7 +140,7 @@ void Interpreter::execCAL(Bytecode instr, const std::vector<Bytecode>& code) {
     bp = sp - 2;    // bp+0=static, bp+1=dynamic, bp+2=ret_addr
 
     for (int i = 0; i < nArgs; i++) {
-        int addr = bp + 3 + i;
+        int addr = bp + 4 + i;
         if (addr >= STACK_SIZE) throw RuntimeError("Stack Overflow saat memindahkan argumen");
         stack[addr] = args[i];
         if (sp < addr) sp = addr;

@@ -182,6 +182,10 @@ void SemanticAnalyzer::visitProcDecl(std::shared_ptr<ProcDeclNode> node) {
 
     symTab.getTab(procTabIdx).ref = blockIdx;
 
+    // Reserve slot 0 (varAddr=bp+3) as the return-value slot for calling convention
+    // consistency (procedures don't use it but the CAL/RET convention expects params at bp+4+).
+    symTab.getBlockTab(blockIdx).psze = 1;
+
     // Visit params
     for (auto& param : node->getParams())
         visitParamDecl(param);
@@ -227,6 +231,10 @@ void SemanticAnalyzer::visitFuncDecl(std::shared_ptr<FuncDeclNode> node) {
     symTab.enterScope();
     int blockIdx = symTab.getCurrentBlock();
     symTab.getTab(funcTabIdx).ref = blockIdx;
+
+    // Reserve slot 0 (adr=0, varAddr=bp+3) as the function return-value slot.
+    // Parameters start at adr=1, so val1 -> varAddr=bp+4, avoiding the retval collision.
+    symTab.getBlockTab(blockIdx).psze = 1;
 
     // Visit params
     for (auto& param : node->getParams())
@@ -699,8 +707,7 @@ int SemanticAnalyzer::visitFieldType(std::shared_ptr<FieldTypeNode> node) {
     }
     symTab.getBlockTab(blockIdx).vsze = offset;
 
-    symTab.exitScope();// Returns stack slots needed for a variable of type t with ref.
-
+    symTab.exitScope();
     lastTypeRef = blockIdx;
     return T_RECORD;
 }

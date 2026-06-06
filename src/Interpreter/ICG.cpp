@@ -63,9 +63,7 @@ int IntermediateCode::levelDiff(int tabIdx) const {
 }
 
 int IntermediateCode::frameSizeFromBlock(int blockIdx) const {
-    int vars   = symTab.getBlockTab(blockIdx).vsze;
-    int params = symTab.getBlockTab(blockIdx).psze;
-    return 3 + vars + params;
+    return 3 + symTab.getBlockTab(blockIdx).vsze;
 }
 
 OprCode IntermediateCode::opToOpr(const std::string& op) const {
@@ -630,7 +628,7 @@ void IntermediateCode::genCall(std::shared_ptr<CallNode> node) {
 
     int idx = lookupVar(name);
     int lev = (idx >= 0) ? levelDiff(idx) : 0;
-    emit(Opcode::CAL, lev, it->second);
+    emit(Opcode::CAL, nArgs, it->second);
     // RETVAL pops the nArgs items that were pushed for arguments
     emit(Opcode::RETVAL, 0, nArgs);
 }
