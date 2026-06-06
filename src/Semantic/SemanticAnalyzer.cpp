@@ -575,6 +575,32 @@ int SemanticAnalyzer::visitArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
 
     if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize()) return T_NONE;
 
+    // --- array bounds checking ---
+    {
+        int bndRef = arrayRef;
+        for (size_t i = 0; i < accessChain.size() && bndRef >= 0 && bndRef < symTab.getArraytabSize(); ++i) {
+            const ArrayTab& arrInfo = symTab.getArrayTab(bndRef);
+            auto idxExpr = accessChain[i]->getIndex();
+            if (idxExpr && idxExpr->getASTType() == ASTType::LiteralNode) {
+                auto lit = std::dynamic_pointer_cast<LiteralNode>(idxExpr);
+                if (lit && lit->getKind() == LiteralKind::Int) {
+                    try {
+                        int idxVal = std::stoi(lit->getValue());
+                        if (idxVal < arrInfo.low || idxVal > arrInfo.high) {
+                            semanticError("Array index " + std::to_string(idxVal) +
+                                          " out of bounds [" + std::to_string(arrInfo.low) +
+                                          ".." + std::to_string(arrInfo.high) + "]");
+                        }
+                    } catch (...) {}
+                }
+            }
+            if (arrInfo.etyp == T_ARRAY && arrInfo.eref >= 0)
+                bndRef = arrInfo.eref;
+            else
+                break;
+        }
+    }
+
     int resultType = T_NONE;
     for (size_t i = 0; i < accessChain.size(); ++i) {
         if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize())
