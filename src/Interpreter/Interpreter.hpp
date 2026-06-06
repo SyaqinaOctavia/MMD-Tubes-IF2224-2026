@@ -14,7 +14,7 @@ public:
 
 static constexpr int STRING_TAG = 0x40000000;
 
-inline bool isStringVal(int v)  { return (v & STRING_TAG) != 0; }
+inline bool isStringVal(int v)  { return v >= 0 && (v & STRING_TAG) != 0; }
 inline int  makeStringVal(int i) { return STRING_TAG | i; }
 inline int  getStringIdx(int v)  { return v & ~STRING_TAG; }
 
@@ -55,7 +55,7 @@ private:
     void execJPC(Bytecode instr);
     void execOPR(Bytecode instr, std::ostream& out);
     void execRET();
-    void execRETVAL(Bytecode instr);
+    void execRETVAL();
     void execLODI(Bytecode instr);
     void execSTOI(Bytecode instr);
 

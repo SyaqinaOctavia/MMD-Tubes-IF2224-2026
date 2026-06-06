@@ -28,7 +28,7 @@ void Interpreter::execute(std::vector<Bytecode>& code, std::ostream& out) {
             case Opcode::JPC:  execJPC(instr);             break;
             case Opcode::OPR:  execOPR(instr, out);        break;
             case Opcode::RET:  execRET();                  break;
-            case Opcode::RETVAL: execRETVAL(instr);        break;
+            case Opcode::RETVAL: execRETVAL();             break;
             case Opcode::LODI:   execLODI(instr);          break;
             case Opcode::STOI:   execSTOI(instr);          break;
             default:
@@ -188,7 +188,7 @@ void Interpreter::execRET() {
     if (callDepth > 0) callDepth--;
 }
 
-void Interpreter::execRETVAL(Bytecode instr) {
+void Interpreter::execRETVAL() {
     push(returnValue);
 }
 
