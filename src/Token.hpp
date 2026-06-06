@@ -34,7 +34,6 @@ inline const std::map<std::string, Symbol> Token::keywordMap = {
     {"andsy", Symbol::andsy},
     {"orsy", Symbol::orsy},
     {"eql", Symbol::eql},
-    {"eql1", Symbol::eql},
     {"neq", Symbol::neq},
     {"gtr", Symbol::gtr},
     {"geq", Symbol::geq},

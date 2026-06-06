@@ -8,7 +8,7 @@
 
 startstate | q0
 deadstate  | q_trap
-finalstate | q_intcon, q_realcon, q_charcon, q_string, q_notsy, q_plus, q_minus, q_times, q_idiv, q_rdiv, q_imod, q_andsy, q_orsy, q_eql, q_eql1, q_neq, q_gtr, q_geq, q_lss, q_leq, q_lparent, q_rparent, q_lbrack, q_rbrack, q_comma, q_semicolon, q_period, q_colon, q_becomes, q_constsy, q_typesy, q_varsy, q_functionsy, q_proceduresy, q_arraysy, q_recordsy, q_programsy, q_ident, q_beginsy, q_ifsy, q_casesy, q_repeatsy, q_whilesy, q_forsy, q_endsy, q_elsesy, q_untilsy, q_ofsy, q_dosy, q_tosy, q_downtosy, q_thensy, q_comment
+finalstate | q_intcon, q_realcon, q_charcon, q_string, q_notsy, q_plus, q_minus, q_times, q_idiv, q_rdiv, q_imod, q_andsy, q_orsy, q_eql, q_neq, q_gtr, q_geq, q_lss, q_leq, q_lparent, q_rparent, q_lbrack, q_rbrack, q_comma, q_semicolon, q_period, q_colon, q_becomes, q_constsy, q_typesy, q_varsy, q_functionsy, q_proceduresy, q_arraysy, q_recordsy, q_programsy, q_ident, q_beginsy, q_ifsy, q_casesy, q_repeatsy, q_whilesy, q_forsy, q_endsy, q_elsesy, q_untilsy, q_ofsy, q_dosy, q_tosy, q_downtosy, q_thensy, q_comment
 
 # ============================================================
 # NUMBERS

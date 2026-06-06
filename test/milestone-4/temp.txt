@@ -1,22 +1,27 @@
-x := 5;
-    y := 10;
-    b := (x < y) and true;
-    
-    arr[1].val := add(x, y);
-    arr[1].flag := true;
-    
-    rec.val := 100;
-    rec.flag := false;
-    
-    if b then
-        writeln('Valid')
-    else
-        x := 0;
-    
-    { Mencetak field tertentu dari array of record }
-    writeln(arr[1].val);
-    
-    while x > 0 do
-    begin
-        x := x - 1;
-    end;
+0 JMP 0 15
+1 INT 0 5
+2 LOD 0 4
+3 LIT 0 2
+4 OPR 0 4
+5 OPR 0 14
+6 RET 0 0
+7 INT 0 6
+8 LOD 0 4
+9 LOD 0 4
+10 OPR 0 4
+11 STO 0 5
+12 LOD 0 5
+13 STO 0 3
+14 RET 0 0
+15 INT 0 4
+16 LIT 0 7
+17 CAL 1 7
+18 RETVAL 0 1
+19 STO 0 3
+20 LOD 0 3
+21 OPR 0 14
+22 LIT 0 6
+23 CAL 1 1
+24 LOD 0 3
+25 CAL 1 1
+26 RET 0 0

@@ -1,16 +1,16 @@
 program UjiKomprehensif;
 
 const
-  BATAS_MIN = 1;
-  BATAS_MAX = 5;
-  PI = 3.14159;
+  BATAS_MIN == 1;
+  BATAS_MAX == 5;
+  PI == 3.14159;
 
 type
-  RentangIndeks = 1..5;
-  AngkaBulat = integer;
-  StatusPemain = (HIDUP, MATI, BERTAHAN, MENYERANG);
-  PapanCatur = array [1..5] of array [1..5] of integer;
-  Karakter = record
+  RentangIndeks == 1..5;
+  AngkaBulat == integer;
+  StatusPemain == (HIDUP, MATI, BERTAHAN, MENYERANG);
+  PapanCatur == array [1..5] of array [1..5] of integer;
+  Karakter == record
     id: integer;
     darah: real;
     status: integer;
@@ -34,7 +34,7 @@ end;
 
 function faktorial(n: integer): integer;
 begin
-  if (n = 0) then
+  if (n == 0) then
     faktorial := 1
   else
     faktorial := n * faktorial(n - 1);
@@ -46,9 +46,9 @@ begin
   begin
     for c := 1 to 5 do
     begin
-      if (r = c) then
+      if (r == c) then
         hero.papan[r][c] := 1
-      else if ((r + c) = 6) then
+      else if ((r + c) == 6) then
         hero.papan[r][c] := 2
       else
         hero.papan[r][c] := 0;
@@ -70,7 +70,7 @@ begin
   writeln(hasilFak);
   
   langkah := 5;
-  while (langkah > 0) and (hero.is_aktif = true) do
+  while (langkah > 0) and (hero.is_aktif == true) do
   begin
     hero.darah := hero.darah - 10.0;
     langkah := langkah - 1;
@@ -102,7 +102,7 @@ begin
       hero.status := 4
   end;
   
-  if not (hero.status = 4) or (hero.darah > 50.0) then
+  if not (hero.status == 4) or (hero.darah > 50.0) then
     writeln('Hero Bertahan!')
   else
     writeln('Game Over');
