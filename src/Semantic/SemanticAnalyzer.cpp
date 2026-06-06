@@ -110,24 +110,41 @@ void SemanticAnalyzer::visitTypeDecl(std::shared_ptr<TypeDeclNode> node) {
     symTab.addTab(name, OBJ_TYPE, t, ref, 1, 0);
 }
 
+
+int SemanticAnalyzer::typeSlotSize(int t, int ref) const {
+    if (t == T_ARRAY && ref >= 0 && ref < symTab.getArraytabSize()) {
+        const ArrayTab& arr = symTab.getArrayTab(ref);
+        int elementSlots = 1;
+        if (arr.etyp == T_ARRAY)
+            elementSlots = typeSlotSize(arr.etyp, arr.eref);
+        else if (arr.etyp == T_RECORD)
+            elementSlots = std::max(1, symTab.getBlockTab(arr.eref).vsze);
+        return std::max(1, arr.size * elementSlots);
+    }
+    if (t == T_RECORD && ref > 0 && ref < symTab.getBlocktabSize())
+        return std::max(1, symTab.getBlockTab(ref).vsze);
+    return 1;
+}
+
 void SemanticAnalyzer::visitVarDecl(std::shared_ptr<VarDeclNode> node) {
     if (!node) return;
     lastTypeRef = 0;
     int t   = visitType(node->getType());
     int ref = lastTypeRef;
+    int slots = typeSlotSize(t, ref);
 
     for (const auto& rawName : node->getNames()) {
         std::string name = rawName;
 
         if (symTab.searchCurrentScope(name) >= 0) {
-            semanticError("Redeclaration of variable '" + rawName + "' in current scope");
+            semanticError("Redeclaration of variable \'" + rawName + "\' in current scope");
             continue;
         }
 
         int blockIdx = symTab.getCurrentBlock();
         int vsze = symTab.getBlockTab(blockIdx).vsze;
         symTab.addTab(name, OBJ_VAR, t, ref, 1, vsze);
-        symTab.getBlockTab(blockIdx).vsze++;
+        symTab.getBlockTab(blockIdx).vsze += slots;
     }
 }
 
@@ -172,6 +189,10 @@ void SemanticAnalyzer::visitProcDecl(std::shared_ptr<ProcDeclNode> node) {
 
     symTab.getTab(procTabIdx).ref = blockIdx;
 
+    // Reserve slot 0 (varAddr=bp+3) as the return-value slot for calling convention
+    // consistency (procedures don't use it but the CAL/RET convention expects params at bp+4+).
+    symTab.getBlockTab(blockIdx).psze = 1;
+
     // Visit params
     for (auto& param : node->getParams())
         visitParamDecl(param);
@@ -179,9 +200,16 @@ void SemanticAnalyzer::visitProcDecl(std::shared_ptr<ProcDeclNode> node) {
     // Record lpar = last parameter index in this block
     symTab.getBlockTab(blockIdx).lpar = symTab.getBlockTab(blockIdx).last;
 
+    // Locals start after params in the frame; seed vsze from psze
+    symTab.getBlockTab(blockIdx).vsze = symTab.getBlockTab(blockIdx).psze;
+
     // Visit local declarations
     for (auto& decl : node->getLocalVar())
         visit(decl);
+
+    // After visiting locals, vsze now = psze + localCount; store net local count
+    int totalVsze = symTab.getBlockTab(blockIdx).vsze;
+    symTab.getBlockTab(blockIdx).vsze = totalVsze;
 
     // Visit body
     if (node->getBody())
@@ -211,11 +239,18 @@ void SemanticAnalyzer::visitFuncDecl(std::shared_ptr<FuncDeclNode> node) {
     int blockIdx = symTab.getCurrentBlock();
     symTab.getTab(funcTabIdx).ref = blockIdx;
 
+    // Reserve slot 0 (adr=0, varAddr=bp+3) as the function return-value slot.
+    // Parameters start at adr=1, so val1 -> varAddr=bp+4, avoiding the retval collision.
+    symTab.getBlockTab(blockIdx).psze = 1;
+
     // Visit params
     for (auto& param : node->getParams())
         visitParamDecl(param);
 
     symTab.getBlockTab(blockIdx).lpar = symTab.getBlockTab(blockIdx).last;
+
+    // Locals start after params in the frame; seed vsze from psze
+    symTab.getBlockTab(blockIdx).vsze = symTab.getBlockTab(blockIdx).psze;
 
     // Visit local declarations and body
     for (auto& decl : node->getLocalVar())
@@ -263,7 +298,9 @@ void SemanticAnalyzer::visitFor(std::shared_ptr<ForNode> node) {
     int idx = symTab.searchTab(varName);
     if (idx < 0) {
         semanticError("FOR loop variable '" + node->getMovingVar() + "' is undeclared");
-    } // TODO : check if move variable must be integer
+    } else if (symTab.getTab(idx).type != T_INTEGER && symTab.getTab(idx).type != T_CHAR && symTab.getTab(idx).type != T_BOOLEAN) {
+        semanticError("FOR loop variable '" + node->getMovingVar() + "' must be ordinal type (Integer, Char, or Boolean)");
+    }
 
     int startType = visitExpr(node->getStartPoint());
     int endType   = visitExpr(node->getEndPoint());
@@ -487,20 +524,65 @@ int SemanticAnalyzer::visitArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
     if (idxType != T_INTEGER && idxType != T_CHAR && idxType != T_BOOLEAN && idxType != T_NONE)
         semanticError("Array index must be ordinal type, got " + typeToString(idxType));
 
-    auto arr = node->getArray();
-    while (arr && arr->getASTType() == ASTType::ArrayAccessNode)
-        arr = std::dynamic_pointer_cast<ArrayAccessNode>(arr)->getArray();
+    std::vector<std::shared_ptr<ArrayAccessNode>> accessChain;
+    auto current = node;
+    while (current) {
+        accessChain.push_back(current);
+        auto parent = std::dynamic_pointer_cast<ArrayAccessNode>(current->getArray());
+        current = parent;
+    }
+    if (accessChain.empty()) return T_NONE;
 
-    if (arr && arr->getASTType() == ASTType::VarRefNode) {
-        auto vr = std::dynamic_pointer_cast<VarRefNode>(arr);
-        int idx = symTab.searchTab(vr->getName());
-        if (idx >= 0) {
-            int ref = symTab.getTab(idx).ref;
-            if (ref > 0 && ref < symTab.getArraytabSize())
-                return symTab.getArrayTab(ref).etyp;
+    std::reverse(accessChain.begin(), accessChain.end());
+    auto baseExpr = accessChain.front()->getArray();
+    if (!baseExpr) return T_NONE;
+
+    int arrayRef = -1;
+    if (baseExpr->getASTType() == ASTType::VarRefNode) {
+        auto baseVar = std::dynamic_pointer_cast<VarRefNode>(baseExpr);
+        int baseIdx = symTab.searchTab(baseVar->getName());
+        if (baseIdx < 0) return T_NONE;
+        arrayRef = symTab.getTab(baseIdx).ref;
+    } else if (baseExpr->getASTType() == ASTType::FieldAccessNode) {
+        auto fa = std::dynamic_pointer_cast<FieldAccessNode>(baseExpr);
+        auto rec = fa->getRecord();
+        while (rec && (rec->getASTType() == ASTType::FieldAccessNode
+                    || rec->getASTType() == ASTType::ArrayAccessNode)) {
+            if (rec->getASTType() == ASTType::FieldAccessNode)
+                rec = std::dynamic_pointer_cast<FieldAccessNode>(rec)->getRecord();
+            else
+                rec = std::dynamic_pointer_cast<ArrayAccessNode>(rec)->getArray();
+        }
+        if (rec && rec->getASTType() == ASTType::VarRefNode) {
+            auto vr = std::dynamic_pointer_cast<VarRefNode>(rec);
+            int idx = symTab.searchTab(vr->getName());
+            if (idx >= 0) {
+                int ref = symTab.getTab(idx).ref;
+                if (ref > 0 && ref < symTab.getBlocktabSize()) {
+                    int fldIdx = symTab.getBlockTab(ref).last;
+                    std::string fld = fa->getFieldName();
+                    while (fldIdx > 0) {
+                        if (symTab.getTab(fldIdx).id == fld) {
+                            arrayRef = symTab.getTab(fldIdx).ref;
+                            break;
+                        }
+                        fldIdx = symTab.getTab(fldIdx).link;
+                    }
+                }
+            }
         }
     }
-    return T_NONE;
+
+    if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize()) return T_NONE;
+
+    int resultType = T_NONE;
+    for (size_t i = 0; i < accessChain.size(); ++i) {
+        if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize())
+            return T_NONE;
+        resultType = symTab.getArrayTab(arrayRef).etyp;
+        arrayRef = symTab.getArrayTab(arrayRef).eref;
+    }
+    return resultType;
 }
 
 int SemanticAnalyzer::visitFieldAccess(std::shared_ptr<FieldAccessNode> node) {
@@ -666,15 +748,18 @@ int SemanticAnalyzer::visitFieldType(std::shared_ptr<FieldTypeNode> node) {
         lastTypeRef = 0;
         int ft  = visitType(typeSpec);
         int ref = lastTypeRef;
+        int fslots = typeSlotSize(ft, ref);
         for (const auto& rawName : names) {
             std::string name = rawName;
             if (symTab.searchCurrentScope(name) >= 0) {
-                semanticError("Duplicate field '" + rawName + "' in record");
+                semanticError("Duplicate field \'" + rawName + "\' in record");
             } else {
-                symTab.addTab(name, OBJ_VAR, ft, ref, 1, offset++);
+                symTab.addTab(name, OBJ_VAR, ft, ref, 1, offset);
+                offset += fslots;
             }
         }
     }
+    symTab.getBlockTab(blockIdx).vsze = offset;
 
     symTab.exitScope();
     lastTypeRef = blockIdx;
@@ -947,12 +1032,13 @@ void SemanticAnalyzer::printNode(std::shared_ptr<ASTNode> node, std::ostream& ou
                 out << "\n";
                 // Print params
                 std::string next = prefix + ext(isLast);
-                for (size_t i = 0; i < pd->getParams().size(); ++i) {
-                    auto& p = pd->getParams()[i];
-                    bool last = (i + 1 == pd->getParams().size()) && pd->getLocalVar().empty() && !pd->getBody();
+                auto pdParams = pd->getParams();
+                for (size_t i = 0; i < pdParams.size(); ++i) {
+                    auto& p = pdParams[i];
+                    bool last = (i + 1 == pdParams.size()) && pd->getLocalVar().empty() && !pd->getBody();
                     out << next << conn(last) << "Param(";
                     for (const auto& n : p->getNames()) out << n << " ";
-                    out << ")\n";
+                    out << ")\\n";
                 }
                 // Print local decls
                 for (size_t i = 0; i < pd->getLocalVar().size(); ++i)

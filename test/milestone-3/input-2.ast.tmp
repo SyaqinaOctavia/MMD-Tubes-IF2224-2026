@@ -1,0 +1,136 @@
+
+SYMBOL TABLE
+IDX  ID              OBJ         TYPE        REF   NRM   LEV   ADR   CONST_VAL       
+0    and             0           0           0     1     0     0                     
+1    array           3           5           0     1     0     0                     
+2    begin           0           0           0     1     0     0                     
+3    case            0           0           0     1     0     0                     
+4    const           0           0           0     1     0     0                     
+5    div             0           0           0     1     0     0                     
+6    downto          0           0           0     1     0     0                     
+7    do              0           0           0     1     0     0                     
+8    else            0           0           0     1     0     0                     
+9    end             0           0           0     1     0     0                     
+10   for             0           0           0     1     0     0                     
+11   function        4           0           0     1     0     0                     
+12   if              0           0           0     1     0     0                     
+13   mod             0           0           0     1     0     0                     
+14   not             0           0           0     1     0     0                     
+15   of              0           0           0     1     0     0                     
+16   or              0           0           0     1     0     0                     
+17   procedure       5           0           0     1     0     0                     
+18   program         0           0           0     1     0     0                     
+19   record          3           6           0     1     0     0                     
+20   repeat          0           0           0     1     0     0                     
+21   integer         3           1           0     1     0     0                     
+22   real            3           2           0     1     0     0                     
+23   boolean         3           3           0     1     0     0                     
+24   char            3           4           0     1     0     0                     
+25   string          3           7           0     1     0     0                     
+26   then            0           0           0     1     0     0                     
+27   to              0           0           0     1     0     0                     
+28   type            0           0           0     1     0     0                     
+29   until           0           0           0     1     0     0                     
+30   var             0           0           0     1     0     0                     
+31   while           0           0           0     1     0     0                     
+32   true            1           3           0     1     0     1     true            
+33   false           1           3           0     1     0     0     false           
+34   readln          5           0           0     1     0     0                     
+35   writeln         5           0           0     1     0     0                     
+36   ValidTest       5           0           0     1     0     0                     
+37   x               2           1           0     1     0     0                     
+38   y               2           1           0     1     0     1                     
+39   b               2           3           0     1     0     2                     
+40   arr             2           5           1     1     0     3                     
+41   val             2           1           0     1     1     0                     
+42   flag            2           3           0     1     1     1                     
+43   rec             2           6           1     1     0     13                    
+44   add             4           1           2     1     0     0                     
+45   val1            2           1           0     1     1     1                     
+46   val2            2           1           0     1     1     2                     
+47   temp            2           1           0     1     1     3                     
+
+BLOCK TABLE
+IDX  LAST    LPAR    PSZE    VSZE    
+0    44      0       0       15      
+1    42      0       0       2       
+2    47      46      3       4       
+
+ARRAY TABLE
+IDX  XTYP    ETYP    EREF    LOW     HIGH    ELSZ    SIZE    
+idx xtyp etyp eref low high elsz size
+0    1       1       0       1       10      1       10      
+1    1       1       0       1       10      1       10      
+
+=== DECORATED ABSTRACT SYNTAX TREE ===
+ProgramNode(name: 'ValidTest')
+├─ Declarations
+│  ├─ VarDecl('x') → tab_idx:37, type:integer, lev:0
+│  ├─ VarDecl('y') → tab_idx:38, type:integer, lev:0
+│  ├─ VarDecl('b') → tab_idx:39, type:boolean, lev:0
+│  ├─ VarDecl('arr') → tab_idx:40, type:array, lev:0
+│  ├─ VarDecl('rec') → tab_idx:43, type:record, lev:0
+│  └─ FuncDecl('add') → tab_idx:44, returnType:integer, ref(btab):2
+│     ├─ VarDecl('temp')
+│     └─ Compound(3 stmts)
+│        ├─ Assign → type:void
+│        │  ├─ Var('temp')
+│        │  └─ BinaryOp('plus') → type:integer
+│        │     ├─ Var('val1')
+│        │     └─ Var('val2')
+│        ├─ Assign → type:void
+│        │  ├─ Var('add') → tab_idx:44, type:integer, lev:0
+│        │  └─ Var('temp')
+│        └─ Compound(0 stmts)
+└─ Block (main compound)
+   ├─ Assign → type:void
+   │  ├─ Var('x') → tab_idx:37, type:integer, lev:0
+   │  └─ Literal(5) → type:integer
+   ├─ Assign → type:void
+   │  ├─ Var('y') → tab_idx:38, type:integer, lev:0
+   │  └─ Literal(10) → type:integer
+   ├─ Assign → type:void
+   │  ├─ Var('b') → tab_idx:39, type:boolean, lev:0
+   │  └─ BinaryOp('andsy') → type:boolean
+   │     ├─ BinaryOp('lss') → type:boolean
+   │     │  ├─ Var('x') → tab_idx:37, type:integer, lev:0
+   │     │  └─ Var('y') → tab_idx:38, type:integer, lev:0
+   │     └─ Var('true') → tab_idx:32, type:boolean, lev:0
+   ├─ Assign → type:void
+   │  ├─ ArrayAccess → type:integer
+   │  │  ├─ Var('arr') → tab_idx:40, type:array, lev:0
+   │  │  └─ Literal(1) → type:integer
+   │  └─ Call('add') → type:integer
+   │     ├─ Var('x') → tab_idx:37, type:integer, lev:0
+   │     └─ Var('y') → tab_idx:38, type:integer, lev:0
+   ├─ Assign → type:void
+   │  ├─ FieldAccess('val') → type:integer
+   │  │  └─ Var('rec') → tab_idx:43, type:record, lev:0
+   │  └─ Literal(100) → type:integer
+   ├─ Assign → type:void
+   │  ├─ FieldAccess('flag') → type:boolean
+   │  │  └─ Var('rec') → tab_idx:43, type:record, lev:0
+   │  └─ Var('false') → tab_idx:33, type:boolean, lev:0
+   ├─ If
+   │  ├─ condition
+   │  │  └─ Var('b') → tab_idx:39, type:boolean, lev:0
+   │  ├─ then
+   │  │  └─ CallStmt('writeln')
+   │  │     └─ Literal('Valid') → type:string
+   │  └─ else
+   │     └─ Assign → type:void
+   │        ├─ Var('x') → tab_idx:37, type:integer, lev:0
+   │        └─ Literal(0) → type:integer
+   └─ While
+      ├─ condition
+      │  └─ BinaryOp('gtr') → type:boolean
+      │     ├─ Var('x') → tab_idx:37, type:integer, lev:0
+      │     └─ Literal(0) → type:integer
+      └─ body
+         └─ Compound(2 stmts)
+            ├─ Assign → type:void
+            │  ├─ Var('x') → tab_idx:37, type:integer, lev:0
+            │  └─ BinaryOp('minus') → type:integer
+            │     ├─ Var('x') → tab_idx:37, type:integer, lev:0
+            │     └─ Literal(1) → type:integer
+            └─ Compound(0 stmts)

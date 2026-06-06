@@ -1,0 +1,53 @@
+program ValidTest;
+var
+    x, y: integer;
+    z: real;
+    b: boolean;
+    arr: array [1..10] of integer;
+    rec: record
+        val: integer;
+        flag: boolean
+    end;
+
+function add(val1: integer; val2: integer): integer;
+var temp: integer;
+begin
+    temp := val1 + val2;
+    add := temp;
+end;
+
+begin
+    x := 5;
+    y := 10;
+    z := 1.3;
+    b := (x < y) and true;
+    
+    arr[1] := add(x, y);
+    rec.val := 100;
+    rec.flag := false;
+    
+    writeln('FUNC CALL TEST');
+    writeln('Result 1 = ', x + y);
+    writeln('Result 2 = ', add(x, y));
+    writeln('Result 3 = ', x - y);
+    writeln('Result 4 = ', add(x, -y));
+    writeln('Result 5 = ', x * y);
+
+    writeln('REAL OUTPUT TEST');
+    writeln('Result 6 = ', z);
+    writeln('Result 7 = ', z * 10);
+    writeln('Result 8 = ', z + 10);
+
+    if b then
+        writeln('Valid')
+    else
+        x := 0;
+        
+    writeln('LOOP TEST');
+    while x > 0 do
+    begin
+        x := x - 1;
+        writeln('x = ', x);
+    end;
+    
+end.

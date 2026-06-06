@@ -4,6 +4,7 @@
 #include "Semantic/ASTer.hpp"
 #include "Semantic/SymbolTable.hpp"
 #include "Semantic/SemanticAnalyzer.hpp"
+#include "Interpreter/Pipeline.hpp"
 #include <cstring>
 #include <iostream>
 
@@ -18,11 +19,14 @@ int main(int argc, char* argv[]){
         cout << "         2b. Lexer and Parser (input with code, output as parse tree)" << endl;
         cout << "         3a. Semantic Analyzer (input with parse tree, output as AST)" << endl;
         cout << "         3b. Lexer, Parser, and Semantic Analyzer (input with code, output as AST)" << endl;
+        cout << "         4a. Full pipeline (input: code, output: intermediate code + run)\n";
+        cout << "         4b. Full pipeline to file (input: code, output file: intermediate code)\n";
         return 0;
     }
     if(std::strcmp(argv[1], "1") == 0){
         Lexer lex;
-        lex.generateTokenToFile(argv[2],argv[3]);
+        std::vector<Token> tokens = lex.generateToken(argv[2]);
+        cout << "Tokenized " << tokens.size() << " tokens" << endl;
     } 
     else if(std::strcmp(argv[1], "2a") == 0){
         std::vector<Token> tokens = Token::readTokens(argv[2]);
@@ -64,7 +68,15 @@ int main(int argc, char* argv[]){
             seman.analyzeAndOutput(astree, argv[3]);
         }
     }
+    else if (strcmp(argv[1], "4a") == 0) {
+        runPipeline(argv[2], "");
+    }
+    else if (strcmp(argv[1], "4b") == 0) {
+        if (argc < 4) { cerr << "4b butuh <input> <output>\n"; return 1; }
+        runPipeline(argv[2], argv[3]);
+    }
     else {
-        cout << "OPTION INVALID!" << endl;
+        cout << "OPTION INVALID!\n";
+        return 1;
     }
 }

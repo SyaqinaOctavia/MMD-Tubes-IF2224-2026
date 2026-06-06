@@ -79,6 +79,8 @@ public:
     void cacheType(void* ptr, int t) { nodeType[ptr] = t; }
 
 private:
+    int typeSlotSize(int t, int ref) const;
+
     // main visitors
     void visit(std::shared_ptr<ASTNode> node);
     int visitExpr(std::shared_ptr<ExprNode> node);

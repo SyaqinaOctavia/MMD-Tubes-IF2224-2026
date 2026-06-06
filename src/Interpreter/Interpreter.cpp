@@ -18,15 +18,20 @@ void Interpreter::execute(std::vector<Bytecode>& code, std::ostream& out) {
         pc++;
 
         switch (instr.getOp()) {
-            case Opcode::LIT: execLIT(instr);             break;
-            case Opcode::LOD: execLOD(instr);             break;
-            case Opcode::STO: execSTO(instr);             break;
-            case Opcode::CAL: execCAL(instr, code);       break;
-            case Opcode::INT: execINT(instr);             break;
-            case Opcode::JMP: execJMP(instr);             break;
-            case Opcode::JPC: execJPC(instr);             break;
-            case Opcode::OPR: execOPR(instr, out);        break;
-            case Opcode::RET: execRET();                  break;
+            case Opcode::LIT:  execLIT(instr);             break;
+            case Opcode::LITS: execLITS(instr);            break;
+            case Opcode::LITR: execLITR(instr);            break;
+            case Opcode::LOD:  execLOD(instr);             break;
+            case Opcode::STO:  execSTO(instr);             break;
+            case Opcode::CAL:  execCAL(instr, code);       break;
+            case Opcode::INT:  execINT(instr);             break;
+            case Opcode::JMP:  execJMP(instr);             break;
+            case Opcode::JPC:  execJPC(instr);             break;
+            case Opcode::OPR:  execOPR(instr, out);        break;
+            case Opcode::RET:  execRET();                  break;
+            case Opcode::RETVAL: execRETVAL();             break;
+            case Opcode::LODI:   execLODI(instr);          break;
+            case Opcode::STOI:   execSTOI(instr);          break;
             default:
                 throw RuntimeError("Opcode tidak dikenal di instruksi " + std::to_string(pc - 1));
         }
@@ -77,4 +82,340 @@ void Interpreter::checkJumpTarget(int target, int codeSize) const {
 
 void Interpreter::checkStackIndex(int idx) const {
     if (idx < 0 || idx >= STACK_SIZE) throw RuntimeError("Out-of-bounds Stack Access: indeks " + std::to_string(idx));
+}
+
+// ========================== executors =========================
+
+void Interpreter::execLIT(Bytecode instr) {
+    push(instr.getTarget());
+}
+
+void Interpreter::execLITS(Bytecode instr) {
+    int strIdx = instr.getTarget();
+    if (strIdx < 0 || strIdx >= (int)stringTable.size())
+        throw RuntimeError("LITS: indeks string " + std::to_string(strIdx) + " di luar string table");
+    push(makeStringVal(strIdx));
+}
+
+void Interpreter::execLITR(Bytecode instr) {
+    int realIdx = instr.getTarget();
+    if (realIdx < 0 || realIdx >= (int)realValues.size())
+        throw RuntimeError("LITR: indeks real " + std::to_string(realIdx) + " di luar real table");
+    push(makeRealVal(realIdx));
+}
+
+// Helper
+void Interpreter::printVal(int val, std::ostream& out) const {
+    if (isStringVal(val)) {
+        int idx = getStringIdx(val);
+        if (idx < 0 || idx >= (int)stringTable.size())
+            throw RuntimeError("printVal: indeks string tidak valid: " + std::to_string(idx));
+        out << stringTable[idx];
+    } else if (isRealVal(val)) {
+        int idx = getRealIdx(val);
+        if (idx < 0 || idx >= (int)realValues.size())
+            throw RuntimeError("printVal: indeks real tidak valid: " + std::to_string(idx));
+        out << realValues[idx];
+    } else {
+        out << val;
+    }
+}
+
+void Interpreter::execLOD(Bytecode instr) {
+    int b = base(instr.getLevel());
+    int addr = b + instr.getTarget();
+    checkStackIndex(addr);
+    push(stack[addr]);
+}
+
+void Interpreter::execSTO(Bytecode instr) {
+    int val = pop();
+    int b = base(instr.getLevel());
+    int addr = b + instr.getTarget();
+    checkStackIndex(addr);
+    stack[addr] = val;
+}
+
+void Interpreter::execCAL(Bytecode instr, const std::vector<Bytecode>& code) {
+    callDepth++;
+    if (callDepth > MAX_CALL_DEPTH)
+        throw RuntimeError("Stack Overflow: kedalaman call melebihi batas " + std::to_string(MAX_CALL_DEPTH) + " (infinite recursion?)");
+
+    checkJumpTarget(instr.getTarget(), code.size());
+
+    int nArgs = instr.getLevel();
+    std::vector<int> args(nArgs);
+    for (int i = nArgs - 1; i >= 0; i--) args[i] = pop();
+
+    push(bp);       // static link
+    push(bp);       // dynamic link
+    push(pc);       // return address
+    bp = sp - 2;    // bp+0=static, bp+1=dynamic, bp+2=ret_addr
+
+    for (int i = 0; i < nArgs; i++) {
+        int addr = bp + 4 + i;
+        if (addr >= STACK_SIZE) throw RuntimeError("Stack Overflow saat memindahkan argumen");
+        stack[addr] = args[i];
+        if (sp < addr) sp = addr;
+    }
+    pc = instr.getTarget();
+}
+
+void Interpreter::execINT(Bytecode instr) {
+    int newSp = bp + instr.getTarget() - 1;
+    if (newSp >= STACK_SIZE)
+        throw RuntimeError("Stack Overflow: INT " + instr.opcodeToStr() + " melebihi ukuran stack");
+
+    for (int i = sp + 1; i <= newSp; i++)
+        stack[i] = 0;
+    if (newSp > sp) sp = newSp;
+}
+
+void Interpreter::execJMP(Bytecode instr) {
+    pc = instr.getTarget();
+}
+
+void Interpreter::execJPC(Bytecode instr) {
+    int cond = pop();
+    if (cond == 0)
+        pc = instr.getTarget();
+}
+
+void Interpreter::execRET() {
+    if (bp == 0 && callDepth == 0) {
+        pc = -1;
+        return;
+    }
+
+    int retValSlot = bp + 3;
+    if (retValSlot >= 0 && retValSlot < STACK_SIZE)
+        returnValue = stack[retValSlot];
+
+    int retAddr     = stack[bp + 2];
+    int callerBp    = stack[bp + 1]; 
+
+    sp = bp - 1; 
+    bp = callerBp;
+    pc = retAddr;
+
+    if (callDepth > 0) callDepth--;
+}
+
+void Interpreter::execRETVAL() {
+    push(returnValue);
+}
+
+void Interpreter::execLODI(Bytecode instr) {
+    int offset = pop();
+    int b = base(instr.getLevel());
+    int addr = b + offset;
+    checkStackIndex(addr);
+    push(stack[addr]);
+}
+
+void Interpreter::execSTOI(Bytecode instr) {
+    int offset = pop();
+    int val    = pop();
+    int b = base(instr.getLevel());
+    int addr = b + offset;
+    checkStackIndex(addr);
+    stack[addr] = val;
+}
+
+// Helper: decode value to double (handles both int and real)
+double Interpreter::decodeValue(int val) const {
+    if (isRealVal(val)) {
+        int idx = getRealIdx(val);
+        if (idx < 0 || idx >= (int)realValues.size())
+            throw RuntimeError("decodeValue: indeks real tidak valid");
+        return realValues[idx];
+    } else if (isStringVal(val)) {
+        throw RuntimeError("decodeValue: tidak bisa melakukan operasi aritmatika pada string");
+    } else {
+        return static_cast<double>(val);
+    }
+}
+
+int Interpreter::encodeRealResult(double val) {
+    realValues.push_back(val);
+    return makeRealVal((int)realValues.size() - 1);
+}
+
+void Interpreter::execOPR(Bytecode instr, std::ostream& out) {
+    OprCode opr = static_cast<OprCode>(instr.getTarget());
+
+    switch (opr) {
+        case OprCode::NEG: {
+            int aVal = pop();
+            if (isRealVal(aVal)) {
+                double a = decodeValue(aVal);
+                push(encodeRealResult(-a));
+            } else {
+                push(-aVal);
+            }
+            break;
+        }
+        case OprCode::ADD: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(encodeRealResult(a + b));
+            } else {
+                push(aVal + bVal);
+            }
+            break;
+        }
+        case OprCode::SUB: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(encodeRealResult(a - b));
+            } else {
+                push(aVal - bVal);
+            }
+            break;
+        }
+        case OprCode::MUL: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(encodeRealResult(a * b));
+            } else {
+                push(aVal * bVal);
+            }
+            break;
+        }
+        case OprCode::DIV: {
+            int bVal = pop();
+            int aVal = pop();
+            double b = decodeValue(bVal);
+            if (b == 0.0) throw RuntimeError("Division by Zero: pembagian dengan nol");
+            double a = decodeValue(aVal);
+            push(encodeRealResult(a / b));
+            break;
+        }
+        case OprCode::IDIV: {
+            int b = pop();
+            int a = pop();
+            checkDivision(b);
+            push(a / b);
+            break;
+        }
+        case OprCode::MOD: {
+            int b = pop();
+            int a = pop();
+            checkDivision(b);
+            push(a % b);
+            break;
+        }
+        case OprCode::EQL: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a == b ? 1 : 0);
+            } else {
+                push(aVal == bVal ? 1 : 0);
+            }
+            break;
+        }
+        case OprCode::NEQ: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a != b ? 1 : 0);
+            } else {
+                push(aVal != bVal ? 1 : 0);
+            }
+            break;
+        }
+        case OprCode::LSS: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a < b ? 1 : 0);
+            } else {
+                push(aVal < bVal ? 1 : 0);
+            }
+            break;
+        }
+        case OprCode::GEQ: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a >= b ? 1 : 0);
+            } else {
+                push(aVal >= bVal ? 1 : 0);
+            }
+            break;
+        }
+        case OprCode::GTR: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a > b ? 1 : 0);
+            } else {
+                push(aVal > bVal ? 1 : 0);
+            }
+            break;
+        }
+        case OprCode::LEQ: {
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a <= b ? 1 : 0);
+            } else {
+                push(aVal <= bVal ? 1 : 0);
+            }
+            break;
+        }
+        case OprCode::WRT: {
+            int val = pop();
+            printVal(val, out);
+            break;
+        }
+        case OprCode::WRTLN: {
+            int val = pop();
+            printVal(val, out);
+            out << "\n";
+            break;
+        }
+        default:
+            throw RuntimeError("OPR tidak dikenal: " + instr.opcodeToStr());
+    }
 }

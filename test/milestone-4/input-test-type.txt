@@ -1,0 +1,26 @@
+program UjiTipeData;
+
+const
+  MIN == 1;
+  MAX == 10;
+
+type
+  Siswa == record
+    umur: integer;
+    lulus: boolean;
+    nilai: integer;
+  end;
+
+var
+  x: Angka;
+  w: Warna;
+  dataSiswa: Siswa;
+
+begin
+  dataSiswa.umur := 3;
+  dataSiswa.lulus := true;
+  dataSiswa.nilai := MAX;
+  writeln(dataSiswa.umur);
+  writeln(dataSiswa.lulus);
+  writeln(dataSiswa.nilai);
+end.
