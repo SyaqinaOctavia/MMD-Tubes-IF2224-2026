@@ -67,6 +67,10 @@ private:
     void execLODI(Bytecode instr);
     void execSTOI(Bytecode instr);
 
+    // Helper for real arithmetic
+    double decodeValue(int val) const;
+    int encodeRealResult(double val);
+
     void checkStackOverflow()  const;
     void checkStackUnderflow() const;
     void checkDivision(int divisor) const;

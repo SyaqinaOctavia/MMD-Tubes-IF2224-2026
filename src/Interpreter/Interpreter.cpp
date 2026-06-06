@@ -222,38 +222,94 @@ void Interpreter::execSTOI(Bytecode instr) {
     stack[addr] = val;
 }
 
+// Helper: decode value to double (handles both int and real)
+double Interpreter::decodeValue(int val) const {
+    if (isRealVal(val)) {
+        int idx = getRealIdx(val);
+        if (idx < 0 || idx >= (int)realValues.size())
+            throw RuntimeError("decodeValue: indeks real tidak valid");
+        return realValues[idx];
+    } else if (isStringVal(val)) {
+        throw RuntimeError("decodeValue: tidak bisa melakukan operasi aritmatika pada string");
+    } else {
+        return static_cast<double>(val);
+    }
+}
+
+int Interpreter::encodeRealResult(double val) {
+    realValues.push_back(val);
+    return makeRealVal((int)realValues.size() - 1);
+}
+
 void Interpreter::execOPR(Bytecode instr, std::ostream& out) {
     OprCode opr = static_cast<OprCode>(instr.getTarget());
 
     switch (opr) {
         case OprCode::NEG: {
-            int a = pop();
-            push(-a);
+            int aVal = pop();
+            if (isRealVal(aVal)) {
+                double a = decodeValue(aVal);
+                push(encodeRealResult(-a));
+            } else {
+                push(-aVal);
+            }
             break;
         }
         case OprCode::ADD: {
-            int b = pop();
-            int a = pop();
-            push(a + b);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(encodeRealResult(a + b));
+            } else {
+                push(aVal + bVal);
+            }
             break;
         }
         case OprCode::SUB: {
-            int b = pop();
-            int a = pop();
-            push(a - b);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(encodeRealResult(a - b));
+            } else {
+                push(aVal - bVal);
+            }
             break;
         }
         case OprCode::MUL: {
-            int b = pop();
-            int a = pop();
-            push(a * b);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(encodeRealResult(a * b));
+            } else {
+                push(aVal * bVal);
+            }
             break;
         }
         case OprCode::DIV: {
-            int b = pop();
-            int a = pop();
-            checkDivision(b);
-            push(a / b);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            double b = decodeValue(bVal);
+            if (b == 0.0) throw RuntimeError("Division by Zero: pembagian dengan nol");
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                push(encodeRealResult(a / b));
+            } else {
+                push(aVal / (int)b);
+            }
             break;
         }
         case OprCode::MOD: {
@@ -264,39 +320,87 @@ void Interpreter::execOPR(Bytecode instr, std::ostream& out) {
             break;
         }
         case OprCode::EQL: {
-            int b = pop();
-            int a = pop();
-            push(a == b ? 1 : 0);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a == b ? 1 : 0);
+            } else {
+                push(aVal == bVal ? 1 : 0);
+            }
             break;
         }
         case OprCode::NEQ: {
-            int b = pop();
-            int a = pop();
-            push(a != b ? 1 : 0);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a != b ? 1 : 0);
+            } else {
+                push(aVal != bVal ? 1 : 0);
+            }
             break;
         }
         case OprCode::LSS: {
-            int b = pop();
-            int a = pop();
-            push(a < b ? 1 : 0);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a < b ? 1 : 0);
+            } else {
+                push(aVal < bVal ? 1 : 0);
+            }
             break;
         }
         case OprCode::GEQ: {
-            int b = pop();
-            int a = pop();
-            push(a >= b ? 1 : 0);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a >= b ? 1 : 0);
+            } else {
+                push(aVal >= bVal ? 1 : 0);
+            }
             break;
         }
         case OprCode::GTR: {
-            int b = pop();
-            int a = pop();
-            push(a > b ? 1 : 0);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a > b ? 1 : 0);
+            } else {
+                push(aVal > bVal ? 1 : 0);
+            }
             break;
         }
         case OprCode::LEQ: {
-            int b = pop();
-            int a = pop();
-            push(a <= b ? 1 : 0);
+            int bVal = pop();
+            int aVal = pop();
+            bool aIsReal = isRealVal(aVal);
+            bool bIsReal = isRealVal(bVal);
+            if (aIsReal || bIsReal) {
+                double a = decodeValue(aVal);
+                double b = decodeValue(bVal);
+                push(a <= b ? 1 : 0);
+            } else {
+                push(aVal <= bVal ? 1 : 0);
+            }
             break;
         }
         case OprCode::WRT: {
