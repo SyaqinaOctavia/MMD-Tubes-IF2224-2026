@@ -1,0 +1,23 @@
+program TestSubprograms;
+var
+  result: integer;
+
+function square(n: integer): integer;
+var
+  s: integer;
+begin
+  s := n * n;
+  square := s;
+end;
+
+procedure printDouble(val: integer);
+begin
+  writeln(val * 2);
+end;
+
+begin
+  result := square(7);
+  writeln(result);
+  printDouble(6);
+  printDouble(result);
+end.
