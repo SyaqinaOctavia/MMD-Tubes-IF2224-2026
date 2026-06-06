@@ -300,16 +300,17 @@ void Interpreter::execOPR(Bytecode instr, std::ostream& out) {
         case OprCode::DIV: {
             int bVal = pop();
             int aVal = pop();
-            bool aIsReal = isRealVal(aVal);
-            bool bIsReal = isRealVal(bVal);
             double b = decodeValue(bVal);
             if (b == 0.0) throw RuntimeError("Division by Zero: pembagian dengan nol");
-            if (aIsReal || bIsReal) {
-                double a = decodeValue(aVal);
-                push(encodeRealResult(a / b));
-            } else {
-                push(aVal / (int)b);
-            }
+            double a = decodeValue(aVal);
+            push(encodeRealResult(a / b));
+            break;
+        }
+        case OprCode::IDIV: {
+            int b = pop();
+            int a = pop();
+            checkDivision(b);
+            push(a / b);
             break;
         }
         case OprCode::MOD: {

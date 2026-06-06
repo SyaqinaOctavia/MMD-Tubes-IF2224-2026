@@ -73,7 +73,8 @@ private:
                                 int& baseIdx,
                                 std::vector<std::shared_ptr<ExprNode>>& indices,
                                 std::vector<int>& lowers,
-                                std::vector<int>& multipliers) const;
+                                std::vector<int>& multipliers,
+                                int& fieldOffset) const;
 
     std::unordered_map<std::string, int> procAddr;
 

@@ -298,7 +298,9 @@ void SemanticAnalyzer::visitFor(std::shared_ptr<ForNode> node) {
     int idx = symTab.searchTab(varName);
     if (idx < 0) {
         semanticError("FOR loop variable '" + node->getMovingVar() + "' is undeclared");
-    } // TODO : check if move variable must be integer
+    } else if (symTab.getTab(idx).type != T_INTEGER && symTab.getTab(idx).type != T_CHAR && symTab.getTab(idx).type != T_BOOLEAN) {
+        semanticError("FOR loop variable '" + node->getMovingVar() + "' must be ordinal type (Integer, Char, or Boolean)");
+    }
 
     int startType = visitExpr(node->getStartPoint());
     int endType   = visitExpr(node->getEndPoint());
@@ -533,14 +535,44 @@ int SemanticAnalyzer::visitArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
 
     std::reverse(accessChain.begin(), accessChain.end());
     auto baseExpr = accessChain.front()->getArray();
-    if (!baseExpr || baseExpr->getASTType() != ASTType::VarRefNode)
-        return T_NONE;
+    if (!baseExpr) return T_NONE;
 
-    auto baseVar = std::dynamic_pointer_cast<VarRefNode>(baseExpr);
-    int baseIdx = symTab.searchTab(baseVar->getName());
-    if (baseIdx < 0) return T_NONE;
+    int arrayRef = -1;
+    if (baseExpr->getASTType() == ASTType::VarRefNode) {
+        auto baseVar = std::dynamic_pointer_cast<VarRefNode>(baseExpr);
+        int baseIdx = symTab.searchTab(baseVar->getName());
+        if (baseIdx < 0) return T_NONE;
+        arrayRef = symTab.getTab(baseIdx).ref;
+    } else if (baseExpr->getASTType() == ASTType::FieldAccessNode) {
+        auto fa = std::dynamic_pointer_cast<FieldAccessNode>(baseExpr);
+        auto rec = fa->getRecord();
+        while (rec && (rec->getASTType() == ASTType::FieldAccessNode
+                    || rec->getASTType() == ASTType::ArrayAccessNode)) {
+            if (rec->getASTType() == ASTType::FieldAccessNode)
+                rec = std::dynamic_pointer_cast<FieldAccessNode>(rec)->getRecord();
+            else
+                rec = std::dynamic_pointer_cast<ArrayAccessNode>(rec)->getArray();
+        }
+        if (rec && rec->getASTType() == ASTType::VarRefNode) {
+            auto vr = std::dynamic_pointer_cast<VarRefNode>(rec);
+            int idx = symTab.searchTab(vr->getName());
+            if (idx >= 0) {
+                int ref = symTab.getTab(idx).ref;
+                if (ref > 0 && ref < symTab.getBlocktabSize()) {
+                    int fldIdx = symTab.getBlockTab(ref).last;
+                    std::string fld = fa->getFieldName();
+                    while (fldIdx > 0) {
+                        if (symTab.getTab(fldIdx).id == fld) {
+                            arrayRef = symTab.getTab(fldIdx).ref;
+                            break;
+                        }
+                        fldIdx = symTab.getTab(fldIdx).link;
+                    }
+                }
+            }
+        }
+    }
 
-    int arrayRef = symTab.getTab(baseIdx).ref;
     if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize()) return T_NONE;
 
     int resultType = T_NONE;

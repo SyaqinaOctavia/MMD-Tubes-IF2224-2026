@@ -73,7 +73,7 @@ OprCode IntermediateCode::opToOpr(const std::string& op) const {
     if (op == "minus" || op == "-")   return OprCode::SUB;
     if (op == "times" || op == "*")   return OprCode::MUL;
     if (op == "rdiv"  || op == "/")   return OprCode::DIV;
-    if (op == "idiv"  || op == "div") return OprCode::DIV;
+    if (op == "idiv"  || op == "div") return OprCode::IDIV;
     if (op == "imod"  || op == "mod") return OprCode::MOD;
     if (op == "eql"   || op == "=")   return OprCode::EQL;
     if (op == "neq"   || op == "<>")  return OprCode::NEQ;
@@ -229,11 +229,14 @@ void IntermediateCode::genLiteral(std::shared_ptr<LiteralNode> node) {
             val = (node->getValue() == "true") ? 1 : 0;
             emit(Opcode::LIT, 0, val);
             break;
-        case LiteralKind::Char:
-            if (!node->getValue().empty())
-                val = static_cast<int>(node->getValue()[0]);
-            emit(Opcode::LIT, 0, val);
+        case LiteralKind::Char: {
+            std::string raw = node->getValue();
+            if (raw.size() >= 2 && raw.front() == '\'' && raw.back() == '\'')
+                raw = raw.substr(1, raw.size() - 2);
+            int strIdx = internString(raw);
+            emit(Opcode::LITS, 0, strIdx);
             break;
+        }
         case LiteralKind::Real: {
             double realVal = std::stod(node->getValue());
             int realIdx = internReal(realVal);
@@ -359,7 +362,8 @@ bool IntermediateCode::collectArrayAccessInfo(std::shared_ptr<ArrayAccessNode> n
                                               int& baseIdx,
                                               std::vector<std::shared_ptr<ExprNode>>& indices,
                                               std::vector<int>& lowers,
-                                              std::vector<int>& multipliers) const {
+                                              std::vector<int>& multipliers,
+                                              int& fieldOffset) const {
     std::vector<std::shared_ptr<ArrayAccessNode>> accessChain;
     auto current = node;
     while (current) {
@@ -370,13 +374,46 @@ bool IntermediateCode::collectArrayAccessInfo(std::shared_ptr<ArrayAccessNode> n
     std::reverse(accessChain.begin(), accessChain.end());
 
     auto baseExpr = accessChain.front()->getArray();
-    if (!baseExpr || baseExpr->getASTType() != ASTType::VarRefNode)
-        return false;
-    auto baseVar = std::dynamic_pointer_cast<VarRefNode>(baseExpr);
-    baseIdx = lookupVar(baseVar->getName());
-    if (baseIdx < 0) return false;
+    if (!baseExpr) return false;
 
-    int arrayRef = symTab.getTab(baseIdx).ref;
+    fieldOffset = 0;
+    int arrayRef = -1;
+
+    if (baseExpr->getASTType() == ASTType::VarRefNode) {
+        auto baseVar = std::dynamic_pointer_cast<VarRefNode>(baseExpr);
+        baseIdx = lookupVar(baseVar->getName());
+        if (baseIdx < 0) return false;
+        arrayRef = symTab.getTab(baseIdx).ref;
+    } else if (baseExpr->getASTType() == ASTType::FieldAccessNode) {
+        auto fa = std::dynamic_pointer_cast<FieldAccessNode>(baseExpr);
+        auto rec = fa->getRecord();
+        while (rec && (rec->getASTType() == ASTType::FieldAccessNode
+                    || rec->getASTType() == ASTType::ArrayAccessNode)) {
+            if (rec->getASTType() == ASTType::FieldAccessNode)
+                rec = std::dynamic_pointer_cast<FieldAccessNode>(rec)->getRecord();
+            else
+                rec = std::dynamic_pointer_cast<ArrayAccessNode>(rec)->getArray();
+        }
+        if (!rec || rec->getASTType() != ASTType::VarRefNode) return false;
+        auto vr = std::dynamic_pointer_cast<VarRefNode>(rec);
+        baseIdx = lookupVar(vr->getName());
+        if (baseIdx < 0) return false;
+        fieldOffset = getRecordFieldAddr(baseIdx, fa->getFieldName());
+
+        int blkRef = symTab.getTab(baseIdx).ref;
+        if (blkRef > 0 && blkRef < symTab.getBlocktabSize()) {
+            int fldIdx = symTab.getBlockTab(blkRef).last;
+            while (fldIdx > 0) {
+                if (symTab.getTab(fldIdx).id == fa->getFieldName()) {
+                    arrayRef = symTab.getTab(fldIdx).ref;
+                    break;
+                }
+                fldIdx = symTab.getTab(fldIdx).link;
+            }
+        }
+    }
+
+    if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize()) return false;
     if (arrayRef < 0 || arrayRef >= symTab.getArraytabSize()) return false;
 
     indices.clear();
@@ -439,7 +476,8 @@ void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
         std::vector<std::shared_ptr<ExprNode>> indices;
         std::vector<int> lowers;
         std::vector<int> multipliers;
-        if (!collectArrayAccessInfo(arrAcc, baseIdx, indices, lowers, multipliers)) {
+        int fieldOffset = 0;
+        if (!collectArrayAccessInfo(arrAcc, baseIdx, indices, lowers, multipliers, fieldOffset)) {
             std::cerr << "ICG: array tidak ditemukan atau tidak didukung saat store\n";
             return;
         }
@@ -450,7 +488,7 @@ void IntermediateCode::genStore(std::shared_ptr<ExprNode> target) {
         }
 
         int lev = levelDiff(baseIdx);
-        emit(Opcode::LIT, 0, varAddr(baseIdx));
+        emit(Opcode::LIT, 0, varAddr(baseIdx) + fieldOffset);
 
         for (size_t i = 0; i < indices.size(); ++i) {
             genExpr(indices[i]);
@@ -536,8 +574,6 @@ void IntermediateCode::genRepeat(std::shared_ptr<RepeatNode> node) {
     int loopStart = nextAddr();
     genStmt(node->getBody());
     genExpr(node->getUntilCondition());
-    emit(Opcode::LIT, 0, 0);
-    emit(Opcode::OPR, 0, static_cast<int>(OprCode::EQL));  // NOT
     emit(Opcode::JPC, 0, loopStart);
 }
 
@@ -700,13 +736,14 @@ void IntermediateCode::genArrayAccess(std::shared_ptr<ArrayAccessNode> node) {
     std::vector<std::shared_ptr<ExprNode>> indices;
     std::vector<int> lowers;
     std::vector<int> multipliers;
-    if (!collectArrayAccessInfo(node, baseIdx, indices, lowers, multipliers)) {
+    int fieldOffset = 0;
+    if (!collectArrayAccessInfo(node, baseIdx, indices, lowers, multipliers, fieldOffset)) {
         std::cerr << "ICG: array tidak ditemukan atau tidak didukung\n";
         emit(Opcode::LIT, 0, 0);
         return;
     }
 
-    emit(Opcode::LIT, 0, varAddr(baseIdx));
+    emit(Opcode::LIT, 0, varAddr(baseIdx) + fieldOffset);
     for (size_t i = 0; i < indices.size(); ++i) {
         genExpr(indices[i]);
         emit(Opcode::LIT, 0, lowers[i]);
